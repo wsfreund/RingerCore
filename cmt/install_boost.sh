@@ -27,7 +27,7 @@ then
       echo "It is needed to install boost python library." 
       if test \! -f boost_1_58_0.tar.gz 
       then
-        if \! wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
+        if ! wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
         then
           boost_file="/afs/cern.ch/user/w/wsfreund/public/boost_1_58_0.tar.gz"
           if test -f $boost_file
