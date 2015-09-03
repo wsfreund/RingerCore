@@ -12,6 +12,9 @@ PACKAGE              = RingerCore
 # the libraries to link with this one:
 PACKAGE_PRELOAD      =
 
+# Extra package cleanup:
+PACKAGE_CLEAN				 =
+
 # additional compilation flags to pass (not propagated to dependent packages):
 PACKAGE_CXXFLAGS     = 
 
