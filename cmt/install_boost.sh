@@ -18,6 +18,10 @@ boost_lib_ne=$BOOST_LOCAL_PATH/lib
 # And the normal versions of the paths
 boost_include=$(eval echo "$BOOST_LOCAL_PATH/include")
 boost_lib=$(eval echo "$BOOST_LOCAL_PATH/lib")
+
+# Do not recheck whether build was successful:
+DO_NOT_CHECK=0
+
 if test \! -f `eval echo "$boost_include/boost/python.hpp"` -o \! -d `eval echo "$boost_lib/"`
 then
   if test \! -f boost_test.h.gch
@@ -61,28 +65,33 @@ then
       cd - > /dev/null
       sleep 3
     else
-      echo "Boost installed at file system" && exit 0
+      echo "Boost installed at file system"
+      DO_NOT_CHECK=1
     fi
   else
-    echo "Boost installed at file system" && exit 0
+    echo "Boost installed at file system"
+    DO_NOT_CHECK=1
   fi
 else
   echo "Boost needed libraries already installed."
+  DO_NOT_CHECK=1
 fi
 
-old_field=`$ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LIBFLAGS`
+old_field=`$ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LDFLAGS`
 if test "${old_field#*-L$boost_lib}" = "$old_field"
 then
-  $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LIBFLAGS "$old_field -L$boost_lib"  
+  $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "-L$boost_lib $old_field " 
+else
+  echo "Do not need to add boost_lib"
 fi
 
 arch=`root-config --arch`
-include_marker=-I
+include_marker="-I"
 
 old_field=`$ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_OBJFLAGS`
 if test "${old_field#*$include_marker$boost_include_ne}" = "$old_field"
 then
-  $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_OBJFLAGS "$old_field $include_marker$boost_include_ne"  
+  $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_OBJFLAGS "-L$boost_lib $old_field $include_marker$boost_include_ne"  
 fi
 
 echo "test \"\$(echo \":\$CPATH:\" | grep -q \":$boost_include_ne:\"; echo \$?)\" -ne \"0\" && export CPATH=$boost_include_ne:\$CPATH || true" >> $NEW_ENV_FILE
@@ -94,4 +103,6 @@ fi
 source $NEW_ENV_FILE || { echo "Couldn't set environment" && exit 1; }
 
 # Final test:
-echo -n "Checking boost installation..." && { `$CXX $PYTHON_INCLUDE -o boost_test.h.gch -P boost_test.h  > /dev/null 2> /dev/null` || { echo "\nBoost couldn't be found!" && exit 1; } && echo " sucessfully installed!"; }
+if test "$DO_NOT_CHECK" -ne 1; then
+  echo -n "Checking boost installation..." && { `$CXX $PYTHON_INCLUDE -o boost_test.h.gch -P boost_test.h  > /dev/null 2> /dev/null` || { echo "\nBoost couldn't be found!" && exit 1; } && echo " sucessfully installed!"; }
+fi

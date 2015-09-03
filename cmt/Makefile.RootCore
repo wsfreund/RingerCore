@@ -16,16 +16,16 @@ PACKAGE_PRELOAD      =
 PACKAGE_CXXFLAGS     = 
 
 # additional compilation flags to pass (propagated to dependent packages):
-PACKAGE_OBJFLAGS = -I/opt/local/Library/Frameworks/Python.framework/Versions/2.7/include//python2.7 -isystem/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages//numpy/core/include -std=c++11 -fPIC -fopenmp -lboost_python -lgomp -lpython2.7 -I${ROOTCOREBIN}/../RingerCore/cmt/include
+PACKAGE_OBJFLAGS = -L/afs/cern.ch/user/w/wsfreund/public/TrigCaloRingerAnalysisPackages/root/RootCoreBin/../RingerCore/cmt/lib -I/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/x86_64/python/2.7.4-x86_64-slc6-gcc48/sw/lcg/external/Python/2.7.4/x86_64-slc6-gcc48-opt/include/python2.7 -isystem/afs/cern.ch/sw/lcg/external/pyanalysis/1.4_python2.7/x86_64-slc6-gcc48-opt/lib/python2.7/site-packages//numpy/core/include -std=c++11 -fPIC -fopenmp -lboost_python -lgomp -lpython2.7 -I${ROOTCOREBIN}/../RingerCore/cmt/include
 
 # additional linker flags to pass (for compiling the library):
-PACKAGE_LDFLAGS =
+PACKAGE_LDFLAGS = -L/afs/cern.ch/user/w/wsfreund/public/TrigCaloRingerAnalysisPackages/root/RootCoreBin/../RingerCore/cmt/lib -fPIC -lboost_python -lgomp -lpython2.7 
 
 # additional linker flags to pass (for compiling binaries):
-PACKAGE_BINFLAGS     =
+PACKAGE_BINFLAGS     = 
 
 # additional linker flags to pass (propagated to client libraries):
-PACKAGE_LIBFLAGS = -fPIC -lboost_python -lgomp -lpython2.7 -L/Users/wsfreund/custom_installed/TrigCaloRingerAnalysisPackages/root/RootCore/../RingerCore/cmt/lib
+PACKAGE_LIBFLAGS 		 =
 
 # the list of packages we depend on:
 PACKAGE_DEP          =

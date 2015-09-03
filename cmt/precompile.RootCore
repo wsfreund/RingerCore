@@ -42,15 +42,7 @@ do
   fi
 done
 
-
-PYTHON_NUMPY_PATH=$(python -c "import numpy; path=numpy.__file__; print path[:path.find('numpy')]")
-if test -z $PYTHON_NUMPY_PATH; then
-  echo "ERROR: Couldn't get NUMPY path." && exit 1
-else
-  if test -n "$RINGERCORE_DBG_LEVEL"; then
-    echo "Found numpy path as: $PYTHON_NUMPY_PATH"
-  fi
-fi 
+PYTHON_NUMPY_PATH=$(python -c "import numpy; path=numpy.__file__; print path[:path.find('numpy')]") 2> /dev/null
 
 echo -n > $NEW_ENV_FILE
 chmod +x $NEW_ENV_FILE
@@ -64,11 +56,20 @@ then
 else
   if test -e $PYTHON_NUMPY_PATH/numpy/core/include; then
     INCLUDE_NUMPY="$include_system_marker$PYTHON_NUMPY_PATH/numpy/core/include"
+  else
     if test -e /usr/include/numpy; then
       INCLUDE_NUMPY="$include_system_marker$/usr/include/numpy"
     fi
   fi
 fi
+
+if test -z $PYTHON_NUMPY_PATH; then
+  echo "ERROR: Couldn't get NUMPY path." && exit 1
+else
+  if test -n "$RINGERCORE_DBG_LEVEL"; then
+    echo "Found numpy path as: $PYTHON_NUMPY_PATH"
+  fi
+fi 
 
 if test -z $INCLUDE_NUMPY; then
   echo "ERROR: Couldn't get NUMPY include path."
@@ -90,7 +91,7 @@ $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE \
   PACKAGE_OBJFLAGS "$PYTHON_INCLUDE_PATH $INCLUDE_NUMPY -std=c++11 -fPIC -fopenmp -lboost_python -lgomp -l$PYTHON_LIB_VERSION" # -v
 
 $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE \
-  PACKAGE_LIBFLAGS "-fPIC -lboost_python -lgomp -l$PYTHON_LIB_VERSION" #   -Wl,--verbose
+  PACKAGE_LDFLAGS "-fPIC -lboost_python -lgomp -l$PYTHON_LIB_VERSION" #   -Wl,--verbose
 
 # Add rootcore libs to python env file
 ROOTCORELIBPATH=\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/
