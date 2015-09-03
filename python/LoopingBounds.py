@@ -256,7 +256,7 @@ class LoopingBounds ( Logger ):
     return len(self.list())
 
 
-from FastNetTool.LimitedTypeList import LimitedTypeList
+from RingerCore.LimitedTypeList import LimitedTypeList
 LoopingBoundsCollection = LimitedTypeList("LoopingBoundsCollection", (), \
     {'_acceptedTypes' : (LoopingBounds,)})
 

@@ -11,7 +11,7 @@ def sourceEnvFile():
     Emulate source new_env_file.sh on python environment.
   """
   try:
-    from FastNetTool.Logger import Logger
+    from RingerCore.Logger import Logger
     logger = Logger.getModuleLogger(__name__)
     import os, sys
     global loadedEnvFile
