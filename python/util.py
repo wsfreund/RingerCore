@@ -130,7 +130,7 @@ def reshape_to_array( input ):
 
 
 def conditionalOption( argument, value ):
-  return argument + value if value else ''
+  return argument + " " + value if value else ''
 
 def trunc_at(s, d, n=1):
   "Returns s truncated at the n'th (1st by default) occurrence of the delimiter, d."
