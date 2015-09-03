@@ -43,11 +43,11 @@ gridParser.add_argument('--site',default = 'AUTO',
     help = "The site location where the job should run.",
     nargs='?', required = False,
     dest = 'grid_site')
-gridParser.add_argument('--excludedSite', default = '', 
+gridParser.add_argument('--excludedSite', default = 'ANALY_CERN_CLOUD,ANALY_SLAC', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
 gridParser.add_argument('--debug', 
-    const='--express --debugMode --allowTaskDuplication', dest='gridExpand_debug',
+    const='--express --debugMode --allowTaskDuplication --disableAutoRetry', dest='gridExpand_debug',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
 gridParser.add_argument('--nJobs', nargs='?', type=int,
