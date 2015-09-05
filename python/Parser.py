@@ -74,6 +74,9 @@ gridParser.add_argument('--nGBPerJob', nargs='?',
 gridParser.add_argument('--skipScout', action='store_true',
     required = False, dest = 'grid_skipScout',
     help = """Flag to disable auto retrying jobs.""")
+gridParser.add_argument('--useNewCode', action='store_true',
+    required = False, dest = 'grid_useNewCode',
+    help = """Flag to disable auto retrying jobs.""")
 gridParser.add_argument('--dry-run', action='store_true',
     help = """Only print grid resulting command, but do not execute it.
             Used for debugging submission.""")

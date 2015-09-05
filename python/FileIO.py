@@ -1,6 +1,7 @@
 import numpy as np
 import cPickle
 import gzip
+import tarfile
 import os
 
 def save(o, filename, **kw):
@@ -33,8 +34,8 @@ def save(o, filename, **kw):
     if len(filename) <= 4 or filename[-4:] != '.pic':
       filename += '.pic'
     if compress:
-      if len(filename) <= 4 or filename[-4:] != '.tgz':
-        filename += '.tgz'
+      if len(filename) <= 5 or filename[-5:] != '.gzip':
+        filename += '.gzip'
       f = gzip.GzipFile(filename, 'wb')
     else:
       f = open(filename, 'w')
@@ -52,16 +53,29 @@ def load(filename, decompress = 'auto'):
     return np.load(filename)
   else:
     if decompress == 'auto':
-      if ( len(filename) > 4 and filename[-4:] == '.tgz' ) or \
-         ( len(filename) > 5 and filename[-6:] == '.tar.gz' ):
-        decompress = True
+      if ( len(filename) >= 4 and filename[-4:] == '.gzip' ):
+        decompress = 'gzip'
+      elif  ( len(filename) >= 6 and filename[-6:] == '.tar.gz' ) or \
+            ( len(filename) >= 4 and filename[-4:] == '.tgz' ):
+        decompress = 'tgz'
       else:
         decompress = False
-      if decompress:
-        f = gzip.GzipFile(filename, 'rb')
-      else:
-        f = open(filename,'r')
-      o = cPickle.load(f)
+    if decompress == 'gzip':
+      f = gzip.GzipFile(filename, 'rb')
+    elif decompress == 'tgz':
+      f = tarfile.open(filename, 'r:gz')
+      o = []
+      for entry in f.getmembers():
+        fileobj = f.extractfile(entry)
+        o.append( cPickle.load(fileobj) )
       f.close()
-      return o
+      if len(o) == 1:
+        return o[0]
+      else:
+        return o
+    else:
+      f = open(filename,'r')
+    o = cPickle.load(f)
+    f.close()
+    return o
 
