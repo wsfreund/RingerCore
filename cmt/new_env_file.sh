@@ -1,4 +1,0 @@
-test "$(echo ":$PYTHONPATH:" | grep -q ":/afs/cern.ch/sw/lcg/external/pyanalysis/1.4_python2.7/x86_64-slc6-gcc48-opt/lib/python2.7/site-packages/:"; echo $?)" -ne "0" && export PYTHONPATH=$PYTHONPATH:/afs/cern.ch/sw/lcg/external/pyanalysis/1.4_python2.7/x86_64-slc6-gcc48-opt/lib/python2.7/site-packages/ || true
-test "$(echo ":$PYTHONPATH:" | grep -q ":$ROOTCOREBIN/lib/$ROOTCORECONFIG/:"; echo $?)" -ne "0" && export PYTHONPATH=$PYTHONPATH:$ROOTCOREBIN/lib/$ROOTCORECONFIG/ || true
-test "$(echo ":$CPATH:" | grep -q ":${ROOTCOREBIN}/../RingerCore/cmt/include:"; echo $?)" -ne "0" && export CPATH=${ROOTCOREBIN}/../RingerCore/cmt/include:$CPATH || true
-test "$(echo ":$LD_LIBRARY_PATH:" | grep -q ":${ROOTCOREBIN}/../RingerCore/cmt/lib:"; echo $?)" -ne "0" && export LD_LIBRARY_PATH=${ROOTCOREBIN}/../RingerCore/cmt/lib:$LD_LIBRARY_PATH || true
