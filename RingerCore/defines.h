@@ -13,7 +13,9 @@
 /**
  * Comment this to remove omp usage even if it is available on system
  **/
-#define USING_MULTI_THREAD
+#if !defined(__CINT__) && !defined(__CLING__)
+# define USING_MULTI_THREAD
+#endif
 
 #if defined(USING_MULTI_THREAD)
 # include <omp.h>
