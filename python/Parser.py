@@ -46,7 +46,7 @@ gridParser.add_argument('--site',default = 'AUTO',
 gridParser.add_argument('--excludedSite', default = 'ANALY_CERN_CLOUD,ANALY_SLAC', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
-gridParser.add_argument('--debug', 
+gridParser.add_argument('--debug', default = '--skipScout',
     const='--express --debugMode --allowTaskDuplication --disableAutoRetry', dest='gridExpand_debug',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
@@ -74,6 +74,12 @@ gridParser.add_argument('--nGBPerJob', nargs='?',
 gridParser.add_argument('--skipScout', action='store_true',
     required = False, dest = 'grid_skipScout',
     help = """Flag to disable auto retrying jobs.""")
+gridParser.add_argument('--memory', type=int,
+    required = False, dest = 'grid_memory',
+    help = """Needed memory to run in MB.""")
+gridParser.add_argument('--long', action='store_true',
+    required = False, dest = 'grid_long',
+    help = """Submit for long queue.""")
 gridParser.add_argument('--useNewCode', action='store_true',
     required = False, dest = 'grid_useNewCode',
     help = """Flag to disable auto retrying jobs.""")

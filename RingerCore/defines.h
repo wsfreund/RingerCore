@@ -6,7 +6,7 @@
  **/
 #if defined(RINGERCORE_DBG_LEVEL)
 # ifndef DBG_LEVEL
-# define DBG_LEVEL RINGERCORE_DBG_LEVEL
+#   define DBG_LEVEL RINGERCORE_DBG_LEVEL
 # endif
 #endif
 
@@ -16,7 +16,7 @@
 #define USING_MULTI_THREAD
 
 #if defined(USING_MULTI_THREAD)
-#include <omp.h>
+# include <omp.h>
 #endif
 
 /**
