@@ -34,8 +34,8 @@ def save(o, filename, **kw):
     if len(filename) <= 4 or filename[-4:] != '.pic':
       filename += '.pic'
     if compress:
-      if len(filename) <= 5 or filename[-5:] != '.gzip':
-        filename += '.gzip'
+      if len(filename) <= 3 or filename[-3:] != '.gz':
+        filename += '.gz'
       f = gzip.GzipFile(filename, 'wb')
     else:
       f = open(filename, 'w')
@@ -53,9 +53,10 @@ def load(filename, decompress = 'auto'):
     return np.load(filename)
   else:
     if decompress == 'auto':
-      if ( len(filename) >= 4 and filename[-4:] == '.gzip' ):
+      if ( len(filename) >= 3 and filename[-3:] == '.gz' ) or \
+          ( len(filename) >= 5 and filename[-5:] == '.gzip' ):
         decompress = 'gzip'
-      elif  ( len(filename) >= 6 and filename[-6:] == '.tar.gz' ) or \
+      elif  ( len(filename) >= 7 and filename[-7:] == '.tar.gz' ) or \
             ( len(filename) >= 4 and filename[-4:] == '.tgz' ):
         decompress = 'tgz'
       else:
