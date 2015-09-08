@@ -19,6 +19,8 @@ boost_lib_ne=$BOOST_LOCAL_PATH/lib
 boost_include=$(eval echo "$BOOST_LOCAL_PATH/include")
 boost_lib=$(eval echo "$BOOST_LOCAL_PATH/lib")
 
+boost_file="/afs/cern.ch/user/w/wsfreund/public/boost_1_58_0.tar.gz"
+
 # Do not recheck whether build was successful:
 DO_NOT_CHECK=0
 
@@ -31,17 +33,16 @@ then
       echo "It is needed to install boost python library." 
       if test \! -f boost_1_58_0.tar.gz 
       then
-        if ! wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
+        if test -f $boost_file
         then
-          boost_file="/afs/cern.ch/user/w/wsfreund/public/boost_1_58_0.tar.gz"
-          if test -f $boost_file
+          if ! rsync -rvhzP -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=quiet" $boost_file .
           then
-            if ! rsync -rvhzP -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=quiet" $boost_file .
-            then
-              scp -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "LogLevel=quiet" $boost_file . \
-                || { echo "Couldn't download boost!" && exit 1; }
-            fi
-          else
+            scp -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -o "LogLevel=quiet" $boost_file . \
+              || { echo "Couldn't download boost from afs!" && exit 1; }
+          fi
+        else
+          if ! wget http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz
+          then
             echo "Couldn't download boost and there is no afs access to download it." && exit 1 
           fi
         fi
