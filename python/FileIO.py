@@ -3,6 +3,7 @@ import cPickle
 import gzip
 import tarfile
 import os
+import StringIO
 
 def save(o, filename, **kw):
   """
@@ -68,7 +69,13 @@ def load(filename, decompress = 'auto'):
       o = []
       for entry in f.getmembers():
         fileobj = f.extractfile(entry)
-        o.append( cPickle.load(fileobj) )
+        if  ( len(entry.name) >= 3 and entry.name[-3:] == '.gz' ) or \
+            ( len(entry.name) >= 5 and entry.name[-5:] == '.gzip' ):
+          fio = StringIO.StringIO(fileobj.read())
+          fzip = gzip.GzipFile(fileobj=fio)
+          o.append( cPickle.load(fzip) )
+        else:
+          o.append( cPickle.load(fileobj) )
       f.close()
       if len(o) == 1:
         return o[0]
