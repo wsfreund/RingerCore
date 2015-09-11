@@ -28,7 +28,7 @@
  *
  * We only display DEBUG messages if building with debug set
  **/
-#if defined(DBG_LEVEL) && FASTNET_DBG_LEVEL > 0
+#if defined(DBG_LEVEL) && DBG_LEVEL > 0
 # define MSG_DEBUG(xmsg) MSG_LVL_CHK( xmsg, ::MSG::DEBUG )
 #else
 # define MSG_DEBUG(xmsg) while(0) { std::ostringstream s; s << xmsg; }
@@ -187,7 +187,7 @@ class MsgStream
     /// Ctor using standard configuration
     /// @{
     MsgStream() 
-      : m_streamName("FastNetTool_Log"),
+      : m_streamName("RingerCore_Log"),
         m_level(MSG::INFO),
         m_currentLevel(MSG::INFO),
         m_active(true){;}
