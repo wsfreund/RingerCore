@@ -49,6 +49,8 @@ def load(filename, decompress = 'auto'):
     Loads an object from disk
   """
   filename = os.path.expandvars(filename)
+  if not os.path.isfile( os.path.expandvars( filename ) ):
+    raise ValueError("Cannot reach file %s" % filename )
   if len(filename) > 4 and (filename[-4:] == '.npy' or \
       filename[-4:] == '.npz'):
     return np.load(filename)
