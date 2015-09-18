@@ -41,7 +41,7 @@ class LoopingBounds ( Logger ):
       oldFlag = self._matlabFlag
       self._matlabFlag = args[0]._matlabFlag
       if oldFlag != self._matlabFlag:
-        if self._matlabFlag():
+        if self._matlabFlag:
           self.turnMatlabFlagOn()
         else:
           self.turnMatlabFlagOff()
@@ -72,6 +72,10 @@ class LoopingBounds ( Logger ):
 
     if len(self._vec) == 3 and self._vec[2] == 0:
       raise ValueError("Attempted to create looping bounds without increment.")
+
+  @property
+  def matlabFlag(self):
+    return self._matlabFlag
 
   def range(self):
     """
@@ -106,7 +110,6 @@ class LoopingBounds ( Logger ):
       Return increment value
     """
     return self._vec[2] if len(self._vec) == 3 else 1
-
 
   def lowerBound(self, openBounded = False):
     """
@@ -284,7 +287,24 @@ class PythonLoopingBounds (LoopingBounds):
     """
       Cannot call turn matlab flags off on PythonLoopingBounds.
     """
-    raise RuntimeError("Can only set matlab flag to on on LoopingBounds objects.")
+    raise RuntimeError("Can only set matlab flag to on for LoopingBounds objects.")
+
+def transformToPythonBounds( bounds ):
+  """
+   Return an equal representation of the bounds, but as an instance of PythonLoopingBounds
+  """
+  if isinstance( bounds, PythonLoopingBounds ):
+    return bounds
+  else:
+    originalVec = bounds.getOriginalVec()
+    if not bounds.matlabFlag:
+      return PythonLoopingBounds( originalVec )
+    else:
+      if len(originalVec) is 3 and originalVec[1] < 0:
+        originalVec[-1] -= 1
+      else:
+        originalVec[-1] += 1
+      return PythonLoopingBounds( originalVec )
 
 PythonLoopingBoundsCollection = LimitedTypeList( \
     "PythonLoopingBoundsCollection", (), \
@@ -310,12 +330,34 @@ class MatlabLoopingBounds (LoopingBounds):
     """
       Cannot call turn matlab flags off on MatlabLoopingBounds.
     """
-    raise RuntimeError("Can only set matlab flag to off on LoopingBounds objects.")
+    raise RuntimeError("Can only set matlab flag to off for LoopingBounds objects.")
+
+def transformToMatlabBounds( bounds ):
+  """
+  Return an equal representation of the bounds, but as an instance of MatlabLoopingBounds 
+  """
+  if isinstance( bounds, MatlabLoopingBounds ):
+    return bounds
+  else:
+    originalVec = bounds.getOriginalVec()
+    if bounds.matlabFlag:
+      return MatlabLoopingBounds( originalVec )
+    else:
+      if len(originalVec) is 3 and originalVec[1] < 0:
+        originalVec[-1] += 1
+      else:
+        originalVec[-1] -= 1
+      return MatlabLoopingBounds( originalVec )
 
 MatlabLoopingBoundsCollection = LimitedTypeList( \
     "MatlabLoopingBoundsCollection", (), \
     {'_acceptedTypes' : (PythonLoopingBounds,)})
 
+
 # Simply redirect SeqLoopingBounds to MatlabLoopingBounds
 SeqLoopingBounds = MatlabLoopingBounds
 SeqLoopingBoundsCollection = MatlabLoopingBoundsCollection
+transformToSeqBounds = transformToMatlabBounds
+
+
+
