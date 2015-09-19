@@ -379,3 +379,34 @@ def percentile(data_list, value, kind='mean'):
         return np.mean([strict, weak])
     else:
         raise ValueError("The kind kwarg must be 'strict', 'weak' or 'mean'. You can also opt to leave it out and rely on the default method.")
+
+
+def convert_objects_to_v1( objs ):
+  from TuningTools.Neural import Neural
+  from RingerCore.util import Roc
+  objs_v1 = dict()
+  objs_v1['version']       = 1
+  objs_v1['type']          = 'tunedFile'
+  objs_v1['neuronBounds']  = objs[0]
+  objs_v1['sortsBounds']   = objs[1]
+  objs_v1['initBound']     = objs[2]
+
+  train_v1 = list()
+  for  train  in  objs[3]:
+    nets=list()
+    for i in range(len(train)):
+      obj = train[i]
+      network = obj[0]
+      network_v1                = Neural(None)
+      network_v1.nNodes         = network.nNodes
+      network_v1.numberOfLayers = network.numberOfLayers
+      network_v1.dataTrain      = network.dataTrain
+      network_v1.layers         = network.layers
+      perf_tst_v1 = Roc([obj[1].spVec,obj[1].detVec,obj[1].faVec,obj[1].cutVec],obj[1].label)
+      perf_op_v1 = Roc([obj[2].spVec,obj[2].detVec,obj[2].faVec,obj[2].cutVec],obj[2].label)
+      nets.append([network_v1, perf_tst_v1, perf_op_v1])
+      
+    train_v1.append(nets)
+  objs_v1['tunedDiscriminators']=train_v1
+  return objs_v1
+
