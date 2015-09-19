@@ -1,5 +1,5 @@
-#ifndef FASTNETTOOL_MSGSTREAM_H
-#define FASTNETTOOL_MSGSTREAM_H
+#ifndef RINGERCORE_MSGSTREAM_H
+#define RINGERCORE_MSGSTREAM_H
 
 #include <cstring>
 #include <string>
