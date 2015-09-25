@@ -300,7 +300,9 @@ def transformToPythonBounds( bounds ):
     if not bounds.matlabFlag:
       return PythonLoopingBounds( originalVec )
     else:
-      if len(originalVec) is 3 and originalVec[1] < 0:
+      if len(originalVec) is 1:
+        originalVec=[1, originalVec[0]+1]
+      elif len(originalVec) is 3 and originalVec[1] < 0:
         originalVec[-1] -= 1
       else:
         originalVec[-1] += 1
@@ -343,7 +345,9 @@ def transformToMatlabBounds( bounds ):
     if bounds.matlabFlag:
       return MatlabLoopingBounds( originalVec )
     else:
-      if len(originalVec) is 3 and originalVec[1] < 0:
+      if len(originalVec) is 1:
+        originalVec=[0, originalVec[0]-1]
+      elif len(originalVec) is 3 and originalVec[1] < 0:
         originalVec[-1] += 1
       else:
         originalVec[-1] -= 1

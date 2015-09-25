@@ -40,7 +40,7 @@ def fatal(self, message, *args, **kws):
 logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
 
-class Logger( object ):
+class Logger:
   """
     Simple class for giving inherited classes logging capability as well as the
     possibility for being serialized by pickle.
@@ -70,7 +70,7 @@ class Logger( object ):
     # Make sure we only add one handler:
     if not logger.handlers:
       logger.setLevel( logDefaultLevel )
-      # create console handler and set level to notset
+      # create console handler and set level to debug
       import sys
       ch = logging.StreamHandler( sys.__stdout__ )
       ch.setLevel( logging.NOTSET ) #  Minimal level in which the ch will print

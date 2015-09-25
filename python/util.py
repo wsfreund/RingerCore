@@ -4,7 +4,6 @@ import gzip
 import inspect
 import numpy as np
 
-
 loadedEnvFile = False
 def sourceEnvFile():
   """
@@ -203,10 +202,7 @@ class Include:
     "Alternative to execfile for python3.0"
     with open(afile, "r") as fh:
       exec(fh.read(), globalz, localz)
-
-
 include = Include()
-
 
 def normalizeSumRow(data):
   #sourceEnvFile()
@@ -224,29 +220,29 @@ def mean(nums):
 
 
 def getEff( outSignal, outNoise, cut ):
-  '''
+  """
     [detEff, faEff] = getEff(outSignal, outNoise, cut)
     Returns the detection and false alarm probabilities for a given input
     vector of detector's perf for signal events(outSignal) and for noise 
     events (outNoise), using a decision threshold 'cut'. The result in whithin
     [0,1].
-  '''
+  """
 
   detEff = (outSignal.shape[0]- np.searchsorted(outSignal,cut))/ float(outSignal.shape[0]) 
   faEff  = (outNoise.shape[0] - np.searchsorted(outNoise, cut))/ float(outNoise.shape[0])
   return [detEff, faEff]
 
 def calcSP( pd, pf ):
-  '''
+  """
     ret  = calcSP(x,y) - Calculates the normalized [0,1] SP value.
     effic is a vector containing the detection efficiency [0,1] of each
     discriminating pattern.  
-  '''
+  """
   from numpy import sqrt
   return sqrt(geomean([pd,pf]) * mean([pd,pf]))
 
 def genRoc( outSignal, outNoise, numPts = 1000 ):
-  '''
+  """
     [spVec, cutVec, detVec, faVec] = genROC(out_signal, out_noise, numPts, doNorm)
     Plots the RoC curve for a given dataset.
     Input Parameters are:
@@ -259,7 +255,7 @@ def genRoc( outSignal, outNoise, numPts = 1000 ):
     If any perf parameters is specified, then the ROC is plot. Otherwise,
     the sp values, cut values, the detection efficiency and false alarm rate 
     are returned (in that order).
-  '''
+  """
   cutVec = np.arange( -1,1,2 /float(numPts))
   cutVec = cutVec[0:numPts - 1]
   detVec = np.array(cutVec.shape[0]*[float(0)])
@@ -274,10 +270,10 @@ def genRoc( outSignal, outNoise, numPts = 1000 ):
   return [spVec, cutVec, detVec, faVec]
 
 
-'''
-  Class Performance
-'''
 class Roc:
+  """
+    Create ROC information holder
+  """
   def __init__(self, vecList, label):
     self.label    = label
     self.spVec    = vecList[0]
@@ -289,93 +285,3 @@ class Roc:
     self.fa       = self.faVec[ np.argmax(self.spVec) ]
     self.cut      = self.cutVec[ np.argmax(self.spVec)]
 
-def percentile(data_list, value, kind='mean'):
-    """
-    Accepts a sample of values and a single number to add to it
-    and determine its percentile rank.
-    
-    A percentile of, for example, 80 percent means that 80 percent of the
-    scores in the sequence are below the given score. 
-    
-    In the case of gaps or ties, the exact definition depends on the type
-    of the calculation stipulated by the "kind" keyword argument.
-    
-    There are three kinds of percentile calculations provided here. The
-    default is "weak".
-    
-        1. "weak"
-    
-            Corresponds to the definition of a cumulative
-            distribution function, with the result generated
-            by returning the percentage of values at or equal
-            to the the provided value.
-    
-        2. "strict"
-        
-            Similar to "weak", except that only values that are
-            less than the given score are counted. This can often
-            produce a result much lower than "weak" when the provided
-            score is occurs many times in the sample.
-            
-        3. "mean"
-        
-            The average of the "weak" and "strict" scores.
-            
-    h3. Example usage
-    
-        >> import calculate
-        >> calculate.percentile([1, 2, 3, 4], 3)
-        75.0
-        >> calculate.percentile([1, 2, 3, 3, 4], 3, kind='strict')
-        40.0
-        >> calculate.percentile([1, 2, 3, 3, 4], 3, kind='weak')
-        80.0
-        >> calculate.percentile([1, 2, 3, 3, 4], 3, kind='mean')
-        60.0
-
-    h3. Documentation
-    
-        * "Percentile rank":http://en.wikipedia.org/wiki/Percentile_rank
-
-    h3. Credits
-    
-        This function is a modification of scipy.stats.percentileofscore. The 
-        only major difference is that I eliminated the numpy dependency, and
-        omitted the rank kwarg option until I can find time to translate
-        the numpy parts out.
-
-    """
-    # Test to make sure the input is a list or tuple
-    if not isinstance(data_list, (list, tuple)):
-        raise TypeError('First input must be a list or tuple. You passed in a %s' % type(data_list))
-    
-    # Convert all the values to floats and test to make sure there aren't any strings in there
-    try:
-        data_list = map(float, data_list)
-    except ValueError:
-        raise ValueError('Input values should contain numbers, your first input contains something else')
-        
-    if not isinstance(value, (int,long,float)):
-        raise ValueError('Input values should contain numbers, your second input is a %s' % type(value))
-    
-    # Find the number of values in the sample
-    n = float(len(data_list))
-
-    if kind == 'strict':
-        # If the selected method is strict, count the number of values 
-        # below the provided one and then divide it into the n
-        return len([i for i in data_list if i < value]) / n * 100
-    
-    elif kind == 'weak':
-        # If the selected method is weak, count the number of values
-        # equal to or below the provided on and then divide it into n
-        return len([i for i in data_list if i <= value]) / n * 100
-
-    elif kind == 'mean':
-        # If the selected method is mean, take the weak and strong
-        # methods and average them.
-        strict = len([i for i in data_list if i < value]) / n * 100
-        weak = len([i for i in data_list if i <= value]) / n * 100
-        return np.mean([strict, weak])
-    else:
-        raise ValueError("The kind kwarg must be 'strict', 'weak' or 'mean'. You can also opt to leave it out and rely on the default method.")
