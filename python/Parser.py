@@ -43,7 +43,7 @@ gridParser.add_argument('--site',default = 'AUTO',
     help = "The site location where the job should run.",
     nargs='?', required = False,
     dest = 'grid_site')
-gridParser.add_argument('--excludedSite', default = 'ANALY_CERN_CLOUD,ANALY_SLAC', # Known bad sites
+gridParser.add_argument('--excludedSite', default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_BNL_SHORT', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
 gridParser.add_argument('--debug', default = '--skipScout',
