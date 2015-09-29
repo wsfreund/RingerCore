@@ -11,6 +11,8 @@ def save(o, filename, **kw):
   """
   compress = kw.pop('compress', True)
   protocol = kw.pop('protocol', -1  )
+  if not isinstance(filename, str):
+    raise("Filename must be a string!")
   filename = os.path.expandvars(filename)
   if type(protocol) is str:
     if protocol == "savez_compressed":
