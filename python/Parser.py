@@ -154,6 +154,8 @@ class GridNamespace( LoggerNamespace, Logger ):
     with the input options.
   """
 
+  noNumyPySites = ['ANALY_SWT2_CPB','ANALY_BNL_EC2E1']
+
   def __init__(self, prog = 'prun', **kw):
     Logger.__init__( self, kw )
     LoggerNamespace.__init__( self, **kw )
