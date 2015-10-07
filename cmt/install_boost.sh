@@ -8,6 +8,7 @@ test "x$1" = "x" -o "x$2" = "x" -o "x$3" = "x" && echo "$0: Wrong number of argu
 MAKEFILE=$1
 NEW_ENV_FILE=$2
 PYTHON_INCLUDE=$3
+DISABLE_RECHECK=0
 
 CXX=`root-config --cxx`
 
@@ -26,7 +27,7 @@ DO_NOT_CHECK=0
 
 if test \! -f `eval echo "$boost_include/boost/python.hpp"` -o \! -d `eval echo "$boost_lib/"`
 then
-  if test \! -f boost_test.h.gch
+  if test $DISABLE_RECHECK -eq 1 -a \! -f boost_test.h.gch
   then
     if ! $CXX $PYTHON_INCLUDE -P boost_test.h -o boost_test.h.gch > /dev/null 2> /dev/null
     then
