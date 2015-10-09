@@ -44,7 +44,7 @@ gridParser.add_argument('--site',default = 'AUTO',
     nargs='?', required = False,
     dest = 'grid_site')
 gridParser.add_argument('--excludedSite', 
-    default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
+    default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
 gridParser.add_argument('--debug', default = '--skipScout',
