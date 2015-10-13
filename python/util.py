@@ -144,10 +144,13 @@ def start_after(s, d, n=1):
 #  v = vector(vecType)
 #  return v(*argl)
 
-def stdvector_to_list(vec):
-  size = vec.size()
-  l = size*[0]
-  for i in range(size):
+def stdvector_to_list(vec, size=None):
+  if size:
+    l=size*[0]
+  else:
+    l = vec.size()*[0]
+
+  for i in range(vec.size()):
     l[i] = vec[i]
   return l
 
