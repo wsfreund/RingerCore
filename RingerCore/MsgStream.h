@@ -1,5 +1,5 @@
-#ifndef RINGERCORE_MSGSTREAM_H
-#define RINGERCORE_MSGSTREAM_H
+#ifndef RINGERCORE_MSGSTREAMMIRROR_H
+#define RINGERCORE_MSGSTREAMMIRROR_H
 
 #include <cstring>
 #include <string>
@@ -15,7 +15,7 @@
  * Macro for using within MsgService inherited classes.
  *
  * It will check if message is above level before requesting to enter it into
- * MsgStream to check it.
+ * MsgStreamMirror to check it.
  **/
 #define MSG_LVL_CHK(xmsg, lvl)  do { \
   if ( msgLevel( lvl ) ) { \
@@ -141,15 +141,17 @@ std::ostream& operator<< ( std::ostream& out, const std::vector< T >& vec )
 /**
  * @brief Adds logging capability to inherited classes
  *
- * Based on Athena framework's MsgStream
+ * Based on Athena framework's MsgStream (almost a copy, but without using
+ * Gaudi infrastructure). It cannot have the same name as the Asg class,
+ * otherwise we'll have conflicts on PyROOT usage.
  **/
-class MsgStream
+class MsgStreamMirror
 {
 
   public:
 
     /**
-     * @brief Helper class for displaying MsgStream messages
+     * @brief Helper class for displaying MsgStreamMirror messages
      **/
     class Message {
       public: 
@@ -186,14 +188,14 @@ class MsgStream
 
     /// Ctor using standard configuration
     /// @{
-    MsgStream() 
+    MsgStreamMirror() 
       : m_streamName("RingerCore_Log"),
         m_level(MSG::INFO),
         m_currentLevel(MSG::INFO),
         m_active(true){;}
 
     /// Ctor using integer for setting logname and msgLevel
-    explicit MsgStream(const std::string &logname, const int msgLevel)
+    explicit MsgStreamMirror(const std::string &logname, const int msgLevel)
       : m_streamName(logname),
         m_level( ( msgLevel > MSG::FATAL ) ? ( MSG::FATAL )
                                            : ( ( msgLevel < MSG::VERBOSE ) ? ( MSG::VERBOSE )
@@ -205,7 +207,7 @@ class MsgStream
         {;}
 
     /// Ctor setting logname and msgLevel
-    explicit MsgStream(const std::string &logname, const MSG::Level msgLevel)
+    explicit MsgStreamMirror(const std::string &logname, const MSG::Level msgLevel)
       : m_streamName(logname),
         m_level(msgLevel),
         m_currentLevel(MSG::INFO),
@@ -213,7 +215,7 @@ class MsgStream
         {;}
 
     /// Copy constructor
-    MsgStream(const MsgStream& msg)
+    MsgStreamMirror(const MsgStreamMirror& msg)
       : m_streamName(msg.m_streamName),
         m_level(msg.m_level),
         m_currentLevel(msg.m_currentLevel),
@@ -254,38 +256,38 @@ class MsgStream
       m_streamName = logName;
     }
 
-    /// oMsgStream flush emulation
-    MsgStream& flush()    {
+    /// oMsgStreamMirror flush emulation
+    MsgStreamMirror& flush()    {
       if ( isActive() ) m_stream.flush();
       return *this;
     }
 
     /// Operators overload:
     /// @{
-    /// Accept MsgStream modifiers (this will call endreq/endmsg)
-    MsgStream& operator<<(MsgStream& (*_f)(MsgStream&)) {
+    /// Accept MsgStreamMirror modifiers (this will call endreq/endmsg)
+    MsgStreamMirror& operator<<(MsgStreamMirror& (*_f)(MsgStreamMirror&)) {
       if ( isActive() ) _f(*this);
       return *this;
     }
-    /// Accept oMsgStream modifiers
-    MsgStream& operator<<(std::ostream& (*_f)(std::ostream&)) {
+    /// Accept oMsgStreamMirror modifiers
+    MsgStreamMirror& operator<<(std::ostream& (*_f)(std::ostream&)) {
       if ( isActive() ) _f(m_stream);
       return *this;
     }
 
     /// Accept ios modifiers
-    MsgStream& operator<<(std::ios& (*_f)(std::ios&)) {
+    MsgStreamMirror& operator<<(std::ios& (*_f)(std::ios&)) {
       if ( isActive() ) _f(m_stream);
       return *this;
     }
 
-    /// Accept MsgStream activation using MsgStreamer operator
-    MsgStream& operator<< (MSG::Level level) {
+    /// Accept MsgStreamMirror activation using MsgStreamMirrorer operator
+    MsgStreamMirror& operator<< (MSG::Level level) {
       return report(level);
     }
 
-    /// Accept MsgStream activation using MsgStreamer operator
-    MsgStream& operator<<(long long arg) {
+    /// Accept MsgStreamMirror activation using MsgStreamMirrorer operator
+    MsgStreamMirror& operator<<(long long arg) {
       try {
         // this may throw, and we cannot afford it if the stream is used in a catch block
         m_stream << arg;
@@ -295,7 +297,7 @@ class MsgStream
     /// @}
 
     /// Initialize report of new message: activate if print level is sufficient.
-    MsgStream& report(MSG::Level lvl) {
+    MsgStreamMirror& report(MSG::Level lvl) {
       if ( ( m_currentLevel = MSG::Level(lvl) ) >= level() ) {
         activate();
       } else {
@@ -304,16 +306,16 @@ class MsgStream
       return *this;
     }
 
-    /// Activate MsgStream
+    /// Activate MsgStreamMirror
     void activate() {
       m_active = true;
     }
-    /// Deactivate MsgStream
+    /// Deactivate MsgStreamMirror
     void deactivate() {
       m_active = false;
     }
 
-    /// Accessor: is MsgStream active
+    /// Accessor: is MsgStreamMirror active
     bool isActive() const {
       return m_active;
     }
@@ -380,9 +382,9 @@ class MsgStream
     void print( const MSG::Level lvl );
 
     /// Output method
-    MsgStream& doOutput();
+    MsgStreamMirror& doOutput();
 
-    /// Access string MsgStream
+    /// Access string MsgStreamMirror
     std::ostringstream& stream(){
       return m_stream;
     }
@@ -403,9 +405,9 @@ class MsgStream
     bool m_active;
 };
 
-/// MsgStream Modifier: endmsg. Calls the output method of the MsgStream
+/// MsgStreamMirror Modifier: endmsg. Calls the output method of the MsgStreamMirror
 inline
-MsgStream& endmsg(MsgStream& s) 
+MsgStreamMirror& endmsg(MsgStreamMirror& s) 
 {
   return s.doOutput();
 }
@@ -413,7 +415,7 @@ MsgStream& endmsg(MsgStream& s)
 
 
 #if defined (__GNUC__) && ! defined(__clang__)
-inline MsgStream& operator << (MsgStream& s,
+inline MsgStreamMirror& operator << (MsgStreamMirror& s,
                                const std::_Setiosflags &manip) {
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -421,7 +423,7 @@ inline MsgStream& operator << (MsgStream& s,
   } catch(...) {}
   return s;
 }
-inline MsgStream& operator << (MsgStream& s,
+inline MsgStreamMirror& operator << (MsgStreamMirror& s,
                                const std::_Resetiosflags &manip)      {
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -429,7 +431,7 @@ inline MsgStream& operator << (MsgStream& s,
   } catch (...) {}
   return s;
 }
-inline MsgStream& operator << (MsgStream& s,
+inline MsgStreamMirror& operator << (MsgStreamMirror& s,
                                const std::_Setbase &manip)    {
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -437,7 +439,7 @@ inline MsgStream& operator << (MsgStream& s,
   } catch (...) {}
   return s;
 }
-inline MsgStream& operator << (MsgStream& s,
+inline MsgStreamMirror& operator << (MsgStreamMirror& s,
                                const std::_Setprecision &manip)       {
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -445,7 +447,7 @@ inline MsgStream& operator << (MsgStream& s,
   } catch (...) {}
   return s;
 }
-inline MsgStream& operator << (MsgStream& s,
+inline MsgStreamMirror& operator << (MsgStreamMirror& s,
                                const std::_Setw &manip)       {
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -456,12 +458,12 @@ inline MsgStream& operator << (MsgStream& s,
 
 namespace MSG {
   inline
-  MsgStream& dec(MsgStream& log) {
+  MsgStreamMirror& dec(MsgStreamMirror& log) {
     log.setf(std::ios_base::dec, std::ios_base::basefield);
     return log;
   }
   inline
-  MsgStream& hex(MsgStream& log) {
+  MsgStreamMirror& hex(MsgStreamMirror& log) {
     log.setf(std::ios_base::hex, std::ios_base::basefield);
     return log;
   }
@@ -470,7 +472,7 @@ namespace MSG {
 
 /// Specialization to avoid the generation of implementations for char[].
 /// \see {<a href="https://savannah.cern.ch/bugs/?87340">bug #87340</a>}
-inline MsgStream& operator<< (MsgStream& s, const char *arg){
+inline MsgStreamMirror& operator<< (MsgStreamMirror& s, const char *arg){
   try {
     // this may throw, and we cannot afford it if the stream is used in a catch block
     if ( s.isActive() ) s.stream() << arg;
@@ -480,7 +482,7 @@ inline MsgStream& operator<< (MsgStream& s, const char *arg){
 
 /// General templated stream operator
 template <typename T>
-MsgStream& operator<< (MsgStream& lhs, const T& arg)  {
+MsgStreamMirror& operator<< (MsgStreamMirror& lhs, const T& arg)  {
   if(lhs.isActive())
     try {
       // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -493,7 +495,7 @@ MsgStream& operator<< (MsgStream& lhs, const T& arg)  {
 #if defined(__GNUC__) && ! defined(__clang__)
 /// compiler is stupid. Must specialize
 template<typename T>
-MsgStream& operator << (MsgStream& lhs, const std::_Setfill<T> &manip) {
+MsgStreamMirror& operator << (MsgStreamMirror& lhs, const std::_Setfill<T> &manip) {
   if ( lhs.isActive() )
     try {
       // this may throw, and we cannot afford it if the stream is used in a catch block
@@ -507,7 +509,7 @@ MsgStream& operator << (MsgStream& lhs, const std::_Setfill<T> &manip) {
 inline
 std::ostream &operator<<( 
     std::ostream &stream, 
-    MsgStream::Message &msg )
+    MsgStreamMirror::Message &msg )
 {
   return stream << msg.m_formatted_msg;
 }
@@ -531,7 +533,7 @@ class IMsgService
      * @brief Builds default interface
      **/
     IMsgService()
-      : m_defName("MsgStream"),
+      : m_defName("MsgStreamMirror"),
         m_defLevel( MSG::INFO ){;}
 
     /**
@@ -556,7 +558,7 @@ class IMsgService
       msg().setLevel(lvl);
     }
 
-    /// Get Level of output from MsgStream Manager
+    /// Get Level of output from MsgStreamMirror Manager
     MSG::Level getMsgLevel() const 
     {
       return msg().level();
@@ -575,9 +577,9 @@ class IMsgService
     }
 
     /// Get streamer
-    virtual MsgStream& msg() = 0;
+    virtual MsgStreamMirror& msg() = 0;
     /// cv get streamer
-    virtual MsgStream& msg() const = 0;
+    virtual MsgStreamMirror& msg() const = 0;
 };
 
 
@@ -605,18 +607,18 @@ class MsgService : virtual public IMsgService
       : m_log( m_defName, lvl){;}
 
     /// Retrieve log
-    MsgStream& msg() override final {
+    MsgStreamMirror& msg() override final {
       return m_log;
     }
 
     /// Const Retrieve log
-    MsgStream& msg() const override final {
+    MsgStreamMirror& msg() const override final {
       return m_log;
     }
 
   private:
     /// Message Stream:
-    mutable MsgStream m_log;
+    mutable MsgStreamMirror m_log;
 };
 
 #endif

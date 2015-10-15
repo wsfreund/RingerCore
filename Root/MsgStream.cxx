@@ -1,8 +1,8 @@
 #include "RingerCore/MsgStream.h"
 
-constexpr unsigned MsgStream::Message::space_between_log_and_msg;
+constexpr unsigned MsgStreamMirror::Message::space_between_log_and_msg;
 //==============================================================================
-MsgStream& MsgStream::doOutput() 
+MsgStreamMirror& MsgStreamMirror::doOutput() 
 {
   try {
     // This piece of code may throw and we cannot afford it when we print a
@@ -21,7 +21,7 @@ MsgStream& MsgStream::doOutput()
 }
 
 //==============================================================================
-void MsgStream::print( const MSG::Level lvl )
+void MsgStreamMirror::print( const MSG::Level lvl )
 {
   // FIXME Check if stream is empty and print its output before printing
   MSG::Level prev_lvl = m_currentLevel;
