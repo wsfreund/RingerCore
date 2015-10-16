@@ -67,12 +67,13 @@ namespace MSG
  * The multiple message levels available
  **/
 enum Level {
-  VERBOSE = 0,
-  DEBUG   = 1,
-  INFO    = 2,
-  WARNING = 3,
-  ERROR   = 4,
-  FATAL   = 5
+  NIL = 0,
+  VERBOSE = 1,
+  DEBUG   = 2,
+  INFO    = 3,
+  WARNING = 4,
+  ERROR   = 5,
+  FATAL   = 6
 };
 
 } // namespace MSG

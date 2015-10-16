@@ -16,9 +16,10 @@ class LoggingLevel ( EnumStringification ):
   @classmethod
   def toC(cls, val):
     if val == cls.VERBOSE:
-      return 0
+      val = 0
     else:
-      return val/10
+      val = val/10
+    return val + 1 # There is NIL at 0, DEBUG is 2 and so on.
 
 logging.addLevelName(LoggingLevel.VERBOSE, "VERBOSE")
 logging.addLevelName(LoggingLevel.FATAL,    "FATAL" )
