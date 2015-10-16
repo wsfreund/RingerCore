@@ -285,3 +285,12 @@ class Roc:
     self.fa       = self.faVec[ np.argmax(self.spVec) ]
     self.cut      = self.cutVec[ np.argmax(self.spVec)]
 
+
+def traverse(o, tree_types=(list, tuple)):
+  "Loop over each holden element"
+  if isinstance(o, tree_types):
+    for value in o:
+      for subvalue in traverse(value, tree_types):
+        yield subvalue
+  else:
+    yield o
