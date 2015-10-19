@@ -245,6 +245,10 @@ class GridNamespace( LoggerNamespace, Logger ):
     for name, value in get_attributes(self):
       if 'grid_' in name:
         name = name.replace('grid_','--')
+        if name == '--outDS' and len(value) > 132:
+          raise ValueError(('Size of --outDS is larger (%d) than 132 char, '
+              'the maximum value allowed by CERN grid. '
+              'Container name is valid until: %s') % (len(value), value[:132]))
       elif 'gridExpand_' in name:
         if value:
           name = value
