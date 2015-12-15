@@ -13,7 +13,7 @@ DISABLE_RECHECK=0
 CXX=`root-config --cxx`
 
 BOOST_LOCAL_PATH=\${ROOTCOREBIN}/../RingerCore/cmt
-# This are the not expanded versions of boost include/library paths:
+# These are the not expanded versions of boost include/library paths:
 boost_include_ne=$BOOST_LOCAL_PATH/include
 boost_lib_ne=$BOOST_LOCAL_PATH/lib
 # And the normal versions of the paths
