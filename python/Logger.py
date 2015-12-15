@@ -6,7 +6,7 @@ class LoggingLevel ( EnumStringification ):
     A wrapper for logging levels, which allows stringification of known log
     levels.
   """
-  VERBOSE = 9
+  VERBOSE = logging.DEBUG - 1
   DEBUG = logging.DEBUG
   INFO = logging.INFO
   WARNING = logging.WARNING
@@ -90,8 +90,8 @@ class Logger( object ):
     d.update( kw )
     self._level = d.pop('level', LoggingLevel.INFO )
     self._logger = d.pop('logger', None)  or \
-        Logger.getModuleLogger(self.__module__, self._level )
-    self._logger.debug('Initialiazing %s', self.__class__.__name__)
+        Logger.getModuleLogger(self.__class__.__name__, self._level )
+    self._logger.verbose('Initialiazing %s', self.__class__.__name__)
 
   def getLevel(self):
     return self._level

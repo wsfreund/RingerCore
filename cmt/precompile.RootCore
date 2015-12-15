@@ -58,7 +58,7 @@ else
     INCLUDE_NUMPY="$include_system_marker$PYTHON_NUMPY_PATH/numpy/core/include"
   else
     if test -e /usr/include/numpy; then
-      INCLUDE_NUMPY="$include_system_marker$/usr/include/numpy"
+      INCLUDE_NUMPY="$include_system_marker/usr/include/numpy"
     fi
   fi
 fi

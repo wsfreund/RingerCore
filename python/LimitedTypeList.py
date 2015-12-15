@@ -8,6 +8,8 @@ class LimitedTypeList (type):
     which will be the only types accepted by the list.
   """
 
+  # TODO Add boolean to flag if the class can hold itself
+
   def __new__(cls, name, bases, dct):
     if not list in bases:
       bases = bases + (list,)
