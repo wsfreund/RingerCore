@@ -20,7 +20,7 @@ boost_lib_ne=$BOOST_LOCAL_PATH/lib
 boost_include=$(eval echo "$BOOST_LOCAL_PATH/include")
 boost_lib=$(eval echo "$BOOST_LOCAL_PATH/lib")
 
-boost_file="/afs/cern.ch/user/w/wsfreund/public/boost_1_58_0.tar.gz"
+boost_file="/afs/cern.ch/user/w/wsfreund/public/misc/boost_1_58_0.tar.gz"
 
 # Do not recheck whether build was successful:
 DO_NOT_CHECK=0
