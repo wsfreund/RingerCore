@@ -1,43 +1,10 @@
 #!/bin/bash
 
-MAKEFILE=Makefile.RootCore
-
-NEW_ENV_FILE=$PWD/new_env_file.sh
-
-arch=`root-config --arch`
-if test "$arch" = "macosx64"
-then
-  include_marker="-I"
-  include_system_marker="-isystem"
-else
-  include_marker="-I"
-  include_system_marker="-isystem"
-fi
-
-source retrieve_python_info.sh
-
-PYTHON_NUMPY_PATH=$(python -c "import numpy; path=numpy.__file__; print path[:path.find('numpy')]") 2> /dev/null
-
-echo -n > $NEW_ENV_FILE
-chmod +x $NEW_ENV_FILE
-
-# Add numpy to python path and to include path if we are using afs:
-if test "x$PYTHON_NUMPY_PATH" = "x" -a -e /afs/cern.ch/sw/lcg/external/pyanalysis/ 
-then
-  PYTHON_NUMPY_PATH=`find /afs/cern.ch/sw/lcg/external/pyanalysis/ -maxdepth 1 -name "*$PYTHON_LIB_VERSION" | tail -1`
-  PYTHON_NUMPY_PATH=$PYTHON_NUMPY_PATH/$rootCmtConfig/lib/$PYTHON_LIB_VERSION/site-packages/
-  INCLUDE_NUMPY="$include_system_marker$PYTHON_NUMPY_PATH/numpy/core/include"
-else
-  if test -e $PYTHON_NUMPY_PATH/numpy/core/include; then
-    INCLUDE_NUMPY="$include_system_marker$PYTHON_NUMPY_PATH/numpy/core/include"
-  else
-    if test -e /usr/include/numpy; then
-      INCLUDE_NUMPY="$include_system_marker/usr/include/numpy"
-    fi
-  fi
-fi
+source ./base_env.sh
+source ./retrieve_python_info.sh
 
 if test -z $PYTHON_NUMPY_PATH; then
+  #FIXME: run install dependencies
   echo "ERROR: Couldn't get NUMPY path." && exit 1
 else
   if test -n "$RINGERCORE_DBG_LEVEL"; then
@@ -45,41 +12,11 @@ else
   fi
 fi 
 
-if test -z $INCLUDE_NUMPY; then
-  echo "ERROR: Couldn't get NUMPY include path."
-  echo "PYTHON_INCLUDE_CANDIDATES are $PYTHON_INCLUDE_CANDIDATES"
-  echo "PYTHON_NUMPY_PATH is $PYTHON_NUMPY_PATH"
-  exit 1
-else
-  if test -n "$RINGERCORE_DBG_LEVEL"; then
-    echo "INCLUDE_NUMPY is $INCLUDE_NUMPY"
-  fi
-fi
-
-
-echo "test \"\$(echo \":\$PYTHONPATH:\" | grep -q \":$PYTHON_NUMPY_PATH:\"; echo \$?)\" -ne \"0\" && export PYTHONPATH=\$PYTHONPATH:$PYTHON_NUMPY_PATH || true" >> $NEW_ENV_FILE
-
-
-# Change our Makefile to add dependent information:
-$ROOTCOREDIR/scripts/set_field.sh $MAKEFILE \
-  PACKAGE_OBJFLAGS "$PYTHON_INCLUDE_PATH $INCLUDE_NUMPY -std=c++11 -fPIC -fopenmp -lboost_python -lgomp -l$PYTHON_LIB_VERSION" # -v
-
-$ROOTCOREDIR/scripts/set_field.sh $MAKEFILE \
-  PACKAGE_LDFLAGS "-fPIC -lboost_python -lgomp -l$PYTHON_LIB_VERSION" #   -Wl,--verbose
+# Add numpy to python path
+add_to_env_file PYTHONPATH $PYTHON_NUMPY_PATH
 
 # Add rootcore libs to python env file
 ROOTCORELIBPATH=\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/
-echo "test \"\$(echo \":\$PYTHONPATH:\" | grep -q \":$ROOTCORELIBPATH:\"; echo \$?)\" -ne \"0\" && export PYTHONPATH=\$PYTHONPATH:$ROOTCORELIBPATH || true" >> $NEW_ENV_FILE
-
-# Source new environment settings before trying to install boost
-source $NEW_ENV_FILE || { echo "Couldn't set environment" && exit 1; }
-
-# Check if it is needed to install_boost 
-if ! ./install_boost.sh "$MAKEFILE" "$NEW_ENV_FILE" "$PYTHON_INCLUDE_PATH"
-then
-  echo "Something went wrong when trying to check or install boost." && exit 1;
-fi
-
-source $NEW_ENV_FILE || { echo "Couldn't set environment" && exit 1; }
+add_to_env_file PYTHONPATH $ROOTCORELIBPATH
 
 true
