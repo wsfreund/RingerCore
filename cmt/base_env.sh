@@ -15,4 +15,11 @@ else
   include_system_marker="-isystem"
 fi
 
+DEP_AREA=$ROOTCOREBIN/../Downloads; DEP_AREA_BSLASH=\$ROOTCOREBIN/../Downloads
+INSTALL_AREA=$ROOTCOREBIN/../InstallArea; INSTALL_AREA_BSLASH=\$ROOTCOREBIN/../InstallArea
+
+# Make sure the folders exist
+test \! -d $DEP_AREA && mkdir -p $DEP_AREA
+test \! -d $INSTALL_AREA && mkdir -p $INSTALL_AREA
+
 source $ROOTCOREBIN/../RingerCore/cmt/common_shell_fcns.sh
