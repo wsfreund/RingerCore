@@ -1,7 +1,6 @@
 #!/bin/bash
-
-source ./base_env.sh
-source ./retrieve_python_info.sh
+source $ROOTCOREBIN/../RingerCore/cmt/base_env.sh || { echo "Couldn't load base shell environment." && exit 1; }
+source $ROOTCOREBIN/../RingerCore/cmt/retrieve_python_info.sh || { echo "Couldn't load python information." && exit 1;}
 
 if test -z $PYTHON_NUMPY_PATH; then
   #FIXME: run install dependencies

@@ -1,13 +1,4 @@
-
-arch=`root-config --arch`
-if test "$arch" = "macosx64"
-then
-  include_marker="-I"
-  include_system_marker="-isystem"
-else
-  include_marker="-I"
-  include_system_marker="-isystem"
-fi
+source $ROOTCOREBIN/../RingerCore/cmt/base_env.sh || { echo "Couldn't load base shell environment." && exit 1; }
 
 PYTHON_EXEC_PATH=`pyenv whence --path python 2>/dev/null || which python`
 PYTHON_EXEC_PATH=`readlink -f $PYTHON_EXEC_PATH`
