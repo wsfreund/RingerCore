@@ -1,9 +1,10 @@
 find_lib()
 {
-  array=$(echo $LD_LIBRARY_PATH | tr ':' ' ' )                        
+  array=$(echo $LD_LIBRARY_PATH | tr ':' ' ' )
   OLD_IFS=$IFS; export IFS=' ';
   for place in $array; do
-    if test -n "$(find $p -mindepth 1 -maxdepth 1 -name "$1*")"; then
+    #echo "Searching on $place" >&2 
+    if test -n "$(find $place -mindepth 1 -maxdepth 1 -name "$1*" 2>/dev/null)"; then
       export IFS=$OLD_IFS
       echo "${place}"
       return 0;
