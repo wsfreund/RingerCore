@@ -1,4 +1,4 @@
-MAKEFILE=Makefile.RootCore
+MAKEFILE=$PWD/Makefile.RootCore
 
 NEW_ENV_FILE=$PWD/new_env_file.sh
 
