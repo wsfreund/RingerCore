@@ -5,23 +5,11 @@ if test \! -f "$ROOTCOREBIN/../RootCoreMacros/base_env.sh"; then
 fi
 
 source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load base shell environment." && exit 1; }
-source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info --python-info=0 \
-    || { echo "Couldn't load python information." && exit 1;}
 
 echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
 
-if test -z $PYTHON_NUMPY_PATH; then
-  #FIXME: run install dependencies
-  echo "ERROR: Couldn't get NUMPY path." && exit 1
-else
-  if test -n "$RINGERCORE_DBG_LEVEL"; then
-    echo "Found numpy path as: $PYTHON_NUMPY_PATH"
-  fi
-fi 
-
-# Add numpy to python path
-add_to_env_file PYTHONPATH "$PYTHON_NUMPY_PATH"
+source install_numpy.sh
 
 # Add rootcore libs to python env file
 ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
