@@ -1,6 +1,14 @@
 #!/bin/bash
-source $ROOTCOREBIN/../RingerCore/cmt/base_env.sh || { echo "Couldn't load base shell environment." && exit 1; }
-source $ROOTCOREBIN/../RingerCore/cmt/retrieve_python_info.sh || { echo "Couldn't load python information." && exit 1;}
+
+if test \! -f "$ROOTCOREBIN/../RootCoreMacros/base_env.sh"; then
+  git clone https://github.com/wsfreund/RootCoreMacros.git "$ROOTCOREBIN/.."
+fi
+
+source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load base shell environment." && exit 1; }
+source "$ROOTCOREBIN/../RingerCore/cmt/retrieve_python_info.sh" || { echo "Couldn't load python information." && exit 1;}
+
+echo -n > "$NEW_ENV_FILE"
+chmod +x "$NEW_ENV_FILE"
 
 if test -z $PYTHON_NUMPY_PATH; then
   #FIXME: run install dependencies
@@ -12,10 +20,10 @@ else
 fi 
 
 # Add numpy to python path
-add_to_env_file PYTHONPATH $PYTHON_NUMPY_PATH
+add_to_env_file PYTHONPATH "$PYTHON_NUMPY_PATH"
 
 # Add rootcore libs to python env file
-ROOTCORELIBPATH=\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/
-add_to_env_file PYTHONPATH $ROOTCORELIBPATH
+ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
+add_to_env_file PYTHONPATH "$ROOTCORELIBPATH"
 
 true
