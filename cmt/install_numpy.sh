@@ -5,7 +5,7 @@ INSTALL_NUMPY=0
 
 test -d "$numpy_install_path/site-packages" && add_to_env PYTHONPATH "$numpy_install_path/site-packages"
 
-source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info --python-info=0 \
+source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info \
     || { echo "Couldn't load python information." && exit 1;}
 
 
@@ -16,7 +16,7 @@ if test -n "$PYTHON_NUMPY_PATH"; then
   if test -n "$RINGERCORE_DBG_LEVEL"; then
     echo "Found numpy path as: $PYTHON_NUMPY_PATH"
   fi
-  test "$NUMPY_LCG" -eq "1" && add_to_env PYTHONPATH "$PYTHON_NUMPY_PATH" \
+  test "$NUMPY_LCG" -eq "1" && add_to_env_file PYTHONPATH "$PYTHON_NUMPY_PATH" \
                             && echo "Using LCG numpy." && return 0;
   # FIXME Overkill, how to do it on shell?
   test "$PYTHON_NUMPY_PATH" != "$(readlink -f "$numpy_install_path/site-packages")/" \
