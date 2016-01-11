@@ -5,7 +5,8 @@ if test \! -f "$ROOTCOREBIN/../RootCoreMacros/base_env.sh"; then
 fi
 
 source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load base shell environment." && exit 1; }
-source "$ROOTCOREBIN/../RingerCore/cmt/retrieve_python_info.sh" || { echo "Couldn't load python information." && exit 1;}
+source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info --python-info=0 \
+    || { echo "Couldn't load python information." && exit 1;}
 
 echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
