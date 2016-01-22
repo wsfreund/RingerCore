@@ -35,7 +35,7 @@ def fatal(self, message, *args, **kws):
   """
     Attempt to emit fatal message
   """
-  if self.isEnabledFor(LoggingLevel.VERBOSE):
+  if self.isEnabledFor(LoggingLevel.FATAL):
     self._log(LoggingLevel.FATAL, message, args, **kws) 
 
 logging.Logger.verbose = verbose
