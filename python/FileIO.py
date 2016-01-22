@@ -55,7 +55,7 @@ def load(filename, decompress = 'auto'):
     raise ValueError("Cannot reach file %s" % filename )
   if len(filename) > 4 and (filename[-4:] == '.npy' or \
       filename[-4:] == '.npz'):
-    return np.load(filename)
+    return np.load(filename,mmap_mode='r')
   else:
     if decompress == 'auto':
       if ( len(filename) >= 3 and filename[-3:] == '.gz' ) or \
