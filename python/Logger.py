@@ -41,6 +41,18 @@ def fatal(self, message, *args, **kws):
 logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
 
+def getFormatter():
+  return logging.Formatter("Py.%(name)-34s%(levelname)7s %(message)s")
+
+# create console handler and set level to notset
+def getConsoleHandler():
+  import sys
+  ch = logging.StreamHandler( sys.__stdout__ )
+  ch.setLevel( logging.NOTSET ) #  Minimal level in which the ch will print
+  # add formatter to ch
+  ch.setFormatter(getFormatter())
+  return ch
+
 class Logger( object ):
   """
     Simple class for giving inherited classes logging capability as well as the
@@ -50,13 +62,8 @@ class Logger( object ):
     manually configured or it will use default configuration.
   """
 
-  # FIXME I'm not sure why, but the property level does not call the setter if
-  # I don't call it directly (for the FastNet inherited class). Enter in deeper
-  # details to fix this issue
-  # This previous FIXME was probably solved, but still needs to be validated.
-
-  # FIXME: Be sure that the FastNetWrapper is able to reconfigure its inherited
-  # classes to use the desired configuration level as well as the python levels
+  _formatter = getFormatter()
+  _ch = getConsoleHandler()
 
   @classmethod
   def getModuleLogger(cls, logName, logDefaultLevel = logging.INFO):
@@ -67,20 +74,20 @@ class Logger( object ):
       Format logging stream handler to output in the same format used by Athena
       messages.
     """
+    # Retrieve root logger
+    rootLogger = logging.getLogger()
+    rootHandlers = rootLogger.handlers
+    for rH in rootHandlers:
+      if isinstance(rH,logging.StreamHandler):
+        rH.setFormatter(cls._formatter)
+    # Retrieve the logger
     logger = logging.getLogger( logName )
-    # Make sure we only add one handler:
-    if not logger.handlers:
-      logger.setLevel( logDefaultLevel )
-      # create console handler and set level to notset
-      import sys
-      ch = logging.StreamHandler( sys.__stdout__ )
-      ch.setLevel( logging.NOTSET ) #  Minimal level in which the ch will print
-      # create formatter
-      formatter = logging.Formatter("Py.%(name)-34s%(levelname)7s %(message)s")
-      # add formatter to ch
-      ch.setFormatter(formatter)
+    # Retrieve handles:
+    handlers = logger.handlers
+    if not cls._ch in handlers:
       # add ch to logger
-      logger.addHandler(ch)
+      logger.addHandler(cls._ch)
+    logger.setLevel( logDefaultLevel )
     return logger
 
   def __init__(self, d = {}, **kw ):
@@ -122,3 +129,5 @@ class Logger( object ):
 
     if not self._logger: # Also add a logger if it is set to None
       self._logger = Logger.getModuleLogger(self.__module__)
+
+del getConsoleHandler, getFormatter
