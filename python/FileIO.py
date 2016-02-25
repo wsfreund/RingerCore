@@ -34,10 +34,10 @@ def save(o, filename, **kw):
     else:
       raise ValueError("Unknown protocol '%s'" % protocol)
   elif type(protocol) is int:
-    if len(filename) <= 4 or filename[-4:] != '.pic':
+    if not filename.endswith('.pic'):
       filename += '.pic'
     if compress:
-      if len(filename) <= 3 or filename[-3:] != '.gz':
+      if filename.endswith('.gz'):
         filename += '.gz'
       f = gzip.GzipFile(filename, 'wb')
     else:
@@ -53,16 +53,13 @@ def load(filename, decompress = 'auto'):
   filename = os.path.expandvars(filename)
   if not os.path.isfile( os.path.expandvars( filename ) ):
     raise ValueError("Cannot reach file %s" % filename )
-  if len(filename) > 4 and (filename[-4:] == '.npy' or \
-      filename[-4:] == '.npz'):
+  if filename.endswith('.npy') or filename.endswith('.npz'):
     return np.load(filename,mmap_mode='r')
   else:
     if decompress == 'auto':
-      if ( len(filename) >= 3 and filename[-3:] == '.gz' ) or \
-          ( len(filename) >= 5 and filename[-5:] == '.gzip' ):
+      if filename.endswith('.gz' ) or filename.endswith('.gzip' ):
         decompress = 'gzip'
-      elif  ( len(filename) >= 7 and filename[-7:] == '.tar.gz' ) or \
-            ( len(filename) >= 4 and filename[-4:] == '.tgz' ):
+      elif filename.endswith('.tar.gz' ) or filename.endswith('.tgz' ):
         decompress = 'tgz'
       else:
         decompress = False
@@ -73,8 +70,7 @@ def load(filename, decompress = 'auto'):
       o = []
       for entry in f.getmembers():
         fileobj = f.extractfile(entry)
-        if  ( len(entry.name) >= 3 and entry.name[-3:] == '.gz' ) or \
-            ( len(entry.name) >= 5 and entry.name[-5:] == '.gzip' ):
+        if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
           fio = StringIO.StringIO(fileobj.read())
           fzip = gzip.GzipFile(fileobj=fio)
           o.append( cPickle.load(fzip) )
@@ -90,7 +86,7 @@ def load(filename, decompress = 'auto'):
     o = cPickle.load(f)
     f.close()
     return o
-
+ 
 
 def expandFolders( pathList ):
   """
