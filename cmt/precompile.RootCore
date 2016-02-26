@@ -1,6 +1,9 @@
 #!/bin/bash
 
 if test \! -f "$ROOTCOREBIN/../RootCoreMacros/base_env.sh"; then
+  if "$RCM_GRID_ENV" -eq "1"; then
+    echo "RootCoreMacros sources are unavailable. Cannot download it from grid." && exit 1;
+  fi
   git clone https://github.com/wsfreund/RootCoreMacros.git "$ROOTCOREBIN/.."
 fi
 
@@ -9,7 +12,7 @@ source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load bas
 echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
 
-source install_numpy.sh
+source check_install_numpy.sh
 
 # Add rootcore libs to python env file
 ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
