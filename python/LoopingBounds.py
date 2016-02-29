@@ -6,7 +6,7 @@ class LoopingBounds ( Logger ):
     Create looping bounds using Matlab/(unix seq command) format
           firstBound:incr:lastBound
     where:
-      - firstBound [default 1 if matlabFlag else 0]: always closed bounded
+      - firstBound [default 1 if matlabFlag else 0]: always close bounded
         value where looping will start;
       - incr [default]: the increment to firstBound which will add looping
         instances until lastBound is reached;

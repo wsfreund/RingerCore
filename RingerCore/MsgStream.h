@@ -30,6 +30,7 @@
  **/
 #if defined(DBG_LEVEL) && DBG_LEVEL > 0
 # define MSG_DEBUG(xmsg) MSG_LVL_CHK( xmsg, ::MSG::DEBUG )
+//# pragma message "Compiled with debug messages!"
 #else
 # define MSG_DEBUG(xmsg) while(0) { std::ostringstream s; s << xmsg; }
 #endif // DEBUG > 0
