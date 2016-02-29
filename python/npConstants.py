@@ -271,7 +271,7 @@ class npConstants( Logger ):
       raise TypeError("array type is not np.ndarray. Instead it is: %r", array)
     if array.dtype != dtype:
       self._logger.info( 'Changing data type from %s to %s', array.dtype, dtype)
-      array = array.astype( dtype )
+      array = array.astype( dtype ) # Keep fortran order, if applicable
     if not self.check_order(array):
       # Transpose data to either C or Fortran representation...
       self._logger.info( 'Changing data fortran order from %s to %s',
@@ -284,7 +284,9 @@ class npConstants( Logger ):
     """
     Check if array order is the same as the required by this object.
     """
-    return array.flags['F_CONTIGUOUS'] == self.useFortran
+    if array.ndim > 1:
+      return array.flags['F_CONTIGUOUS'] == self.useFortran
+    return True
 
   @classmethod
   def isfortran(self, array):
