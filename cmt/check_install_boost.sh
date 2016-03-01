@@ -208,12 +208,25 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
       fi
     fi
   fi
-  echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $DEP_AREA 2> /dev/null) \
-                                && echo " done!" \
-      || { echo "Couldn't extract files!" && exit 1; }
+	if test "$arch" = "macosx64"; then
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" -C $DEP_AREA 2>&1 ) \
+																	&& echo " done!" \
+				|| { echo "Couldn't extract files!" && exit 1; }
+	else
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $DEP_AREA 2> /dev/null) \
+																	&& echo " done!" \
+				|| { echo "Couldn't extract files!" && exit 1; }
+	fi
 	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 1;}
-	boost_folder=$(echo $boost_folder | cut -f1 -d ' ' )
-	boost_folder=$DEP_AREA/${boost_folder%%\/*};
+  if test "$arch" = "macosx64"; then
+    BOOTSTRAP_DARWIN_ARGS="--with-toolset=clang"
+    B2_DARWIN_ARGS="toolset=clang"
+    boost_folder=$(echo ${boost_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
+    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+  else
+    boost_folder=$(echo $boost_folder | cut -f1 -d ' ' )
+    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+  fi
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
     cd $boost_folder
