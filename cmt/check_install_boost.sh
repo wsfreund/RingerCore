@@ -217,7 +217,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
 																	&& echo " done!" \
 				|| { echo "Couldn't extract files!" && exit 1; }
 	fi
-	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 1;}
+	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 2;}
   if test "$arch" = "macosx64"; then
     BOOTSTRAP_DARWIN_ARGS="--with-toolset=clang"
     B2_DARWIN_ARGS="toolset=clang"
@@ -230,13 +230,13 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
     cd $boost_folder
-    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS > /dev/null
+    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS  $BOOTSTRAP_DARWIN_ARGS > /dev/null
     then
       echo "Finished setting bootstrap successfully."
     else
       echo "Couldn't source bootstrap.sh." && exit 1
     fi
-    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS -j$ROOTCORE_NCPUS > /dev/null
+    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
     then
       echo "Sucessfully compiled boost."
     else
