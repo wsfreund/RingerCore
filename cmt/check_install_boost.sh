@@ -208,22 +208,35 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
       fi
     fi
   fi
-  echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $DEP_AREA 2> /dev/null) \
-                                && echo " done!" \
-      || { echo "Couldn't extract files!" && exit 1; }
-	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 1;}
-	boost_folder=$(echo $boost_folder | cut -f1 -d ' ' )
-	boost_folder=$DEP_AREA/${boost_folder%%\/*};
+	if test "$arch" = "macosx64"; then
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" -C $DEP_AREA 2>&1 ) \
+																	&& echo " done!" \
+				|| { echo "Couldn't extract files!" && exit 1; }
+	else
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $DEP_AREA 2> /dev/null) \
+																	&& echo " done!" \
+				|| { echo "Couldn't extract files!" && exit 1; }
+	fi
+	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 2;}
+  if test "$arch" = "macosx64"; then
+    BOOTSTRAP_DARWIN_ARGS="--with-toolset=clang"
+    B2_DARWIN_ARGS="toolset=clang"
+    boost_folder=$(echo ${boost_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
+    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+  else
+    boost_folder=$(echo $boost_folder | cut -f1 -d ' ' )
+    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+  fi
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
     cd $boost_folder
-    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS > /dev/null
+    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS  $BOOTSTRAP_DARWIN_ARGS > /dev/null
     then
       echo "Finished setting bootstrap successfully."
     else
       echo "Couldn't source bootstrap.sh." && exit 1
     fi
-    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS -j$ROOTCORE_NCPUS > /dev/null
+    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
     then
       echo "Sucessfully compiled boost."
     else
