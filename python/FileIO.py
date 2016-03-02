@@ -37,7 +37,7 @@ def save(o, filename, **kw):
     if not filename.endswith('.pic'):
       filename += '.pic'
     if compress:
-      if filename.endswith('.gz'):
+      if not filename.endswith('.gz'):
         filename += '.gz'
       f = gzip.GzipFile(filename, 'wb')
     else:
