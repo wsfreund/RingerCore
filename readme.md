@@ -4,9 +4,27 @@
 This package contains a series of base functionalities for the Ringer framework and its packages. Its contents are considered implementation details and this documentation should be useful only for developers.
 
 
+Table of Contents
+=================
 
-<h1 id="tocheading">Table of Contents</h1>
-<div id="toc"></div>
+  * [Ringer framework: RingerCore package](#ringer-framework-ringercore-package)
+  * [Installation](#installation)
+    * [Compile time flags](#compile-time-flags)
+  * [Package Organization](#package-organization)
+    * [Python provided functionalities](#python-provided-functionalities)
+      * [LimitedTypeList](#limitedtypelist)
+      * [Logger](#logger)
+      * [LoopingBounds](#loopingbounds)
+      * [Parser](#parser)
+      * [npConstants](#npconstants)
+      * [FileIO](#fileio)
+      * [util](#util)
+        * [ EnumStringification](#enumstringification)
+        * [ retrieve_kw and NotSet](#retrieve_kw-and-notset)
+        * [checkForUnusedVars](#checkforunusedvars)
+        * [traverse](#traverse)
+    * [C   provided functionalities](#c-provided-functionalities)
+
 
 # Installation
 
@@ -918,16 +936,3 @@ class B : public A
 
 ```
 
-<script type="text/javascript">
-    show=true;
-    function toggle(){
-        if (show){
-            $('div.input').hide();
-        }else{
-            $('div.input').show();
-        }
-        show = !show
-    }
-$.getScript('https://kmahelona.github.io/ipython_notebook_goodies/ipython_notebook_toc.js')
-</script>
-<a href="javascript:toggle()" target="_self"></a>
