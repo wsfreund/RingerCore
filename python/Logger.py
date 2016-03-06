@@ -101,10 +101,10 @@ class Logger( object ):
     self._logger.verbose('Initialiazing %s', self.__class__.__name__)
 
   def getLevel(self):
-    return self._level
+    return LoggingLevel.tostring( self._level )
 
   def setLevel(self, value):
-    self._level = value
+    self._level = LoggingLevel.retrieve( value )
     self._logger.setLevel(self._level)
 
   level = property( getLevel, setLevel )

@@ -14,7 +14,7 @@ from RingerCore.Logger import LoggingLevel, Logger
 loggerParser = argparse.ArgumentParser(add_help = False)
 loggerParser.add_argument('--output-level', 
     default = LoggingLevel.tostring( LoggingLevel.INFO ), 
-    type=str, required = False, choices = get_attributes(LoggingLevel, onlyVars = True),
+    type=str, required = False, choices = get_attributes(LoggingLevel, onlyVars = True, getProtected = False),
     help = "The output level for the main logger")
 ###############################################################################
 ## LoggerNamespace
@@ -28,8 +28,8 @@ class LoggerNamespace( argparse.Namespace ):
     argparse.Namespace.__init__( self, **kw )
 
   def __getattr__(self, attr):
-    if attr == 'output_level' and type(self.output_level) == str:
-      return LoggingLevel.fromstring( self.__dict__['output_level'] )
+    if not 'output_level' in self.__dict__ and attr == 'output_level':
+      return LoggingLevel.INFO
     else:
       return self.__dict__[attr]
 ###############################################################################
@@ -87,6 +87,9 @@ gridParser.add_argument('--useNewCode', action='store_true',
 gridParser.add_argument('--dry-run', action='store_true',
     help = """Only print grid resulting command, but do not execute it.
             Used for debugging submission.""")
+gridParser.add_argument('--allowTaskDuplication', action='store_true',
+    required = False, dest = 'grid_allowTaskDuplication',
+    help = """Flag to disable auto retrying jobs.""")
 mutuallyEx1 = gridParser.add_mutually_exclusive_group( required=False )
 mutuallyEx1.add_argument('-itar','--inTarBall', 
     metavar='InTarBall', nargs = '?', dest = 'grid_inTarBall',
@@ -127,9 +130,6 @@ _outParser.add_argument('--outDS','-o', action='store',
                         help = "The output Dataset ID (DID)")
 _outParser.add_argument('--outputs', required = True, dest = 'grid_outputs',
     help = """The output format.""")
-gridParser.add_argument('--allowTaskDuplication', action='store_true',
-    required = False, dest = 'grid_allowTaskDuplication',
-    help = """Flag to disable auto retrying jobs.""")
 ################################################################################
 ## Input and output grid parser
 ioGridParser = argparse.ArgumentParser(add_help = False, 
