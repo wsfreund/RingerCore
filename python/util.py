@@ -74,10 +74,11 @@ class EnumStringification:
     """
     allowedValues = [attr for attr in get_attributes(cls) if not attr[0].startswith('_')]
     if type(val) is str:
+      oldVal = val
       val = cls.fromstring(val)
       if val is None:
           raise ValueError("String (%s) does not match any of the allowed values %r." % \
-              (val, allowedValues))
+              (oldVal, allowedValues))
     else:
       if not val in [attr[1] for attr in allowedValues]:
         raise ValueError(("Attempted to retrieve val benchmark "
@@ -119,8 +120,10 @@ def get_attributes(o, **kw):
     Return attributes from a class or object.
   """
   onlyVars = kw.pop('onlyVars', False)
+  getProtected = kw.pop('getProtected', True)
   return [(a[0] if onlyVars else a) for a in inspect.getmembers(o, lambda a:not(inspect.isroutine(a))) \
-             if not(a[0].startswith('__') and a[0].endswith('__')) ]
+             if not(a[0].startswith('__') and a[0].endswith('__')) \
+                and (getProtected or not( a[0].startswith('_') or a[0].startswith('__') ) ) ]
 
 def printArgs(args, fcn = None):
   try:
