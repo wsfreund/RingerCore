@@ -1,8 +1,7 @@
 
 # Ringer framework: RingerCore package
 
-This package contains a series of base functionalities for the Ringer framework and its packages. Its contents are considered implementation details and this documentation should be useful only for developers.
-
+This package contains a set of base functionalities for the Ringer framework and its packages. The contents are considered implementation details and this documentation is provided for developers that use this package.
 
 Table of Contents
 =================
@@ -28,7 +27,7 @@ Table of Contents
 
 # Installation
 
-This package cannot be installed by itself. Please take a look on the projects which have other dependencies needed by this package:
+This package cannot be installed by itself. Consider installing one of the RootCore projects using this package:
 
  - [RingerTuning](https://github.com/wsfreund/RingerTuning) [recommended]: this project contains only the packages needed for tuning the discriminators;
  - [RingerProject](https://github.com/joaoVictorPinto/RingerProject): Use this git repository, however, if you want to install all packages related to the Ringer algorithm.
@@ -80,11 +79,11 @@ find -L ./python -maxdepth 2 -mindepth 1 -not -name "*.pyc" -a -not -name "__ini
     ./python/LoopingBounds.py
 
 
-The `argparse` is the python standard argparse module, but it was used on python 2.6 legacy releases. The `OldLogger` provides compatibility with legacy files. More details about the other modules are given below.
+The `argparse` is the python standard argparse module, but it is available to be used on python 2.6 releases. The `OldLogger` provides compatibility with legacy files. More details about the other modules are given below.
 
 ### LimitedTypeList
 
-The `LimitedTypeList` is a class factory that create lists being limited to accept objects that inherit of certain types. When an object of other type is added to the list, an exception of type `NotAllowedType` is thrown. Consider the example:
+The `LimitedTypeList` is a class factory that create containers very similar to lists, however being limited to accept objects that inherit of certain types. When it is attempted to add an object of other type, an exception of type `NotAllowedType` is thrown. Consider the example:
 
 
 
@@ -130,7 +129,7 @@ intList.append(8.)
     NotAllowedType: Attempted to add to IntList an object (type=<type 'float'>) which is not an instance from the allowedTypes: (<type 'int'>,)!
 
 
-In the previous, we used the __init__ method for building the `IntList`. We repeat previous example using a more readable code:
+In the previous, we used the __init__ method for building the `IntList`. We repeat previous example, but now using a more readable code:
 
 
 ```python
@@ -176,11 +175,11 @@ More complex classes can be created, with their own methods. Examples can be fou
 
 ### Logger
 
-This module provide the logging capabilities emulating Athena messaging system. The same levels provided by the Athena logging system are available (in decreasing verbosity order: VERBOSE, DEBUG, INFO, WARNING, FATAL).
+This module provides logging capabilities that emulates Athena messaging system. The same levels provided by the Athena logging system are available (in decreasing verbosity order: VERBOSE, DEBUG, INFO, WARNING, FATAL).
 
-The logging level is determined via the `LoggingLevel` "enumeration" class. It is an [`EnumStringification`](#enumstringification) class, so the values can be easily be parsed from the command line.
+The logging level is determined via the `LoggingLevel` "enumeration" class. It is an [`EnumStringification`](#EnumStringification) class, so the values can be easily parsed when obtained from the command line.
 
-Meanwhile the `Logger` class adds the `self._logger` property and the level property for its inherited classes. A logger object can also be retrieved via the class method `Logger.getModuleLogger` when it is needed to use it without any object. The following example ilustrate both usage cases. 
+Meanwhile the `Logger` class adds the `self._logger` property and the level property for its inherited classes. A logger object can also be retrieved via the class method `Logger.getModuleLogger`, which makes possible the usage of `Logger` objects outside class scopes. The following example illustrates both usage cases. 
 
 *The logging system is also compatible with IPython notebook (jupyter), as shown in the next example. Please note, however, that the jupyter messaging system causes miss-synchronization with the print command and the messages captured from the logging module.*
 
@@ -249,13 +248,13 @@ print [name for name, obj in inspect.getmembers(LoopingBounds, inspect.isclass) 
     ['LoopingBounds', 'MatlabLoopingBounds', 'PythonLoopingBounds', 'SeqLoopingBounds']
 
 
-The `LoopingBounds` class is the base class for the other three classes. The `MatlabLoopingBounds` and `SeqLoopingBounds` are the same object and represents the list of indexes when it is entered a looping sequence in the matlab (using the `0:2:8` matlab notation, exchanging the `:` by `,` in the its constructor) and the last one emulates the unix `seq` command, which results in the same sequence from the matlab.
+The `LoopingBounds` class is the base class for the other three classes. The `MatlabLoopingBounds` and `SeqLoopingBounds` are the same object and represents the list of indexes delimiting a looping sequence in the matlab (e.g. the `0:2:8` matlab notation, exchanging the `:` by `,` in the its constructor) and the last one emulates the unix `seq` command, which results in the same sequence from the matlab.
 
-The `PythonLoopingBounds`, however, results in different looping indices when using the same bounds used in the Matlab or seq commands, as it emulates the python `range` function.
+The `PythonLoopingBounds`, however, results in different looping indexes, when considering the same bounds used in the Matlab or seq commands, as it emulates the python `range` function.
 
-Use the module functions `transformToMatlabBounds` or `transformToPythonBounds` to transform the looping bounds objects to other types.
+Use the module functions `transformToMatlabBounds` or `transformToPythonBounds` to transform the looping bounds objects to the respective types without changing the looping sequence.
 
-The main usage of these module is to let user inform the looping index sequence however it prefers, and them loop upon it. It can also save space, as the raw object can be saved with only the raw looping arguments passed to the constructor, and the object can be reconstructed independent on how the user informed it.
+The main usage of these module is to let user inform the looping index sequence however it prefers, homogenizing code. It can also be used to reduce file sizes when saving and object, as the raw object can be saved with only the arguments provided to the `LoopingBounds` classes.
 
 Next follows an example showing these behaviors.
 
@@ -348,7 +347,7 @@ print "PythonLoopingBounds(5,10).formattedString('s'):", PythonLoopingBounds(5,1
 
 ### Parser
 
-Provides default parsers to be used to create python executables. Currently, it provides the following parsers:
+Provides default parsers to be used in order to create python executables. Currently, it provides the following parsers:
 
 - gridParser: Provides most argument options as the panda executable command `prun`, but without specifying an input or an output;
 - inGridParser: Extends `gridParser` to allow user to also specify input dataset;
@@ -356,7 +355,7 @@ Provides default parsers to be used to create python executables. Currently, it 
 - ioGridParser: Extends `gridParser` to allow user to also specify both input and output datasets;
 - loggerParser: Provides logging options to be provided to the `LoggingLevel` class and to be distributed over the `Logger` instances.
 
-Consider, for instance, that you want to create an python module that can be executed by the user and can capture the gridParser and loggerParser arguments. This can be done as follows:
+Consider, for instance, that it is wanted to create a python module that can be executed by the user and that it can capture the gridParser and loggerParser arguments. This can be done as follows:
 
 
 ```python
@@ -419,12 +418,10 @@ parser.print_help()
                             The output level for the main logger
 
 
-With this combination, many different parsers can be easily created by mixing the provided parsers with other specific parsers attending the needs for your own job. Available usage examples can be seen on [`createData.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/standalone/createData.py), [`createTuningJobFiles.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/standalone/createTuningJobFiles.py) etc. In some cases, you might want to make some options unavailable for the user, an example on how to do this can be seen on [`runGRIDtuning.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/grid_scripts/runGRIDtuning.py).
+With this combination, many different parsers can be easily created by mixing the provided parsers with parsers providing specific job arguments. Available usage examples can be seen on [`createData.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/standalone/createData.py), [`createTuningJobFiles.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/standalone/createTuningJobFiles.py) etc. In some cases, it might be wanted to exclude or modify some of the options available on the default parsers, an example on how to do this can be seen on [`runGRIDtuning.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/grid_scripts/runGRIDtuning.py).
 
-This module also provides some namespaces that should be used when parsing arguments using the loggerParser and the grid parsers. In the first case, make sure to pass the `LoggerNamespace` to the parser `parse_args` method. When using the grid parsers, the `GridNamespace` should be used. It provides methods for setting the `bexec`, `exec` job arguments. The last also inherits from the LoggerNamespace, so it can also handle the logger parser arguments. 
+This module also provides some `namespaces` that should be used when parsing arguments using the loggerParser and the grid parsers. In the first case, make sure to pass the `LoggerNamespace` to the parser `parse_args` method. When using the grid parsers, the `GridNamespace` should be used. It provides methods for setting the `bexec`, `exec` job arguments. The `GridNamespace` also inherits from the `LoggerNamespace`, so it can also handle the logger parser arguments. 
 
-
-*Consider taking a look at [`runGRIDtuning.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/grid_scripts/runGRIDtuning.py) to observe a more detailed working code using `GridNamespace`.*
 
 
 ```python
@@ -460,9 +457,11 @@ args.run_cmd()
     
 
 
+*Consider taking a look at [`runGRIDtuning.py`](https://github.com/wsfreund/TuningTools/blob/master/scripts/grid_scripts/runGRIDtuning.py) to observe a more detailed working code using `GridNamespace`.*
+
 ### npConstants
 
-This class allows to bypass the numpy defaults for the `order` and `dtype` and use new defaults. 
+This class allows to harmonize numpy default flags. 
 
 
 ```python
@@ -471,7 +470,7 @@ import inspect
 print(inspect.getdoc(npConstants))
 ```
 
-    This class is used by dependent packages to armonize numpy flags. Currently
+    This class is used by dependent packages to harmonize numpy flags. Currently
     it can be used obtain armonization in the following information:
       - fortran/c representation;
         o dtype: retrieves floating point string used on numpy
@@ -489,7 +488,7 @@ print(inspect.getdoc(npConstants))
         flagged)
 
 
-Several different numpy configurations can be set and changed accordingly depending on how it is needed to work with the data representation. E.g.:
+Several different numpy configurations can be set and changed accordingly, depending on how data should be represented. E.g.:
 
 
 ```python
@@ -672,18 +671,18 @@ print 'array2 loaded from numpy_filez_compressed.npz: ', f['array2']
     array2 loaded from numpy_filez_compressed.npz:  [0 1 2 3 4 5 6 7 8 9]
 
 
-Finally, an utilitary module method is provided which allows recursively expanding system folders to retrieve files within it. It is available under the name of `expandFolders`.
+Finally, the method `expandFolders` allows recursively expanding system folders to retrieve files within it. 
 
 ### util
 
-This module provide utilities miscellanea. Some of those are covered here:
+This module provide a miscellanea of utilities. Some of those are covered here:
 
 
 #### EnumStringification
 
-This class allows emulating a python enumeration and easy transformation from string to int or vice versa through the methods `tostring` and `fromstring`. Its method `retrieve` makes sure that the used string or value is valid within the enumeration and returns the corresponding enumeration integer.
+This class allows emulating a C enumeration on Python. It also provides easy transformation from string to int or vice versa through the methods `tostring` and `fromstring`. Its `retrieve` method makes sure that the used string or provided int value are valid within the enumeration and returns the corresponding enumeration integer.
 
-In the next example we show usage for a case sensitive EnumStringification:
+In the next example we show the usage for a case sensitive EnumStringification:
 
 
 ```python
@@ -736,7 +735,7 @@ val = SomeEnum.retrieve("Val2")
     ValueError: String (Val2) does not match any of the allowed values [('val1', 1), ('val2', 2)].
 
 
-However, the match case may not be the desired behavior. In those cases, set the `_ignoreCase` property to True, as follows:
+However, in some cases the case sensitive enumeration may not be the desired behavior. In those cases, set the `_ignoreCase` property to True, as follows:
 
 
 ```python
@@ -760,7 +759,7 @@ print IgnoreCaseEnum.tostring(IgnoreCaseEnum.fromstring("VAL2"))
 
 #### retrieve_kw and NotSet
 
-When used in conjunction, allows to bypass default configuration retrieved on higher level classes and assure that the lower level classes default configuration will be used. This is quite important to make sure that only one default value will be available in the python code and that it is not needed to change all references to that property through all python codes. Take a look on [`python/CreateData.py`](https://github.com/wsfreund/TuningTools/tree/master/python/CreateData.py) and [`python/FilterEvents.py`](https://github.com/wsfreund/TuningTools/tree/master/python/FilterEvents.py) `__call__` methods to see an usage example.
+When used in conjunction, they allow to bypass default configuration retrieved on higher level classes and assure that the  default configuration of the lower level classes will be used. This is quite important to make sure that only one default value will be available in the python code and that it is not needed to change all references to that property through all python codes. Take a look on [`python/CreateData.py`](https://github.com/wsfreund/TuningTools/tree/master/python/CreateData.py) and [`python/FilterEvents.py`](https://github.com/wsfreund/TuningTools/tree/master/python/FilterEvents.py) `__call__` methods to see an usage example.
 
 
 #### checkForUnusedVars
@@ -785,7 +784,7 @@ someFcn(arg0=0,arg1=1,arg2=2,arg3=3)
 
 #### traverse
 
-It is used to loop over the individual objects upon multiple iterable objects and possibly changing the looping object. Consider the examples:
+It is used to loop over the individual objects upon multiple iterable objects. It is also possible to change the looping object by using the returned parent object if it a mutable object. Consider the following examples:
 
 
 ```python
@@ -812,7 +811,7 @@ for obj in traverse(a,(list, tuple),0): print obj
     (7, 2, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 0, 1)
 
 
-Now let's loop over the iterables and change their holden values:
+Looping over the iterables and change their holden values:
 
 
 ```python
@@ -898,9 +897,9 @@ for obj in traverse(a,(list, tuple),5): print obj
 
 ## C++ provided functionalities
 
-The most important C++ functionality provided is available in the [`RingerCore/MsgStream.h`](https://github.com/wsfreund/RingerCore/blob/master/RingerCore/MsgStream.h) file. It is based on Athena framework's MsgStream, but does not need the Gaudi infrastructure. The name was changed to `MsgStreamMirror` as it cannot have the same name from the Asg class, otherwise it would generate conflicts when running PyROOT.
+The most important C++ functionality provided is available in the [`RingerCore/MsgStream.h`](https://github.com/wsfreund/RingerCore/blob/master/RingerCore/MsgStream.h) file. It is based on Athena framework's MsgStream, but does not need the Gaudi infrastructure. The name was changed to `MsgStreamMirror` as it cannot have the same name from the Asg class (otherwise it would generate dictionary conflicts when running PyROOT).
 
-It also provided the macros which emulate the same behavior on Athena:
+It also provides the macros which emulate the same behavior from Athena:
 
 ```
 MSG_DEBUG(msg)
@@ -910,11 +909,11 @@ MSG_ERROR(msg)
 MSG_FATAL(msg)
 ```
 
-Finally, to have access to those macros on your classes, make sure to inherit from `MsgService`, also defined in this file. In case that multiple inherited classes must use this service, and it is wanted the messaging system to display the most derived class name, overwrite the `IMsgService` constructor to use the most inherited class name. E.g.:
+Finally, in order to make those macros available on your classes, make sure them inherit from `MsgService`, also defined in this file. In case classes inheriting from classes that inherit from `MsgService` are needed, and it is wanted that the messaging system display the most derived class name, overwrite the `IMsgService` constructor to use the most inherited class name. E.g.:
 
 ```C++
 /** 
- * Supose A -> B 
+ * Supose MsgService -> A -> B 
  * then:
  **/
 
@@ -935,4 +934,3 @@ class B : public A
 };
 
 ```
-

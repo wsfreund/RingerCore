@@ -4,7 +4,7 @@ import numpy as np
 
 class npConstants( Logger ):
   """
-  This class is used by dependent packages to armonize numpy flags. Currently
+  This class is used by dependent packages to harmonize numpy flags. Currently,
   it can be used obtain armonization in the following information:
     - fortran/c representation;
       o dtype: retrieves floating point string used on numpy
