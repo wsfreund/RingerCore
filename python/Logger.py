@@ -15,6 +15,7 @@ class LoggingLevel ( EnumStringification ):
 
   @classmethod
   def toC(cls, val):
+    val = LoggingLevel.retrieve( val ) 
     if val == cls.VERBOSE:
       val = 0
     else:
@@ -95,8 +96,9 @@ class Logger( object ):
       Retrieve from args the logger, or create it using default configuration.
     """
     d.update( kw )
-    self._level = d.pop('level', LoggingLevel.INFO )
-    self._logger = d.pop('logger', None)  or \
+    from RingerCore.util import retrieve_kw
+    self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level', LoggingLevel.INFO ) )
+    self._logger = retrieve_kw(d,'logger', None)  or \
         Logger.getModuleLogger(self.__class__.__name__, self._level )
     self._logger.verbose('Initialiazing %s', self.__class__.__name__)
 
