@@ -38,13 +38,17 @@ if test "$INSTALL_NUMPY" -eq "1"; then
     if test -f $numpy_afs_path; then
       cp "$numpy_afs_path" "$numpy_tgz_file"
     else
+      if "$RCM_GRID_ENV" -eq "1"; then
+        echo "Cannot reach numpy source files. Cannot download it from grid." && exit 1;
+      fi
       curl -s -o "$numpy_tgz_file" "http://sourceforge.net/projects/numpy/files/NumPy/${numpy_version}/numpy-${numpy_version}.tar.gz/download" \
         || { echo "Couldn't download numpy!" && return 1; }
     fi
   fi
 
   echo "Installing Numpy..."
-  numpy_folder=$(tar xfzv "$numpy_tgz_file" --skip-old-files -C "$DEP_AREA" 2> /dev/null)
+  numpy_source_tmp_dir=$(mktemp -d)
+  numpy_folder=$(tar xfzv "$numpy_tgz_file" --skip-old-files -C $numpy_source_tmp_dir  2> /dev/null)
   test -z "$numpy_folder" && { echo "Couldn't extract numpy!" && return 1;}
   numpy_folder=$(echo "$numpy_folder" | cut -f1 -d ' ' )
   numpy_folder="$DEP_AREA/${numpy_folder%%\/*}";
@@ -60,6 +64,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   cd - > /dev/null
   mv $(find $numpy_install_path -name "site-packages" -type d) "$numpy_install_path"
   rm -r $(find $numpy_install_path  -maxdepth 1 -mindepth 1 -not -name "site-packages" -a -not -name "bin")
+  rm -r $numpy_source_tmp_dir
 fi
 
 test -d "$numpy_install_path" && export numpy_install_path_bslash
