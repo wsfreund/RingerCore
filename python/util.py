@@ -17,6 +17,21 @@ class Holder(object):
   def __call__(self):
     return self.obj
 
+
+def pathResolver( localRunOnFolder ):
+  files=list()
+  # Put dir for your data here:
+  f = os.popen('ls '+localRunOnFolder)
+  for j in f:
+    i = j[0:-1]
+    files += [localRunOnFolder+i]
+    files.sort()
+  return files
+
+
+
+
+
 loadedEnvFile = False
 def sourceEnvFile():
   """
