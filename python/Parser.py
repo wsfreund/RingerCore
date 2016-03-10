@@ -12,7 +12,8 @@ from RingerCore.util import EnumStringification, get_attributes
 ###############################################################################
 from RingerCore.Logger import LoggingLevel, Logger
 loggerParser = argparse.ArgumentParser(add_help = False)
-loggerParser.add_argument('--output-level', 
+logOutput = loggerParser.add_argument_group('Loggging arguments', '')
+logOutput.add_argument('--output-level', 
     default = LoggingLevel.tostring( LoggingLevel.INFO ), 
     type=str, required = False, choices = get_attributes(LoggingLevel, onlyVars = True, getProtected = False),
     help = "The output level for the main logger")
@@ -39,58 +40,60 @@ class LoggerNamespace( argparse.Namespace ):
 ################################################################################
 # Basic grid parser
 gridParser = argparse.ArgumentParser(add_help = False)
-gridParser.add_argument('--site',default = 'AUTO',
+gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
+gridParserGroup.add_argument('--site',default = 'AUTO',
     help = "The site location where the job should run.",
     nargs='?', required = False,
     dest = 'grid_site')
-gridParser.add_argument('--excludedSite', 
-    default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
+gridParserGroup.add_argument('--excludedSite', 
+    default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
+    #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
-gridParser.add_argument('--debug', default = '--skipScout',
+gridParserGroup.add_argument('--debug', default = '--skipScout',
     const='--express --debugMode --allowTaskDuplication --disableAutoRetry', dest='gridExpand_debug',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
-gridParser.add_argument('--nJobs', nargs='?', type=int,
+gridParserGroup.add_argument('--nJobs', nargs='?', type=int,
     required = False, dest = 'grid_nJobs',
     help = """Number of jobs to submit.""")
-gridParser.add_argument('--excludeFile', nargs='?', 
-    required = False, default = '"*.o,*.so,*.a,*.gch"', dest = 'grid_excludeFile',
+gridParserGroup.add_argument('--excludeFile', nargs='?', 
+    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*"', dest = 'grid_excludeFile',
     help = """Files to exclude from environment copied to grid.""")
-gridParser.add_argument('--disableAutoRetry', action='store_true',
+gridParserGroup.add_argument('--disableAutoRetry', action='store_true',
     required = False, dest = 'grid_disableAutoRetry',
     help = """Flag to disable auto retrying jobs.""")
-gridParser.add_argument('--extFile', nargs='?',
+gridParserGroup.add_argument('--extFile', nargs='?',
     required = False, dest = 'grid_extFile', default='',
     help = """External file to add.""")
-gridParser.add_argument('--maxNFilesPerJob', nargs='?',
+gridParserGroup.add_argument('--maxNFilesPerJob', nargs='?',
     required = False, dest = 'grid_maxNFilesPerJob',
     help = """Maximum number of files per job.""")
-gridParser.add_argument('--cloud', nargs='?',
+gridParserGroup.add_argument('--cloud', nargs='?',
     required = False, default=False, dest = 'grid_cloud',
     help = """The cloud where to submit the job.""")
-gridParser.add_argument('--nGBPerJob', nargs='?',
+gridParserGroup.add_argument('--nGBPerJob', nargs='?',
     required = False, dest = 'grid_nGBPerJob',
     help = """Maximum number of GB per job.""")
-gridParser.add_argument('--skipScout', action='store_true',
+gridParserGroup.add_argument('--skipScout', action='store_true',
     required = False, dest = 'grid_skipScout',
     help = """Flag to disable auto retrying jobs.""")
-gridParser.add_argument('--memory', type=int,
+gridParserGroup.add_argument('--memory', type=int,
     required = False, dest = 'grid_memory',
     help = """Needed memory to run in MB.""")
-gridParser.add_argument('--long', action='store_true',
+gridParserGroup.add_argument('--long', action='store_true',
     required = False, dest = 'grid_long',
     help = """Submit for long queue.""")
-gridParser.add_argument('--useNewCode', action='store_true',
+gridParserGroup.add_argument('--useNewCode', action='store_true',
     required = False, dest = 'grid_useNewCode',
     help = """Flag to disable auto retrying jobs.""")
-gridParser.add_argument('--dry-run', action='store_true',
+gridParserGroup.add_argument('--dry-run', action='store_true',
     help = """Only print grid resulting command, but do not execute it.
             Used for debugging submission.""")
-gridParser.add_argument('--allowTaskDuplication', action='store_true',
+gridParserGroup.add_argument('--allowTaskDuplication', action='store_true',
     required = False, dest = 'grid_allowTaskDuplication',
     help = """Flag to disable auto retrying jobs.""")
-mutuallyEx1 = gridParser.add_mutually_exclusive_group( required=False )
+mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
 mutuallyEx1.add_argument('-itar','--inTarBall', 
     metavar='InTarBall', nargs = '?', dest = 'grid_inTarBall',
     help = "The environemnt tarball for posterior usage.")
@@ -100,35 +103,37 @@ mutuallyEx1.add_argument('-otar','--outTarBall',
 ################################################################################
 ## Temporary classes only to deal with diamond inherit scheme
 _inParser = argparse.ArgumentParser(add_help = False)
-_inParser.add_argument('--inDS','-i', action='store', 
+_inParserGroup = _inParser.add_argument_group('GRID Input Dataset Arguments', '')
+_inParserGroup.add_argument('--inDS','-i', action='store', 
                        required = True, dest = 'grid_inDS',
                        help = "The input Dataset ID (DID)")
-_inParser.add_argument('--secondaryDSs', action='store', nargs='+',
+_inParserGroup.add_argument('--secondaryDSs', action='store', nargs='+',
                        required = False, dest = 'grid_secondaryDS',
                        help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
-_inParser.add_argument('--forceStaged', action='store_true',
+_inParserGroup.add_argument('--forceStaged', action='store_true',
     required = False,  dest = 'grid_forceStaged', default = False,
     help = """Force files from primary DS to be staged to local
     disk, even if direct-access is possible.""")
-_inParser.add_argument('--forceStagedSecondary', action='store_true',
+_inParserGroup.add_argument('--forceStagedSecondary', action='store_true',
     required = False, dest = 'grid_forceStagedSecondary',
     help = """Force files from secondary DS to be staged to local
               disk, even if direct-access is possible.""")
-_inParser.add_argument('--reusableSecondary', nargs='?',
+_inParserGroup.add_argument('--reusableSecondary', nargs='?',
     required = False, dest = 'grid_reusableSecondary',
     help = """Allow reuse secondary dataset.""")
-_inParser.add_argument('--nFiles', nargs='?', type=int,
+_inParserGroup.add_argument('--nFiles', nargs='?', type=int,
     required = False, dest = 'grid_nFiles',
     help = """Number of files to run.""")
-_inParser.add_argument('--nFilesPerJob', nargs='?', type=int,
+_inParserGroup.add_argument('--nFilesPerJob', nargs='?', type=int,
     required = False, dest = 'grid_nFilesPerJob',
     help = """Number of files to run per job.""")
 ################################################################################
 _outParser = argparse.ArgumentParser(add_help = False)
-_outParser.add_argument('--outDS','-o', action='store', 
+_outParserGroup = _inParser.add_argument_group('GRID Output Dataset Arguments', '')
+_outParserGroup.add_argument('--outDS','-o', action='store', 
                         required = True, dest = 'grid_outDS',
                         help = "The output Dataset ID (DID)")
-_outParser.add_argument('--outputs', required = True, dest = 'grid_outputs',
+_outParserGroup.add_argument('--outputs', required = True, dest = 'grid_outputs',
     help = """The output format.""")
 ################################################################################
 ## Input and output grid parser
@@ -154,7 +159,7 @@ class GridNamespace( LoggerNamespace, Logger ):
     with the input options.
   """
 
-  noNumyPySites = ['ANALY_SWT2_CPB','ANALY_BNL_EC2E1']
+  #noNumyPySites = ['ANALY_SWT2_CPB','ANALY_BNL_EC2E1']
 
   def __init__(self, prog = 'prun', **kw):
     Logger.__init__( self, kw )

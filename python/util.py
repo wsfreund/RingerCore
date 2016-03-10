@@ -4,7 +4,18 @@ import gzip
 import inspect
 import numpy as np
 
-class NotSet( object ): pass
+class NotSetType(type):
+  def __bool__(self):
+    return False
+  __nonzero__=__bool__
+class NotSet( object ): 
+  __metaclass__=NotSetType
+
+class Holder(object):
+  def __init__(self, obj):
+    self.obj = obj
+  def __call__(self):
+    return self.obj
 
 loadedEnvFile = False
 def sourceEnvFile():
@@ -154,7 +165,8 @@ def reshape_to_array( input ):
 
 
 def conditionalOption( argument, value ):
-  return argument + " " + value if value else ''
+  return ( argument + " " + str(value) if not( type(value) in (list,tuple) ) and not( value in (None, NotSet) ) else \
+      ( argument + " " + ' '.join([str(val) for val in value]) if value else '' ) )
 
 def trunc_at(s, d, n=1):
   "Returns s truncated at the n'th (1st by default) occurrence of the delimiter, d."
