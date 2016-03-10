@@ -208,12 +208,13 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
       fi
     fi
   fi
+  boost_source_tmp_dir=$(mktemp -d)
 	if test "$arch" = "macosx64"; then
-		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" -C $DEP_AREA 2>&1 ) \
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" -C $boost_source_tmp_dir 2>&1 ) \
 																	&& echo " done!" \
 				|| { echo "Couldn't extract files!" && exit 1; }
 	else
-		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $DEP_AREA 2> /dev/null) \
+		echo -n "extracting files..." && boost_folder=$(tar xfvz "$boost_file" --skip-old-files -C $boost_source_tmp_dir 2> /dev/null) \
 																	&& echo " done!" \
 				|| { echo "Couldn't extract files!" && exit 1; }
 	fi
@@ -249,6 +250,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
     cp -r "$DEP_AREA/boost_1_58_0/boost" "$boost_include"
   fi
   LOCAL_BOOST_INSTALLED=1
+  rm -rf $boost_source_tmp_dir
 fi
 
 # Add local boost installation to environment file (if needed)
