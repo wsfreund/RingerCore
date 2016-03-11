@@ -273,12 +273,12 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
   fi
 
   old_field=$("$ROOTCOREDIR/scripts/get_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS)
-  if test "${old_field#*$include_marker$boost_include_ne}" = "${old_field}"
+  if test "${old_field#*$include_system_marker$boost_include_ne}" = "${old_field}"
   then
     if test $HEADERS_ONLY -eq "0"; then
-      "$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS "-L$boost_lib_ne $include_marker$boost_include_ne $old_field"  
+      "$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS "-L$boost_lib_ne $include_system_marker$boost_include_ne $old_field"  
 		else
-			"$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS " $include_marker$boost_include_ne $old_field"
+			"$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS " $include_system_marker$boost_include_ne $old_field"
     fi
   fi
 
