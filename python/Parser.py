@@ -51,7 +51,7 @@ gridParserGroup.add_argument('--excludedSite',
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
 gridParserGroup.add_argument('--debug', default = '--skipScout',
-    const='--express --debugMode --allowTaskDuplication --disableAutoRetry', dest='gridExpand_debug',
+    const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode', dest='gridExpand_debug',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
 gridParserGroup.add_argument('--nJobs', nargs='?', type=int,

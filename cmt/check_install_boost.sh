@@ -166,7 +166,7 @@ test ! -f "$CHECK_HEADER" && echo "Header \"$CHECK_HEADER\" for checking boost c
 
 # Check if we need to install boost locally or add it to environment path:
 if test -f "$boost_include/boost/algorithm/string.hpp" \
-  -a $HEADERS_ONLY -eq "0" -o -d "$boost_lib"; then
+        -a $HEADERS_ONLY -eq "0" -o -d "$boost_lib"; then
   echo "boost needed files already installed."
   LOCAL_BOOST_INSTALLED=1
   DO_NOT_CHECK=1
@@ -223,10 +223,10 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
     BOOTSTRAP_DARWIN_ARGS="--with-toolset=clang"
     B2_DARWIN_ARGS="toolset=clang"
     boost_folder=$(echo ${boost_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
-    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+    boost_folder=$boost_source_tmp_dir/${boost_folder%%\/*};
   else
     boost_folder=$(echo $boost_folder | cut -f1 -d ' ' )
-    boost_folder=$DEP_AREA/${boost_folder%%\/*};
+    boost_folder=$boost_source_tmp_dir/${boost_folder%%\/*};
   fi
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
@@ -247,7 +247,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   else
 		echo "copying headers..."
     test -d "$boost_include" || mkdir -p "$boost_include"
-    cp -r "$DEP_AREA/boost_1_58_0/boost" "$boost_include"
+    cp -r "$boost_folder/boost" "$boost_include"
   fi
   LOCAL_BOOST_INSTALLED=1
   rm -rf $boost_source_tmp_dir

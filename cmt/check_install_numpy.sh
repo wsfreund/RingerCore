@@ -38,7 +38,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
     if test -f $numpy_afs_path; then
       cp "$numpy_afs_path" "$numpy_tgz_file"
     else
-      if "$RCM_GRID_ENV" -eq "1"; then
+      if testtest  "$RCM_GRID_ENV" -eq "1"; then
         echo "Cannot reach numpy source files. Cannot download it from grid." && exit 1;
       fi
       curl -s -o "$numpy_tgz_file" "http://sourceforge.net/projects/numpy/files/NumPy/${numpy_version}/numpy-${numpy_version}.tar.gz/download" \
@@ -51,7 +51,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   numpy_folder=$(tar xfzv "$numpy_tgz_file" --skip-old-files -C $numpy_source_tmp_dir  2> /dev/null)
   test -z "$numpy_folder" && { echo "Couldn't extract numpy!" && return 1;}
   numpy_folder=$(echo "$numpy_folder" | cut -f1 -d ' ' )
-  numpy_folder="$DEP_AREA/${numpy_folder%%\/*}";
+  numpy_folder="$numpy_source_tmp_dir/${numpy_folder%%\/*}";
   if test -e "$numpy_install_path"; then
     rm -r "$numpy_install_path" \
       || { echo "Couldn't remove old installed numpy. Please remove it manually on path \"$numpy_install_path\" and try again." && return 1; }
