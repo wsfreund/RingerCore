@@ -132,6 +132,7 @@ def get_attributes(o, **kw):
   """
   onlyVars = kw.pop('onlyVars', False)
   getProtected = kw.pop('getProtected', True)
+  checkForUnusedVars(kw)
   return [(a[0] if onlyVars else a) for a in inspect.getmembers(o, lambda a:not(inspect.isroutine(a))) \
              if not(a[0].startswith('__') and a[0].endswith('__')) \
                 and (getProtected or not( a[0].startswith('_') or a[0].startswith('__') ) ) ]
