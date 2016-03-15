@@ -45,8 +45,9 @@ gridParserGroup.add_argument('--site',default = 'AUTO',
     help = "The site location where the job should run.",
     nargs='?', required = False,
     dest = 'grid_site')
+grid_shortSites = 'ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT'
 gridParserGroup.add_argument('--excludedSite', 
-    default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
+    #default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
     #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
     help = "The excluded site location.", nargs='?',
     required = False, dest = 'grid_excludedSite')
@@ -246,6 +247,13 @@ class GridNamespace( LoggerNamespace, Logger ):
       if len(self.grid_extFile):
         self.grid_extFile += ','
       self.grid_extFile += self.extFile()
+    if self.grid_long:
+      if self.grid_excludedSite:
+        for shortSite in grid_shortSites.split(','):
+          if not shortSite in self.grid_excludedSite:
+            self.grid_excludedSite += ',' + shortSite
+      else:
+        self.grid_excludedSite = grid_shortSites
     # Add extra arguments
     for name, value in get_attributes(self):
       if 'grid_' in name:
