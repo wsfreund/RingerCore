@@ -298,3 +298,15 @@ class npConstants( Logger ):
     else:
       return np.isfortran(array)
 
+  def toRepr(self, array):
+    """
+      Change representation without changing dimensions.
+    """
+    if not self.check_order(array):
+      self._logger.debug("Changing array representation.")
+      if self.useFortran:
+        array = np.asfortranarray(array)
+      else:
+        array = np.ascontiguousarray(array)
+    return array
+
