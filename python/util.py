@@ -325,9 +325,10 @@ class SetDepth(Exception):
   def __init__(self, value):
     self.depth = value
 
-def traverse(o, tree_types=(list, tuple),                                                                                                                           
+def traverse(o, tree_types=(list, tuple),
     max_depth_dist=0, max_depth=np.iinfo(np.uint64).max, 
-    level=0, idx=0, parent=None):
+    level=0, idx=0, parent=None,
+    simple_ret=False):
   """
   Loop over each holden element. 
   Can also be used to change the holden values, e.g.:
@@ -338,7 +339,7 @@ def traverse(o, tree_types=(list, tuple),
 
   Examples printing using max_depth_dist:
 
-  In [0]: for obj in traverse(a,(list, tuple),0): print obj
+  In [0]: for obj in traverse(a,(list, tuple),0,simple_ret=False): print obj
   (1, 0, [1, 2, 3], 0, 3)
   (2, 1, [1, 2, 3], 0, 3)
   (3, 2, [1, 2, 3], 0, 3)
@@ -361,7 +362,7 @@ def traverse(o, tree_types=(list, tuple),
   ([6], 0, [[[4, 7], []], [6]], 1, 3)
   ([[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, None, 1, 1)
 
-  In [2]: for obj in traverse(a,(list, tuple),2): print obj
+  In [2]: for obj in traverse(a,(list, tuple),2,simple_ret=False): print obj
   ([[1, 2, 3], [2, 3], [3, 4, 5, 6]], 0, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, 2)
   ([[4, 7], []], 0, [[[4, 7], []], [6]], 2, 3)
   ([[[4, 7], []], [6]], 1, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, 2)
@@ -380,7 +381,11 @@ def traverse(o, tree_types=(list, tuple),
     level += 1
     # FIXME Still need to test max_depth
     if level > max_depth:
-      yield o, idx, parent, depth_dist
+      if simple_ret:
+        yield o
+      else:
+        yield o, idx, parent, 0, level
+      return
     skipped = False
     for idx, value in enumerate(o):
       try:
@@ -390,27 +395,39 @@ def traverse(o, tree_types=(list, tuple),
               subdepth_dist += 1
               break
             else:
-              yield subvalue, subidx, subparent, subdepth_dist, sublevel 
+              if simple_ret:
+                yield subvalue
+              else:
+                yield subvalue, subidx, subparent, subdepth_dist, sublevel 
           else:
             subdepth_dist += 1
             break
         else: 
           continue
       except SetDepth, e:
-        yield o, idx, parent, e.depth, level
+        if simple_ret:
+          yield o
+        else:
+          yield o, idx, parent, e.depth, level
         break
       if subdepth_dist == max_depth_dist:
         if skipped:
           subdepth_dist += 1
           break
         else:
-          yield o, idx, parent, subdepth_dist, level
+          if simple_ret:
+            yield o
+          else:
+            yield o, idx, parent, subdepth_dist, level
           break
       else:
         if level > (max_depth_dist - subdepth_dist):
           raise SetDepth(subdepth_dist+1)
   else:   
-    yield o, idx, parent, 0, level
+    if simple_ret:
+      yield o
+    else:
+      yield o, idx, parent, 0, level
 
 def setDefaultKey( d, key, val):
   if not key in d: d[key] = val
