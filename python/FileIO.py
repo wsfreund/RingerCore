@@ -101,7 +101,6 @@ def expandFolders( pathList, filters = None):
   """
     Expand all files using the filters on pathList
   """
-  # FIXME debug this the ensure correctness when using multiplie folders
   if not isinstance( pathList, (list,tuple,) ):
     pathList = [pathList]
   from glob import glob
