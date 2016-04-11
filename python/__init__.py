@@ -15,6 +15,9 @@ from .LoopingBounds import *
 from . import parsers
 __all__.extend( parsers.__all__ )
 from .parsers import *
+from . import npConstants
+__all__.extend( npConstants.__all__ )
+from .npConstants import *
 from . import util
 __all__.extend( util.__all__ )
 from .util import *
