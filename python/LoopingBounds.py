@@ -1,3 +1,7 @@
+__all__ = ['LoopingBounds', 'MatlabLoopingBounds', 'PythonLoopingBounds',
+           'transformToMatlabBounds', 'transformToPythonBounds',
+           'transformToSeqBounds', 'LoopingBoundsCollection',
+           'MatlabLoopingBoundsCollection', 'PythonLoopingBoundsCollection']
 from RingerCore.Logger import Logger
 import math
 

@@ -1,3 +1,11 @@
+__all__ = ['EnumStringification', 'Holder', 'Include', 'include',
+    'NotSet', 'NotSetType', 'Roc', 'SetDepth', 'calcSP',
+    'checkForUnusedVars', 'conditionalOption', 'findFile',
+    'fixFileList', 'floatFromStr', 'geomean', 'get_attributes',
+    'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
+    'retrieve_kw', 'setDefaultKey', 'start_after',
+    'stdvector_to_list', 'traverse','trunc_at']
+
 import re, os, __main__
 import cPickle
 import gzip
@@ -7,9 +15,10 @@ import numpy as np
 class NotSetType(type):
   def __bool__(self):
     return False
-  __nonzero__=__bool__
+  __nonzero__ = __bool__
+
 class NotSet( object ): 
-  __metaclass__=NotSetType
+  __metaclass__ = NotSetType
 
 class Holder(object):
   def __init__(self, obj):
@@ -250,14 +259,6 @@ class Include:
     with open(afile, "r") as fh:
       exec(fh.read(), globalz, localz)
 include = Include()
-
-def normalizeSumRow(data):
-  #sourceEnvFile()
-  import numpy as np
-  norms = data.sum(axis=1)
-  norms[norms==0] = 1
-  data = data / norms[:, np.newaxis ]
-  return data
 
 def geomean(nums):
   return (reduce(lambda x, y: x*y, nums))**(1.0/len(nums))
