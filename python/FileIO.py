@@ -1,3 +1,5 @@
+__all__ = ['save', 'load', 'expandFolders']
+
 import numpy as np
 import cPickle
 import gzip

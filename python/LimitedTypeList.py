@@ -1,3 +1,5 @@
+__all__ = ['LimitedTypeList', 'NotAllowedType']
+
 import types
 
 class LimitedTypeList (type):
@@ -58,6 +60,15 @@ def _LimitedTypeList__append(self, var):
   if not isinstance(var, self._acceptedTypes):
     raise NotAllowedType( self, var, self._acceptedTypes)
   list.append(self,var)
+
+def _LimitedTypeList__extend(self, var):
+  """
+    Default append method
+  """
+  # This is default overload for list append, checking if item is accepted
+  if not isinstance(var, self._acceptedTypes):
+    raise NotAllowedType( self, var, self._acceptedTypes)
+  list.extend(self,var)
 
 def _LimitedTypeList____add__(self, var):
   """
