@@ -81,7 +81,7 @@ class EnumStringification:
     else:
       allowedValues = [attr for attr in get_attributes(cls) if not attr[0].startswith('_')]
       try:
-        idx = [attr[0].upper() for attr in allowedValues].index(str_.upper())
+        idx = [attr[0].upper() for attr in allowedValues].index(str_.upper().replace('-','_'))
       except ValueError:
         raise ValueError("%s is not in enumeration. Use one of the followings: %r" % (str_, allowedValues) )
       return allowedValues[idx][1]
