@@ -26,7 +26,9 @@
  **/
 #define USE_OMP (defined(_OPENMP) && defined(USING_MULTI_THREAD))
 
-#define NORMAL      "\033[0m"
+//the following are UBUNTU/LINUX ONLY terminal color codes.
+#define RESET       "\033[0m"
+#define NORMAL      RESET
 #define BLACK       "\033[30m"             /* Black */
 #define RED         "\033[31m"             /* Red */
 #define GREEN       "\033[32m"             /* Green */
