@@ -4,6 +4,7 @@ import textwrap
 __all__ = ['GridNamespace',  'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser']
 
 from RingerCore.Logger import Logger
+from RingerCore.util import get_attributes
 from RingerCore.parsers.Logger import LoggerNamespace
 
 try:
