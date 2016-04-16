@@ -9,7 +9,7 @@ source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info \
     || { echo "Couldn't load python information." && exit 1;}
 
 
- Check if we need to install numpy:
+# Check if we need to install numpy:
 if test -n "$PYTHON_NUMPY_PATH"; then
   # No need to install it...
   echo "No need to install numpy."
@@ -27,7 +27,6 @@ else
   INSTALL_NUMPY=1
 fi
 
-INSTALL_NUMPY=1
 
 if test "$INSTALL_NUMPY" -eq "1"; then
   numpy_version="1.10.4"
@@ -67,9 +66,8 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   rm -r $numpy_source_tmp_dir
 fi
 
-test -d "$numpy_install_path"                            && export numpy_install_path_bslash
-test -d "$numpy_install_path/bin"                        && add_to_env_file PATH "$numpy_install_path_bslash/bin"
-test -d "$numpy_install_path/site-packages"              && add_to_env_file PYTHONPATH "$numpy_install_path_bslash/site-packages"
-test -d "$numpy_install_path/site-packages/core/include" && add_to_env_file CPATH "$numpy_install_path_bslash/site-packages"
+test -d "$numpy_install_path" && export numpy_install_path_bslash
+test -d "$numpy_install_path/bin" && add_to_env_file PATH "$numpy_install_path_bslash/bin"
+test -d "$numpy_install_path/site-packages" && add_to_env_file PYTHONPATH "$numpy_install_path_bslash/site-packages"
 
 source "$NEW_ENV_FILE"
