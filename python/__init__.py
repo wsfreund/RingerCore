@@ -21,3 +21,6 @@ from .npConstants import *
 from . import util
 __all__.extend( util.__all__ )
 from .util import *
+from . import StoreGate
+__all__.extend( StoreGate.__all__ )
+from .StoreGate import *
