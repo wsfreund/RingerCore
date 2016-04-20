@@ -45,7 +45,38 @@ logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
 
 def getFormatter():
-  return logging.Formatter("Py.%(name)-34s%(levelname)7s %(message)s")
+  class Formatter(logging.Formatter):
+    black, red, green, yellow, blue, magenta, cyan, white = range(8)
+    reset_seq = "\033[0m"
+    color_seq = "\033[1;%dm"
+    bold_seq = "\033[1m"
+    colors = { 
+							 'WARNING':  yellow,
+							 'INFO':     green,
+							 'DEBUG':    blue,
+							 'CRITICAL': magenta,
+							 'ERROR':    red
+						 }
+
+    def __init__(self, msg, use_color = False):
+      logging.Formatter.__init__(self, msg)
+      self.use_color = use_color
+
+    def format(self, record):
+      levelname = record.levelname
+      name = record.name
+      msg = record.msg
+      if self.use_color and levelname in self.colors:
+        msg_color = self.color_seq % (30 + self.colors[levelname]) + msg + self.reset_seq
+        levelname_color = self.color_seq % (30 + self.colors[levelname]) + levelname + self.reset_seq
+        name_color = self.color_seq % (30 + self.colors[levelname]) + name + self.reset_seq
+        record.msg = msg_color
+        record.levelname = levelname_color
+        record.name = name_color
+      return logging.Formatter.format(self, record)
+  #formatter = Formatter("Py.%(name)-41s%(levelname)14s %(message)s")
+  formatter = Formatter("Py.%(name)-34s%(levelname)7s %(message)s")
+  return formatter
 
 # create console handler and set level to notset
 def getConsoleHandler():
