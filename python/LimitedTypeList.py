@@ -1,6 +1,8 @@
-__all__ = ['LimitedTypeList', 'NotAllowedType']
+__all__ = ['LimitedTypeList', 'LimitedTypeStreamableList', 'NotAllowedType',
+           'LimitedTypeListRDC', 'LimitedTypeListRDS', 'LoggerLimitedTypeListRDS']
 
-import types
+import re
+_lMethodSearch=re.compile("_LimitedTypeList__(\S+)")
 
 class LimitedTypeList (type):
   """
@@ -14,14 +16,12 @@ class LimitedTypeList (type):
 
   def __new__(cls, name, bases, dct):
     if not list in bases:
-      bases = bases + (list,)
+      bases = (list,) + bases 
     import inspect
     import sys
-    import re
-    methodSearch=re.compile("_LimitedTypeList__(\S+)")
     for localFcnName, fcn in inspect.getmembers( sys.modules[__name__], \
         inspect.isfunction):
-      m = methodSearch.match(localFcnName)
+      m = _lMethodSearch.match(localFcnName)
       if m:
         fcnName = m.group(1)
         if not fcnName in dct:
@@ -131,4 +131,87 @@ class NotAllowedType(ValueError):
   def __init__( self , obj, input_, allowedTypes ):
     ValueError.__init__(self, ("Attempted to add to %s an object (type=%s) which is not an "
       "instance from the allowedTypes: %s!") % (obj.__class__.__name__, type(input_),allowedTypes,) )
+
+from RingerCore.RawDictStreamable import RawDictStreamable, RawDictStreamer, \
+                                         RawDictCnv, LoggerRawDictStreamer, \
+                                         checkAttrOrSetDefault
+
+class LimitedTypeListRDS( RawDictStreamer ):
+  """
+  This is the default streamer class for limited type lists. Overload this
+  method to deal with special cases.
+  """
+
+  # FIXME: items should be __items. How to treat __items so that matlab can
+  # read it as well?
+
+  def __call__(self, obj):
+    "Return a raw dict object from itself"
+    setattr(obj,'items', list(obj))
+    self._logger.debug("Added property items to %s with the following list: %r", 
+        obj.__class__.__name__,
+        obj.__dict__['items'])
+    raw = RawDictStreamer.__call__( self, obj )
+    obj.__dict__.pop('items')
+    return raw
+
+  def treatDict(self, obj, raw):
+    listItems = raw['items']
+    from TuningTools.PreProc import PreProcCollection
+    tObj = type(obj)
+    for idx, cObj in enumerate(listItems):
+      if hasattr( cObj, 'toRawObj' ):
+        listItems[idx] = cObj.toRawObj()
+    RawDictStreamer.treatDict( self, obj, raw )
+    return raw
+
+class LimitedTypeListRDC( RawDictCnv ):
+  """
+  This is the default converter class for the limited type list. Overload this
+  method to deal with special cases.
+  """
+
+  ignoreAttrs = {'items'}
+
+  def __init__(self, ignoreAttrs = set(), toProtectedAttrs = set(), **kw ):
+    ignoreAttrs = set(ignoreAttrs) | LimitedTypeListRDC.ignoreAttrs
+    RawDictCnv.__init__( self, ignoreAttrs, toProtectedAttrs, **kw )
+
+  def treatObj( self, obj, d ):
+    """
+    Overload this method to treat the python object
+    """
+    for rawObj in d['items']:
+      obj.append( self.retrieveAttrVal( 'items', rawObj ) )
+    return obj
+
+class LoggerLimitedTypeListRDS( LoggerRawDictStreamer, LimitedTypeListRDS ):
+  # FIXME This should be a collection of RDCs to be applied
+  def __init__(self, transientAttrs = set(), toPublicAttrs = set(), **kw):
+    LoggerRawDictStreamer.__init__(self, transientAttrs, toPublicAttrs, **kw)
+
+  def __call__(self, obj):
+    return LimitedTypeListRDS.__call__( self, obj )
+
+class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
+  """
+  LimitedTypeList with RawDictStreamable capability.
+  """
+
+  def __init__(cls, name, bases, dct):
+    RawDictStreamable.__init__(cls,name, bases, dct)
+    LimitedTypeList.__init__(cls,name, bases, dct)
+
+  def __new__(cls, name, bases, dct):
+    from RingerCore.Logger import Logger
+    if Logger in bases:
+      checkAttrOrSetDefault( "_streamerObj", dct, bases, LoggerLimitedTypeListRDS )
+    else:
+      checkAttrOrSetDefault( "_streamerObj", dct, bases, LimitedTypeListRDS )
+    checkAttrOrSetDefault( "_cnvObj", dct, bases, LimitedTypeListRDC )
+    t1 = RawDictStreamable.__new__(cls, name, bases, dct)
+    name = t1.__name__
+    bases = tuple(t1.mro())
+    dct = t1.__dict__.copy()
+    return LimitedTypeList.__new__(cls, name, bases, dct)
 

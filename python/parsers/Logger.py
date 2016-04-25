@@ -15,8 +15,9 @@ loggerParser = argparse.ArgumentParser(add_help = False)
 logOutput = loggerParser.add_argument_group('Loggging arguments', '')
 logOutput.add_argument('--output-level', 
     default = LoggingLevel.tostring( LoggingLevel.INFO ), 
-    type=str, required = False, choices = get_attributes(LoggingLevel, onlyVars = True, getProtected = False),
-    help = "The output level for the main logger")
+    type=str, required = False, dest = '_outputLevel',
+    help = "The output level for the main logger. Options are: " + \
+        str( get_attributes( LoggingLevel, onlyVars = True, getProtected = False ) ))
 ###############################################################################
 ## LoggerNamespace
 # When using logger parser parent, make sure to use LoggerNamespace when
@@ -28,11 +29,12 @@ class LoggerNamespace( argparse.Namespace ):
   def __init__(self, **kw):
     argparse.Namespace.__init__( self, **kw )
 
-  def __getattr__(self, attr):
-    if not 'output_level' in self.__dict__ and attr == 'output_level':
-      return LoggingLevel.INFO
+  @property
+  def output_level(self):
+    if '_outputLevel' in self.__dict__:
+      return LoggingLevel.retrieve( self.__dict__['_outputLevel'] )
     else:
-      return self.__dict__[attr]
+      return LoggingLevel.INFO
 ###############################################################################
 
 

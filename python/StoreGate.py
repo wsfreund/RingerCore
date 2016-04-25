@@ -9,7 +9,6 @@ class StoreGate(Logger):
   _dirs       = list()
 
   def __init__( self, outputFile, **kw ):
-    
     Logger.__init__(self, kw)
     from ROOT import TFile
     self._outputFile = outputFile
@@ -29,7 +28,7 @@ class StoreGate(Logger):
       self._file.mkdir(fullpath)
       self._file.cd(fullpath)
       self._currentDir = fullpath
-      self._logger.debug('Created directory with name %s', theDir)
+      self._logger.verbose('Created directory with name %s', theDir)
 
   #Go to the root base dir
   def root(self):
@@ -51,12 +50,12 @@ class StoreGate(Logger):
       self._dirs.append(fullpath)
       self._objects[fullpath] = obj
       obj.Write()
-      self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
+      self._logger.verbose('Saving object type %s into %s',type(obj), fullpath)
   
   def retrieve(self, feature):
     fullpath = (self._currentDir + '/' + feature).replace('//','/')
     if fullpath in self._dirs:
-      self._logger.debug('Retrieving object type %s into %s',type(obj), fullpath)
+      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
       return self._objects[fullpath]
     else:
       #None object if doesnt exist into the store
