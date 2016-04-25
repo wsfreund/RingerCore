@@ -55,7 +55,8 @@ def getFormatter():
 							 'INFO':     green,
 							 'DEBUG':    blue,
 							 'CRITICAL': magenta,
-							 'ERROR':    red
+							 'ERROR':    red,
+							 'VERBOSE':  cyan
 						 }
 
     def __init__(self, msg, use_color = False):
@@ -74,8 +75,8 @@ def getFormatter():
         record.levelname = levelname_color
         record.name = name_color
       return logging.Formatter.format(self, record)
-  #formatter = Formatter("Py.%(name)-41s%(levelname)14s %(message)s")
-  formatter = Formatter("Py.%(name)-34s%(levelname)7s %(message)s")
+  #formatter = Formatter("Py.%(name)-41.41s%(levelname)-14.14s %(message)s")
+  formatter = Formatter("Py.%(name)-33.33s %(levelname)7.7s %(message)s")
   return formatter
 
 # create console handler and set level to notset
@@ -162,7 +163,7 @@ class Logger( object ):
     except AttributeError:
       self._logger = Logger.getModuleLogger(self.__module__)
 
-    if not self._logger: # Also add a logger if it is set to None
+    if self._logger is None: # Also add a logger if it is set to None
       self._logger = Logger.getModuleLogger(self.__module__)
 
 del getConsoleHandler, getFormatter
