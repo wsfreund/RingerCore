@@ -1,12 +1,14 @@
-__all__ = ['EnumStringification', 'Holder', 'Include', 'include',
+__all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'NotSet', 'NotSetType', 'Roc', 'SetDepth', 'calcSP',
     'checkForUnusedVars', 'conditionalOption', 'findFile',
-    'fixFileList', 'floatFromStr', 'geomean', 'get_attributes',
+    'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at']
 
 import re, os, __main__
+import sys
+import types
 import cPickle
 import gzip
 import inspect
@@ -106,7 +108,20 @@ class EnumStringification:
             "%r") % allowedValues)
     return val
 
+def str_to_class(field):
+  try:
+    identifier = getattr(sys.modules[__name__], field)
+  except AttributeError:
+    raise NameError("%s doesn't exist." % field)
+  if isinstance(identifier, (types.ClassType, types.TypeType)):
+    return identifier
+  raise TypeError("%s is not a class." % field)
 
+class BooleanStr( EnumStringification ):
+  _ignoreCase = True
+
+  False = 0,
+  True = 1,
 
 def mkdir_p(path):
   import os, errno
@@ -117,22 +132,17 @@ def mkdir_p(path):
       pass
     else: raise
 
-def fixFileList( fileList ):
+def csvStr2List( csvStr ):
   """
-    Return a filelist from untreated file list.
+    Return a list from the comma separated values
   """
   # Treat comma separated lists:
-  if type(fileList) is str:
-    fileList = fileList.split(',')
+  if type(csvStr) is str:
+    csvStr = csvStr.split(',')
   # Make sure our confFileList is a list (just to be compatible for 
-  if not type(fileList) is list:
-    fileList = [fileList]
-  import os
-  for i, filePath in enumerate(fileList):
-    fileList[i] = os.path.abspath(os.path.expandvars(os.path.expanduser(filePath)))
-    if not os.path.isfile(fileList[i]):
-      raise ValueError("Inexistent file '%s'" % filePath)
-  return fileList
+  if not type(csvStr) is list:
+    csvStr = [csvStr]
+  return csvStr
 
 
 def get_attributes(o, **kw):
