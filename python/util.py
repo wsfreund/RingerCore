@@ -469,3 +469,10 @@ def checkForUnusedVars(d, fcn = None):
       print 'WARNING:%s' % msg
 
 
+def createRootParameter( type_name, name, value):
+  from ROOT import TParameter
+  return TParameter(type_name)(name,value)
+
+
+
+
