@@ -165,16 +165,13 @@ INSTALL_LOCAL_BOOST=0 # Whether to install boost locally
 test ! -f "$CHECK_HEADER" && echo "Header \"$CHECK_HEADER\" for checking boost compilation does not exist." && exit 1;
 
 # Check if we need to install boost locally or add it to environment path:
-# FIXME The find $boost_lib will fail if multiple check_install_boost with
-# different libraries are used! In case one day someone needs to install
-# different libraries in different packages, this will need to be changed...
 if test -f "$boost_include/boost/algorithm/string.hpp" \
-      && { test $HEADERS_ONLY -eq "0" && $(find $boost_lib -maxdepth 0 -type d -empty 2>/dev/null); }; then
+        -a $HEADERS_ONLY -eq "0" -o -d "$boost_lib"; then
   echo "boost needed files already installed."
   LOCAL_BOOST_INSTALLED=1
   DO_NOT_CHECK=1
 else
-  if test "$DISABLE_RECHECK" -eq "0" -o \! -f "$CHECK_HEADER.gch" 
+  if test "$DISABLE_RECHECK" -eq "0" -o \! -f "$CHECK_HEADER.gch"
   then
     echo "checking boost instalation (this may take a while)..."
     if ! $CXX $PYTHON_INCLUDE_PATH -P $CHECK_HEADER -o $CHECK_HEADER.gch > /dev/null 2> /dev/null
