@@ -1,12 +1,14 @@
-__all__ = ['EnumStringification', 'Holder', 'Include', 'include',
-    'NotSet', 'NotSetType', 'Roc', 'SetDepth', 'calcSP',
+__all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
+    'NotSet', 'NotSetType', 'str_to_class', 'Roc', 'SetDepth', 'calcSP',
     'checkForUnusedVars', 'conditionalOption', 'findFile',
-    'fixFileList', 'floatFromStr', 'geomean', 'get_attributes',
+    'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at']
 
 import re, os, __main__
+import sys
+import types
 import cPickle
 import gzip
 import inspect
@@ -60,7 +62,7 @@ def sourceEnvFile():
   except IOError:
     raise RuntimeError("Cannot find new_env_file.sh, did you forget to set environment or compile the package?")
   
-class EnumStringification:
+class EnumStringification( object ):
   "Adds 'enum' static methods for conversion to/from string"
 
   _ignoreCase = False
@@ -106,33 +108,49 @@ class EnumStringification:
             "%r") % allowedValues)
     return val
 
+def str_to_class(module_name, class_name):
+  try:
+    import importlib
+  except ImportError:
+    # load the module, will raise ImportError if module cannot be loaded
+    m = __import__(module_name, globals(), locals(), class_name)
+    # get the class, will raise AttributeError if class cannot be found
+    c = getattr(m, class_name)
+    return c
+  # load the module, will raise ImportError if module cannot be loaded
+  m = importlib.import_module(module_name)
+  # get the class, will raise AttributeError if class cannot be found
+  c = getattr(m, class_name)
+  return c
 
+class BooleanStr( EnumStringification ):
+  _ignoreCase = True
+
+  False = 0
+  True = 1
 
 def mkdir_p(path):
   import os, errno
+  path = os.path.expandvars( path )
   try:
-    os.makedirs(path)
+    if not os.path.exists( path ):
+      os.makedirs(path)
   except OSError as exc: # Python >2.5
     if exc.errno == errno.EEXIST and os.path.isdir(path):
       pass
     else: raise
 
-def fixFileList( fileList ):
+def csvStr2List( csvStr ):
   """
-    Return a filelist from untreated file list.
+    Return a list from the comma separated values
   """
   # Treat comma separated lists:
-  if type(fileList) is str:
-    fileList = fileList.split(',')
+  if type(csvStr) is str:
+    csvStr = csvStr.split(',')
   # Make sure our confFileList is a list (just to be compatible for 
-  if not type(fileList) is list:
-    fileList = [fileList]
-  import os
-  for i, filePath in enumerate(fileList):
-    fileList[i] = os.path.abspath(os.path.expandvars(os.path.expanduser(filePath)))
-    if not os.path.isfile(fileList[i]):
-      raise ValueError("Inexistent file '%s'" % filePath)
-  return fileList
+  if not type(csvStr) is list:
+    csvStr = [csvStr]
+  return csvStr
 
 
 def get_attributes(o, **kw):
@@ -449,5 +467,12 @@ def checkForUnusedVars(d, fcn = None):
       fcn(msg)
     else:
       print 'WARNING:%s' % msg
+
+
+def createRootParameter( type_name, name, value):
+  from ROOT import TParameter
+  return TParameter(type_name)(name,value)
+
+
 
 
