@@ -166,15 +166,27 @@ test ! -f "$CHECK_HEADER" && echo "Header \"$CHECK_HEADER\" for checking boost c
 
 # Check if we need to install boost locally or add it to environment path:
 if test -f "$boost_include/boost/algorithm/string.hpp" \
-        -a $HEADERS_ONLY -eq "0" -o -d "$boost_lib"; then
+    -a $HEADERS_ONLY -eq "1" -o -d "$boost_lib"; then
   echo "boost needed files already installed."
   LOCAL_BOOST_INSTALLED=1
   DO_NOT_CHECK=1
 else
-  if test "$DISABLE_RECHECK" -eq "0" -o \! -f "$CHECK_HEADER.gch"
+  if test "$DISABLE_RECHECK" -eq "0" -o \! -f "$CHECK_HEADER.o"
   then
     echo "checking boost instalation (this may take a while)..."
-    if ! $CXX $PYTHON_INCLUDE_PATH -P $CHECK_HEADER -o $CHECK_HEADER.gch > /dev/null 2> /dev/null
+    # Check if --with-libraries= in --bootstrap-extra-args
+    if test "${BOOTSTRAP_EXTRA_ARGS#*--with-libraries=*}" != "${BOOTSTRAP_EXTRA_ARGS}"
+    then
+      extra_args_libs="${BOOTSTRAP_EXTRA_ARGS#*--with-libraries=}"
+      extra_args_libs="${extra_args_libs%--*},"
+      OLD_IFS=$IFS; export IFS=',';
+      for lib in $extra_args_libs; do
+        boost_needed_libs="$boost_needed_libs -lboost_$lib"
+      done
+      boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
+      echo "Requested to check the following libraries: $boost_needed_libs"
+    fi 
+    if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs -c $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
     then
       INSTALL_LOCAL_BOOST=1
     else
@@ -245,9 +257,9 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
     fi
     cd - > /dev/null
   else
-		echo -n "copying headers..." && echo "done!"
     test -d "$boost_include" || mkdir -p "$boost_include"
-    cp -r "$boost_folder/boost" "$boost_include"
+		echo -n "copying headers... " && cp -r "$boost_folder/boost" "$boost_include" && echo "done!"
+    
   fi
   LOCAL_BOOST_INSTALLED=1
   rm -rf $boost_source_tmp_dir
@@ -261,7 +273,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
     old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LDFLAGS)
     if test "${old_field#*-L$boost_lib}" = "$old_field"
     then
-      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "-L$boost_lib $old_field " 
+      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "-L$boost_lib $boost_needed_libs $old_field " 
     else
       echo "Do not need to add boost_lib."
     fi
@@ -289,7 +301,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
   # Final test:
   if test "$DO_NOT_CHECK" -ne 1; then
     echo -n "checking boost installation..." \
-      && { `$CXX $PYTHON_INCLUDE_PATH -o $CHECK_HEADER.gch -P $CHECK_HEADER  > /dev/null 2> /dev/null` \
+      && { $CXX $PYTHON_INCLUDE_PATH -L$boost_lib $boost_needed_libs -o $CHECK_HEADER.o -c $CHECK_HEADER \
          || { echo "\nboost couldn't be found!" && exit 1; } \
          && echo " sucessfully installed!"; }
   fi
