@@ -66,8 +66,9 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   rm -r $numpy_source_tmp_dir
 fi
 
-test -d "$numpy_install_path" && export numpy_install_path_bslash
-test -d "$numpy_install_path/bin" && add_to_env_file PATH "$numpy_install_path_bslash/bin"
-test -d "$numpy_install_path/site-packages" && add_to_env_file PYTHONPATH "$numpy_install_path_bslash/site-packages"
+test -d "$numpy_install_path"                            && export numpy_install_path_bslash
+test -d "$numpy_install_path/bin"                        && add_to_env_file PATH "$numpy_install_path_bslash/bin"
+test -d "$numpy_install_path/site-packages"              && add_to_env_file PYTHONPATH "$numpy_install_path_bslash/site-packages"
+test -d "$numpy_install_path/site-packages/core/include" && add_to_env_file CPATH "$numpy_install_path_bslash/site-packages/core/include"
 
 source "$NEW_ENV_FILE"
