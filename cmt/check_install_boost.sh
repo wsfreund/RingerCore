@@ -134,8 +134,6 @@ while :; do
   shift
 done
 
-CXX=$(root-config --cxx)
-
 source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" \
 	 || { echo "Couldn't load python information." && exit 1;}
 
@@ -273,7 +271,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
     old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LDFLAGS)
     if test "${old_field#*-L$boost_lib}" = "$old_field"
     then
-      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "-L$boost_lib $boost_needed_libs $old_field " 
+      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "$old_field -L$boost_lib"
     else
       echo "Do not need to add boost_lib."
     fi
@@ -288,9 +286,9 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
   if test "${old_field#*$include_system_marker$boost_include_ne}" = "${old_field}"
   then
     if test $HEADERS_ONLY -eq "0"; then
-      "$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS "-L$boost_lib_ne $include_system_marker$boost_include_ne $old_field"  
+      "$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS "$old_field -L$boost_lib_ne $include_system_marker$boost_include_ne"  
 		else
-			"$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS " $include_system_marker$boost_include_ne $old_field"
+			"$ROOTCOREDIR/scripts/set_field.sh" "$MAKEFILE" PACKAGE_OBJFLAGS "$old_field $include_system_marker$boost_include_ne"
     fi
   fi
 
