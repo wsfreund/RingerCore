@@ -121,6 +121,23 @@ while :; do
       echo 'ERROR: "--bootstrap-extra-args" requires a non-empty option argument.\n' >&2
       return 1
       ;;
+    --extra-test-args)
+      if [ ${2#--} != $2 ]; then
+        echo 'ERROR: "--extra-test-args" requires a non-empty option argument.\n' >&2
+        return 1
+      else
+        EXTRA_TEST_ARGS=$2
+        shift 2
+        continue
+      fi
+      ;;
+    --extra-test-args=?*)
+      EXTRA_TEST_ARGS=${1#*=} # Delete everything up to "=" and assign the remainder.
+      ;;
+    --extra-test-args=)       # Handle the case of an empty --disable-recheck=
+      echo 'ERROR: "--extra-test-args" requires a non-empty option argument.\n' >&2
+      return 1
+      ;;
     --)              # End of all options.
       shift
       break
@@ -177,14 +194,15 @@ else
     then
       extra_args_libs="${BOOTSTRAP_EXTRA_ARGS#*--with-libraries=}"
       extra_args_libs="${extra_args_libs%--*},"
-      OLD_IFS=$IFS; export IFS=',';
+      OLD_IFS=$IFS; IFS=',';
       for lib in $extra_args_libs; do
         boost_needed_libs="$boost_needed_libs -lboost_$lib"
       done
+      IFS=$OLD_IFS
       boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
       echo "requested to check the following libraries: $boost_needed_libs"
     fi 
-    if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
+    if ! $CXX $CHECK_HEADER -o $CHECK_HEADER.o $boost_needed_libs $EXTRA_TEST_ARGS > /dev/null 2> /dev/null
     then
       INSTALL_LOCAL_BOOST=1
     else
@@ -240,6 +258,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   fi
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
+		echo "running boostrap..."
     cd $boost_folder
     if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS $BOOTSTRAP_DARWIN_ARGS > /dev/null
     then
@@ -247,6 +266,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
     else
       echo "couldn't execute bootstrap.sh." && exit 1
     fi
+		echo "compiling boost..."
     if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
     then
       echo "sucessfully compiled boost."
@@ -299,7 +319,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
   # Final test:
   if test "$DO_NOT_CHECK" -ne 1; then
     echo -n "checking boost installation..." \
-      && { $CXX $PYTHON_INCLUDE_PATH -L$boost_lib $boost_needed_libs -o $CHECK_HEADER.o $CHECK_HEADER \
+      && { $CXX $CHECK_HEADER -o $CHECK_HEADER.o -L$boost_lib $boost_needed_libs $EXTRA_TEST_ARGS \
          || { echo "\nboost couldn't be found!" && exit 1; } \
          && echo " sucessfully installed!"; }
   fi
