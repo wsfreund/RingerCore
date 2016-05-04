@@ -241,20 +241,18 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
     cd $boost_folder
-    set -x
-    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS $BOOTSTRAP_DARWIN_ARGS 
+    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS $BOOTSTRAP_DARWIN_ARGS > /dev/null
     then
       echo "finished setting bootstrap successfully."
     else
       echo "couldn't execute bootstrap.sh." && exit 1
     fi
-    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS
+    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
     then
       echo "sucessfully compiled boost."
     else
       echo "couldn't compile boost." && exit 1
     fi
-    set +x
     cd - > /dev/null
   else
     test -d "$boost_include" || mkdir -p "$boost_include"
