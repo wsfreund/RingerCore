@@ -184,12 +184,12 @@ else
       boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
       echo "requested to check the following libraries: $boost_needed_libs"
     fi 
-    #if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
-    #then
+    if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
+    then
       INSTALL_LOCAL_BOOST=1
-    #else
-    #  echo "boost installed at file system" && return 0;
-    #fi
+    else
+      echo "boost installed at file system" && return 0;
+    fi
   else
     echo "skipping boost recheck."
   fi
