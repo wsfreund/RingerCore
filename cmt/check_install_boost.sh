@@ -182,14 +182,14 @@ else
         boost_needed_libs="$boost_needed_libs -lboost_$lib"
       done
       boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
-      echo "Requested to check the following libraries: $boost_needed_libs"
+      echo "requested to check the following libraries: $boost_needed_libs"
     fi 
-    if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs -c $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
-    then
+    #if ! $CXX $PYTHON_INCLUDE_PATH $boost_needed_libs $CHECK_HEADER -o $CHECK_HEADER.o > /dev/null 2> /dev/null
+    #then
       INSTALL_LOCAL_BOOST=1
-    else
-      echo "boost installed at file system" && return 0;
-    fi
+    #else
+    #  echo "boost installed at file system" && return 0;
+    #fi
   else
     echo "skipping boost recheck."
   fi
@@ -241,18 +241,20 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   if test $HEADERS_ONLY -eq "0"; then
 		echo "installing boost..."
     cd $boost_folder
-    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS  $BOOTSTRAP_DARWIN_ARGS > /dev/null
+    set -x
+    if ./bootstrap.sh --prefix="$BOOST_LOCAL_PATH" $BOOTSTRAP_EXTRA_ARGS $BOOTSTRAP_DARWIN_ARGS 
     then
-      echo "Finished setting bootstrap successfully."
+      echo "finished setting bootstrap successfully."
     else
-      echo "Couldn't source bootstrap.sh." && exit 1
+      echo "couldn't execute bootstrap.sh." && exit 1
     fi
-    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
+    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS
     then
-      echo "Sucessfully compiled boost."
+      echo "sucessfully compiled boost."
     else
-      echo "Couldn't install boost." && exit 1
+      echo "couldn't compile boost." && exit 1
     fi
+    set +x
     cd - > /dev/null
   else
     test -d "$boost_include" || mkdir -p "$boost_include"
@@ -273,7 +275,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
     then
       $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "$old_field -L$boost_lib"
     else
-      echo "Do not need to add boost_lib."
+      echo "no need to add boost_lib."
     fi
     add_to_env_file LD_LIBRARY_PATH $boost_lib_ne
     if test "$arch" = "macosx64"
@@ -299,7 +301,7 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
   # Final test:
   if test "$DO_NOT_CHECK" -ne 1; then
     echo -n "checking boost installation..." \
-      && { $CXX $PYTHON_INCLUDE_PATH -L$boost_lib $boost_needed_libs -o $CHECK_HEADER.o -c $CHECK_HEADER \
+      && { $CXX $PYTHON_INCLUDE_PATH -L$boost_lib $boost_needed_libs -o $CHECK_HEADER.o $CHECK_HEADER \
          || { echo "\nboost couldn't be found!" && exit 1; } \
          && echo " sucessfully installed!"; }
   fi

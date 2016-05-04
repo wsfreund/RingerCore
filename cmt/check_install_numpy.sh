@@ -3,23 +3,20 @@ numpy_install_path="$INSTALL_AREA/numpy"; numpy_install_path_bslash="$INSTALL_AR
 
 INSTALL_NUMPY=0
 
-test -d "$numpy_install_path/site-packages" && add_to_env PYTHONPATH "$numpy_install_path/site-packages"
-
 source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info \
     || { echo "Couldn't load python information." && exit 1;}
-
 
 # Check if we need to install numpy:
 if test -n "$PYTHON_NUMPY_PATH"; then
   # No need to install it...
-  echo "No need to install numpy."
+  echo "no need to install numpy."
   if test -n "$RINGERCORE_DBG_LEVEL"; then
-    echo "Found numpy path as: $PYTHON_NUMPY_PATH"
+    echo "found numpy path as: $PYTHON_NUMPY_PATH"
   fi
   test "$NUMPY_LCG" -eq "1" && add_to_env_file PYTHONPATH "$PYTHON_NUMPY_PATH" \
                             && echo "Using LCG numpy." && return 0;
   test "$PYTHON_NUMPY_PATH" != "$(readlink -f "$numpy_install_path/site-packages")/" \
-       && echo "Using system numpy." \
+       && echo "using system numpy." \
        && return 0;
   # If we get here, then environment must be local, we will only add it the environment file.
 else
@@ -29,24 +26,28 @@ fi
 
 
 if test "$INSTALL_NUMPY" -eq "1"; then
+
+  # Cython is a dependency for numpy.
+  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_cython.sh"
+
   numpy_version="1.10.4"
 
   # Protect against corrupt files:
   if test -n $(find $(dirname $numpy_tgz_file) -size 1M -name "$(basename $numpy_tgz_file)" 2>/dev/null); then
-    echo "Downloading ${numpy_tgz_file}..."
+    echo "downloading ${numpy_tgz_file}..."
     numpy_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/numpy.tgz"
     if test -f $numpy_afs_path; then
       cp "$numpy_afs_path" "$numpy_tgz_file"
     else
       if test  "$RCM_GRID_ENV" -eq "1"; then
-        echo "Cannot reach numpy source files. Cannot download it from grid." && exit 1;
+        echo "cannot reach numpy source files. Cannot download it from grid." && exit 1;
       fi
       curl -L -s -o "$numpy_tgz_file" "https://github.com/numpy/numpy/archive/v${numpy_version}.tar.gz" \
-        || { echo "Couldn't download numpy!" && return 1; }
+        || { echo "couldn't download numpy!" && return 1; }
     fi
   fi
 
-  echo "Installing Numpy..."
+  echo "installing numpy..."
   numpy_source_tmp_dir=$(mktemp -d)
 	if test "$arch" = "macosx64"; then
     echo -n "extracting files... " && numpy_folder=$(tar xfzv "$numpy_tgz_file" -C $numpy_source_tmp_dir  2>&1 ) \
@@ -57,7 +58,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
         && echo "done" \
         || { echo "Couldn't extract numpy files!" && exit 1; }
   fi
-	test -z "$numpy_folder" && { echo "Couldn't extract numpy!" && return 2;}
+	test -z "$numpy_folder" && { echo "couldn't extract numpy!" && return 2;}
   if test "$arch" = "macosx64"; then
     numpy_folder=$(echo ${numpy_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
     numpy_folder=$numpy_source_tmp_dir/${numpy_folder%%\/*};
@@ -67,13 +68,13 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   fi
   if test -e "$numpy_install_path"; then
     rm -r "$numpy_install_path" \
-      || { echo "Couldn't remove old installed numpy. Please remove it manually on path \"$numpy_install_path\" and try again." && return 1; }
+      || { echo "couldn't remove old installed numpy. Please remove it manually on path \"$numpy_install_path\" and try again." && return 1; }
   fi
   mkdir -p "$numpy_install_path"
   cd "$numpy_folder"; tmp_numpy_install_folder="$numpy_install_path/lib/$PYTHON_LIB_VERSION/site-packages/"
   mkdir -p "$tmp_numpy_install_folder"
   export PYTHONPATH="$tmp_numpy_install_folder:$PYTHONPATH"
-  echo -n "Installing numpy... "
+  echo -n "compiling numpy... "
   python setup.py install --prefix "$numpy_install_path" > /dev/null 2>/dev/null || { echo "Couldn't install numpy." && return 1;}
   echo "done"
   cd - > /dev/null
@@ -83,8 +84,8 @@ if test "$INSTALL_NUMPY" -eq "1"; then
 fi
 
 test -d "$numpy_install_path"                                  && export numpy_install_path_bslash
-test -d "$numpy_install_path/bin"                              && add_to_env_file PATH "$numpy_install_path_bslash/bin"
-test -d "$numpy_install_path/site-packages"                    && add_to_env_file PYTHONPATH "$numpy_install_path_bslash/site-packages"
-test -d "$numpy_install_path/site-packages/numpy/core/include" && add_to_env_file CPATH "$numpy_install_path_bslash/site-packages/numpy/core/include"
+test -d "$numpy_install_path/bin"                              && add_to_env_file   PATH        "$numpy_install_path_bslash/bin"
+test -d "$numpy_install_path/site-packages"                    && add_to_env_file   PYTHONPATH  "$numpy_install_path_bslash/site-packages"
+test -d "$numpy_install_path/site-packages/numpy/core/include" && add_to_env_file   CPATH       "$numpy_install_path_bslash/site-packages/numpy/core/include"
 
 source "$NEW_ENV_FILE"
