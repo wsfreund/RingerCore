@@ -298,6 +298,10 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
     add_to_env_file LD_LIBRARY_PATH $boost_lib_ne
     if test "$arch" = "macosx64"
     then
+      # FIXME For some reason libboost_python is not being found by clang on
+      # ElCapitan. In this case install_name_tool -change libboost_python.dylib
+      # $ROOTCORE/../InstallArea/boost/lib/libboost_python.dylib will solve the
+      # issue, however, I'm not sure what is causing it.
       add_to_env_file DYLD_LIBRARY_PATH $boost_lib_ne
     fi
   fi
