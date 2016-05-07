@@ -202,7 +202,7 @@ else
       boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
       echo "requested to check the following libraries: $boost_needed_libs"
     fi 
-    if ! $CXX $CHECK_HEADER -o $CHECK_HEADER.o $boost_needed_libs $EXTRA_TEST_ARGS > /dev/null 2> /dev/null
+    if ! $CXX $CHECK_HEADER $boost_needed_libs $EXTRA_TEST_ARGS -o $CHECK_HEADER.o > /dev/null 2> /dev/null
     then
       INSTALL_LOCAL_BOOST=1
     else
@@ -230,10 +230,12 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
           || { echo "Couldn't download boost from afs!" && exit 1; }
       fi
     else
+      echo -n "downloading boost... "
       if ! wget -q -O "$boost_file" "$boost_dl_site"
       then
         echo "Couldn't download boost and there is no afs access to download it." && exit 1 
       fi
+      echo "done!"
     fi
   fi
   boost_source_tmp_dir=$(mktemp -d)
@@ -248,6 +250,7 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
 	fi
 	test -z "$boost_folder" && { echo "Couldn't extract boost!" && return 2;}
   if test "$arch" = "macosx64"; then
+    # FIXME Should use root-config to set toolset for every compilation?
     BOOTSTRAP_DARWIN_ARGS="--with-toolset=clang"
     B2_DARWIN_ARGS="toolset=clang"
     boost_folder=$(echo ${boost_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
@@ -267,7 +270,11 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
       echo "couldn't execute bootstrap.sh." && exit 1
     fi
 		echo "compiling boost..."
-    if ./b2 install --prefix="$BOOST_LOCAL_PATH" $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS > /dev/null
+		test -d $boost_include && b2_command="stage" || b2_command="install"
+    if ./b2 $b2_command link=shared \
+        --stagedir="$BOOST_LOCAL_PATH" --prefix="$BOOST_LOCAL_PATH" \
+        $B2_EXTRA_ARGS $B2_DARWIN_ARGS -j$ROOTCORE_NCPUS \
+        > /dev/null
     then
       echo "sucessfully compiled boost."
     else
@@ -277,7 +284,6 @@ if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
   else
     test -d "$boost_include" || mkdir -p "$boost_include"
 		echo -n "copying headers... " && cp -r "$boost_folder/boost" "$boost_include" && echo "done!"
-    
   fi
   LOCAL_BOOST_INSTALLED=1
   rm -rf $boost_source_tmp_dir
@@ -291,17 +297,18 @@ if test "$LOCAL_BOOST_INSTALLED" -eq "1"; then
     old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LDFLAGS)
     if test "${old_field#*-L$boost_lib}" = "$old_field"
     then
-      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "$old_field -L$boost_lib"
+      $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "$old_field -L$boost_lib" # -Wl,-rpath,otherpath
     else
       echo "no need to add boost_lib."
     fi
     add_to_env_file LD_LIBRARY_PATH $boost_lib_ne
     if test "$arch" = "macosx64"
     then
-      # FIXME For some reason libboost_python is not being found by clang on
-      # ElCapitan. In this case install_name_tool -change libboost_python.dylib
-      # $ROOTCORE/../InstallArea/boost/lib/libboost_python.dylib will solve the
-      # issue, however, I'm not sure what is causing it.
+      echo "changing boost library install_names to absolute path:"
+      for libfile in $(find $boost_lib  -maxdepth 1 -mindepth 1); do
+        echo "  setting '$(basename $libfile)' install_name to: $libfile"
+        install_name_tool $libfile -id $libfile
+      done
       add_to_env_file DYLD_LIBRARY_PATH $boost_lib_ne
     fi
   fi
