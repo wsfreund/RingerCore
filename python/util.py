@@ -340,6 +340,44 @@ class Roc(object):
     self.fa  = self.faVec  [ self.maxIdx ]
     self.cut = self.cutVec [ self.maxIdx ]
 
+#Helper function
+def Roc_to_histogram(g, nsignal, nnoise):
+  import numpy as np
+  npoints = g.GetN()
+  nsignalLastBin = 0
+  nnoiseLastBin  = 0
+  nsignalBin = np.array([0]*npoints)
+  nnoiseBin = np.array([0]*npoints)
+  totalSignal = totalNoise =0
+  pd = g.GetY()
+  fa = g.GetX()
+  for np in range( npoints ):
+    nsignalBin[np] = nsignal - int(pd[np]*nsignal) - nsignalLastBin
+    nnoiseBin[np] = nnoise - int(fa[np]*nnoise) - nnoiseLastBin
+    nsignalLastBin += nsignalBin[np]
+    nnoiseLastBin += nnoiseBin[np]
+    totalSignal += nsignalBin[np]
+    totalNoise += nnoiseBin[np]
+  #Loop over Receive Operating Curve
+
+  signalTarget = 1
+  noiseTarget = -1
+  #Prepare the estimation output
+  resolution = (signalTarget - noiseTarget)/float(npoints)
+  binValue = noiseTarget
+  signalOutput = []
+  noiseOutput = []
+
+  for np in range(npoints):
+    signalOutput += nsignalBin[np]*[binValue]
+    noiseOutput += nnoiseBin[np]*[binValue]
+    binValue += resolution
+
+  return signalOutput, noiseOutput
+
+
+
+
 class SetDepth(Exception):
   def __init__(self, value):
     self.depth = value
