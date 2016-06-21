@@ -18,6 +18,10 @@ class NotSetType(type):
   def __bool__(self):
     return False
   __nonzero__ = __bool__
+  def __repr__(self):
+    return "<+NotSet+>"
+  def __str__(self):
+    return "<+NotSet+>"
 
 class NotSet( object ): 
   __metaclass__ = NotSetType
