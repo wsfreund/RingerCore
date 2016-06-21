@@ -95,6 +95,11 @@ class EnumStringification( object ):
     this enumeration class.
     """
     allowedValues = [attr for attr in get_attributes(cls) if not attr[0].startswith('_')]
+    try:
+      # Convert integer string values to integer, if possible:
+      val = int(val)
+    except ValueError:
+      pass
     if type(val) is str:
       oldVal = val
       val = cls.fromstring(val)
@@ -129,6 +134,18 @@ class BooleanStr( EnumStringification ):
   False = 0
   True = 1
 
+  @staticmethod
+  def treatVar(var,d, default = False):
+    if var in d:
+      if d[var] not in (None, NotSet):
+        return BooleanStr.retrieve( d[var] )
+      else:
+        return d[var]
+    else:
+      return default
+
+
+
 def mkdir_p(path):
   import os, errno
   path = os.path.expandvars( path )
@@ -143,9 +160,17 @@ def mkdir_p(path):
 def csvStr2List( csvStr ):
   """
     Return a list from the comma separated values
+    If input string starts with @, then it is assumed that the leading string
+    an actual path and the content from the file is parsed.
   """
   # Treat comma separated lists:
   if type(csvStr) is str:
+    # Treat files which start with @ as a comma separated list of files
+    if csvStr.startswith('@'):
+      with open( os.path.expandvars( csvStr[1:] ), 'r') as content_file:
+        csvStr = content_file.read()
+        csvStr = csvStr.replace('\n','')
+        if csvStr.endswith(' '): csvStr = csvStr[:-1]
     csvStr = csvStr.split(',')
   # Make sure our confFileList is a list (just to be compatible for 
   if not type(csvStr) is list:
@@ -472,7 +497,4 @@ def checkForUnusedVars(d, fcn = None):
 def createRootParameter( type_name, name, value):
   from ROOT import TParameter
   return TParameter(type_name)(name,value)
-
-
-
 
