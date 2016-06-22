@@ -41,12 +41,18 @@ gridParserGroup.add_argument('--excludeFile', nargs='?',
 gridParserGroup.add_argument('--disableAutoRetry', action='store_true',
     required = False, dest = 'grid_disableAutoRetry',
     help = """Flag to disable auto retrying jobs.""")
+gridParserGroup.add_argument('--followLinks', action='store_true',
+    required = False, dest = 'grid_followLinks',
+    help = """Flag to disable auto retrying jobs.""")
 gridParserGroup.add_argument('--extFile', nargs='?',
     required = False, dest = 'grid_extFile', default='',
     help = """External file to add.""")
-gridParserGroup.add_argument('--maxNFilesPerJob', nargs='?',
-    required = False, dest = 'grid_maxNFilesPerJob',
-    help = """Maximum number of files per job.""")
+gridParserGroup.add_argument('--match', 
+    required = False, dest = 'grid_match',
+    help = """Use only files matching with given pattern.""")
+gridParserGroup.add_argument('--antiMatch', 
+    required = False, dest = 'grid_antiMatch',
+    help = """Use all files but those matching with given pattern.""")
 gridParserGroup.add_argument('--cloud', nargs='?',
     required = False, default=False, dest = 'grid_cloud',
     help = """The cloud where to submit the job.""")

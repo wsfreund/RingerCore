@@ -12,8 +12,8 @@ def save(o, filename, **kw):
   """
     Save an object to disk.
   """
-  compress = kw.pop('compress', True)
-  protocol = kw.pop('protocol', -1  )
+  compress = kw.pop( 'compress', True )
+  protocol = kw.pop( 'protocol', -1   )
   if not isinstance(filename, str):
     raise("Filename must be a string!")
   filename = os.path.expandvars(filename)
@@ -49,9 +49,13 @@ def save(o, filename, **kw):
     f.close()
   return filename
 
-def load(filename, decompress = 'auto', allowTmpFile = True):
+def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False):
   """
-    Loads an object from disk
+    Loads an object from disk.
+
+    -> decompress: what protocol should be used to decompress the file.
+    -> allowTmpFile: if to allow temporary files to improve loading speed.
+    -> useHighLevelObj: automatic convert rawDicts to their python representation (not currently supported for numpy files.
   """
   filename = os.path.expandvars(filename)
   if not os.path.isfile( os.path.expandvars( filename ) ):
@@ -77,7 +81,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True):
           f.extractall(path=tmpFolderPath)
           for member in f.getmembers():
             with open(os.path.join(tmpFolderPath,member.name)) as f_member:
-              o.append( cPickle.load(f_member) )
+              o.append( __transformDataRawData( cPickle.load(f_member), useHighLevelObj ) )
           import shutil
           shutil.rmtree(tmpFolderPath)
         else:
@@ -85,9 +89,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True):
           if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
             fio = StringIO.StringIO(fileobj.read())
             fzip = gzip.GzipFile(fileobj=fio)
-            o.append( cPickle.load(fzip) )
+            o.append( __transformRawData( cPickle.load(fzip), useHighLevelObj ) )
           else:
-            o.append( cPickle.load(fileobj) )
+            o.append( __transformRawData( cPickle.load(fileobj), useHighLevelObj ) )
         f.close()
       if len(o) == 1:
         return o[0]
@@ -97,7 +101,16 @@ def load(filename, decompress = 'auto', allowTmpFile = True):
       f = open(filename,'r')
     o = cPickle.load(f)
     f.close()
-    return o
+    return __transformDataRawData( o, useHighLevelObj )
+
+def __transformDataRawData(o, useHighLevelObj):
+  """
+  Transforms raw data if requested to use high level object
+  """
+  if useHighLevelObj:
+    from RingerCore.RawDictStreamable import retrieveRawDict
+    o = retrieveRawDict( o )
+  return o
  
 def expandFolders( pathList, filters = None):
   """
@@ -114,7 +127,7 @@ def expandFolders( pathList, filters = None):
   for path in pathList:
     path = os.path.abspath( os.path.expandvars( path ) )
     if not os.path.exists( path ):
-      raise ValueError("Cannot reach path %s" % path )
+      raise ValueError("Cannot reach path '%s'" % path )
     if os.path.isdir(path):
       for idx, filt in enumerate(filters):
         cList = [ f for f in glob( os.path.join(path,filt) ) ]
