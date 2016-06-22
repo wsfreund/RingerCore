@@ -1,9 +1,10 @@
 __all__ = ['RawDictStreamable', 'RawDictStreamer', 'RawDictCnv', 'mangle_attr',
-           'LoggerStreamable', 'LoggerRawDictStreamer', 'checkAttrOrSetDefault']
+           'LoggerStreamable', 'LoggerRawDictStreamer', 'checkAttrOrSetDefault',
+           'isRawDictFormat', 'retrieveRawDict']
 
 from RingerCore.Logger import Logger
 from RingerCore.util import checkForUnusedVars
-
+mLogger = Logger.getModuleLogger( __name__ )
 def mangle_attr(source, attr):
   """
   Simulate python private attritubutes mangling. Taken from:
@@ -74,16 +75,6 @@ class RawDictStreamer( Logger ):
       raw['__version'] = obj.__class__._version
     return raw
 
-def isRawDictFormat( d ):
-  """
-  Returns if dictionary is on streamed raw dictionary format.
-  """
-  isRawDictFormat = False
-  if type(d) is dict and \
-      all( baseAttr in d for baseAttr in RawDictCnv.baseAttrs ):
-    isRawDictFormat = True
-  return isRawDictFormat
-
 class RawDictCnv( Logger ):
   """
   This is the default converter class. Overload this method to deal with
@@ -114,6 +105,10 @@ class RawDictCnv( Logger ):
     """
     Add information to python class from dictionary d
     """
+    try:
+      obj._readVersion = d['__version']
+    except KeyError:
+      obj._readVersion = 0
     for k, val in d.iteritems():
       if k in self.ignoreAttrs: 
         continue
@@ -121,11 +116,11 @@ class RawDictCnv( Logger ):
         nK = mangle_attr( self.__class__, 
                           list(self.toProtectedAttrs)[self._searchAttr(k)] 
                         )
-        obj.__dict__[nK] = self.retrieveAttrVal( nK, d[k] )
+        obj.__dict__[nK] = retrieveRawDict( val )
         continue
       except ValueError:
         pass
-      obj.__dict__[k] = self.retrieveAttrVal( k, d[k] )
+      obj.__dict__[k] = retrieveRawDict( val )
     return self.treatObj( obj, d )
 
   def treatObj( self, obj, d ):
@@ -134,22 +129,30 @@ class RawDictCnv( Logger ):
     """
     return obj
 
-  def retrieveAttrVal( self, key, val ):
-    """
-    Transform contained values to their respective python classes if they are a
-    raw dictionary.
-    """
-    if isRawDictFormat( val ):
-      try:
-        from RingerCore.util import str_to_class
-        self._logger.debug( "Converting streamable instance of type '%s' on attribute named '%s'.",
-                            val['class'],
-                            key )
-        cls = str_to_class( val['__module'], val['class'] )
-        val = cls.fromRawObj( val )
-      except KeyError,  e:
-        self._logger.error("Couldn't convert attribute %s! Reason: %s", key, e)
-    return val
+def isRawDictFormat( d ):
+  """
+  Returns if dictionary is on streamed raw dictionary format.
+  """
+  isRawDictFormat = False
+  if type(d) is dict and \
+      all( baseAttr in d for baseAttr in RawDictCnv.baseAttrs ):
+    isRawDictFormat = True
+  return isRawDictFormat
+
+
+def retrieveRawDict( val ):
+  """
+  Transform rawDict to an instance from its respective python class
+  """
+  if isRawDictFormat( val ):
+    try:
+      from RingerCore.util import str_to_class
+      mLogger.debug( "Converting rawDict to an instance of type '%s'." % val['class'] )
+      cls = str_to_class( val['__module'], val['class'] )
+      val = cls.fromRawObj( val )
+    except KeyError, e:
+      mLogger.error("Couldn't convert rawDict to an instance of type '%s'!\n Reason: %s", val['class'], e)
+  return val
 
 import re
 _lMethodSearch=re.compile("_RawDictStreamable__(\S+)")
@@ -187,9 +190,10 @@ class RawDictStreamable( type ):
     checkAttrOrSetDefault( '_streamerObj', dct, bases, RawDictStreamer )
     checkAttrOrSetDefault( '_cnvObj',      dct, bases, RawDictCnv      )
     if not '_version' in dct:
-      dct['_version'] = 0
+      dct['_version'] = 1
     if not type(dct['_version']) is int:
       raise ValueError("_version must be declared as an int.")
+    dct['_readVersion'] = 0
     return type.__new__(cls, name, bases, dct)
 
   def fromRawObj(cls, obj):

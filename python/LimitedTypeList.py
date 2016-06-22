@@ -181,8 +181,9 @@ class LimitedTypeListRDC( RawDictCnv ):
     """
     Overload this method to treat the python object
     """
+    from RingerCore.RawDictStreamable import retrieveRawDict
     for rawObj in d['items']:
-      obj.append( self.retrieveAttrVal( 'items', rawObj ) )
+      obj.append( retrieveRawDict( rawObj ) )
     return obj
 
 class LoggerLimitedTypeListRDS( LoggerRawDictStreamer, LimitedTypeListRDS ):
