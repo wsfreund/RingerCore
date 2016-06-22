@@ -21,20 +21,18 @@ def progressbar(it, prefix="", size=60):
 
 from RingerCore.Logger  import Logger, LoggingLevel
 
-class StoreGate(Logger):
-  _currentDir = ""
-  _objects    = dict()
-  _dirs       = list()
+class StoreGate( Logger) :
 
   def __init__( self, outputFile, **kw ):
     Logger.__init__(self, kw)
-    from ROOT import TFile
-    self._outputFile = outputFile
+    if not outputFile.endswith('.root'):
+      outputFile += '.root'
     #Create TFile object to hold everything
     self._file = TFile( outputFile, "recreate")
-    #Property
     self._holdObj = True
-
+    self._currentDir = ""
+    self._objects    = dict()
+    self._dirs       = list()
 
   #Save objects and delete storegate
   def __del__(self):
