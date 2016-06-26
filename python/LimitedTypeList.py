@@ -1,5 +1,6 @@
 __all__ = ['LimitedTypeList', 'LimitedTypeStreamableList', 'NotAllowedType',
-           'LimitedTypeListRDC', 'LimitedTypeListRDS', 'LoggerLimitedTypeListRDS']
+           'LimitedTypeListRDC', 'LimitedTypeListRDS', 'LoggerLimitedTypeListRDS',
+           'inspect_list_attrs']
 
 import re
 _lMethodSearch=re.compile("_LimitedTypeList__(\S+)")
@@ -216,3 +217,37 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
     dct = t1.__dict__.copy()
     return LimitedTypeList.__new__(cls, name, bases, dct)
 
+def inspect_list_attrs(var, nDepth, wantedType, tree_types = (list,tuple), dim = None, name = "" ):
+  """
+  Check if list can be set into a LimitedTypeList of <wantedType> at the depth
+  <nDepth>.
+  
+  Also make sure that its dimension is <dim>, otherwise spam it to <dim> if its
+  previous size was 1.
+
+  Use <name> to dimension name.
+  """
+  if nDepth == 0:
+    var = wantedType( var )
+    # And that its size spans over last dim:
+    lPar = len(var)
+    if dim:
+      if lPar == 1:
+        var = wantedType( var * dim )
+      elif lPar != dim:
+        raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+  else:
+    from RingerCore.util import traverse
+    for obj, idx, parent, depth_dist, level in traverse(var,
+                                                        tree_types = tree_types,
+                                                        max_depth = nDepth,
+                                                       ):
+      parent[idx] = wantedType(obj)
+      lPar = len(parent[idx])
+      # Make sure that its size spans over dim:
+      if dim:
+        if lPar == 1:
+          parent[idx] = wantedType( parent[idx] * dim )
+        elif lPar != dim:
+          raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+  return var

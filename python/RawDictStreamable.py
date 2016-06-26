@@ -4,7 +4,9 @@ __all__ = ['RawDictStreamable', 'RawDictStreamer', 'RawDictCnv', 'mangle_attr',
 
 from RingerCore.Logger import Logger
 from RingerCore.util import checkForUnusedVars
+
 mLogger = Logger.getModuleLogger( __name__ )
+
 def mangle_attr(source, attr):
   """
   Simulate python private attritubutes mangling. Taken from:
