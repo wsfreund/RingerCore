@@ -14,7 +14,7 @@ import gzip
 import inspect
 import numpy as np
 
-class NotSetType(type):
+class NotSetType( type ):
   def __bool__(self):
     return False
   __nonzero__ = __bool__
@@ -26,7 +26,7 @@ class NotSetType(type):
 class NotSet( object ): 
   __metaclass__ = NotSetType
 
-class Holder(object):
+class Holder( object ):
   def __init__(self, obj):
     self.obj = obj
   def __call__(self):
