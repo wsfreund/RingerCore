@@ -4,7 +4,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
     'retrieve_kw', 'setDefaultKey', 'start_after',
-    'stdvector_to_list', 'traverse','trunc_at']
+    'stdvector_to_list', 'traverse','trunc_at', 'progressbar']
 
 import re, os, __main__
 import sys
@@ -210,6 +210,63 @@ def printArgs(args, fcn = None):
       print 'INFO:%s' % msg
   except ImportError:
     logger.info('Retrieved the following configuration: \n %r', vars(args))
+
+def progressbar(it, count ,prefix="", size=60, disp=True, logger = None):
+  """
+    Display progressbar.
+
+    Input arguments:
+    -> it: the iterations collection;
+    -> count: total number of iterations on collection;
+    -> size: number of chars to use on the progressbar;
+    -> disp: whether to display progressbar or not;
+    -> logger: use this logger object instead o sys.stdout;
+  """
+  def _show(_i, logger = None):
+    x = int(size*_i/count)
+    if logger:
+      fn, lno, func = logger.findCaller() 
+      record = LogRecord(logger.name, level, fn, lno, 
+                          "%s[%s%s] %i/%i\r",
+                          (prefix, "#"*x, "."*(size-x), _i, count,), 
+                          None, 
+                          func=func)
+      # emit message
+      logger.handle(record)
+    else:
+      sys.stdout.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), _i, count))
+      sys.stdout.flush()
+  # end of (_show)
+  # prepare for looping:
+  if disp: 
+    # override emit to emit_no_nl
+    if logger:
+      from RingerCore.Logger import emit_no_nl
+      prev_emit = []
+      for handler in Logger.handlers:
+        if type(handler) is StreamHandler:
+          prev_emit.append( handler.emit )
+          handler.emit = emit_no_nl
+    _show(0, logger)
+  # end of (looping preparation)
+  # loop
+  for i, item in enumerate(it):
+    yield item
+    if disp:  
+      _show(i+1, logger)
+  # end of (looping)
+  # final treatments
+  if disp:
+    if logger:
+      # override back
+      for handler in Logger.handlers:
+        if type(handler) is StreamHandler:
+          handler.emit = prev_emit.pop()
+      _show(i+1, logger)
+    else:
+      sys.stdout.write("\n")
+      sys.stdout.flush()
+  # end of (final treatments)
 
 def reshape( input ):
   #sourceEnvFile()
