@@ -49,68 +49,101 @@ def save(o, filename, **kw):
     f.close()
   return filename
 
-def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False):
+
+def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
+         useGenerator = False):
   """
     Loads an object from disk.
 
     -> decompress: what protocol should be used to decompress the file.
     -> allowTmpFile: if to allow temporary files to improve loading speed.
-    -> useHighLevelObj: automatic convert rawDicts to their python representation (not currently supported for numpy files.
+    -> useHighLevelObj: automatic convert rawDicts to their python
+       representation (not currently supported for numpy files.
+    -> useGenerator: This option changes the behavior when loading a tarball
+       file with multiple members. Instead returning a collection with all
+       contents within the file, it will return a generator allowing each file
+       to be read individually, thus reducing the amount of memory used in the
+       process.
   """
   filename = os.path.expandvars(filename)
+  transformDataRawData = __TransformDataRawData( useHighLevelObj )
   if not os.path.isfile( os.path.expandvars( filename ) ):
     raise ValueError("Cannot reach file %s" % filename )
   if filename.endswith('.npy') or filename.endswith('.npz'):
-    return np.load(filename,mmap_mode='r')
+    return transformDataRawData( np.load(filename,mmap_mode='r') )
   else:
     if decompress == 'auto':
-      if filename.endswith('.gz' ) or filename.endswith('.gzip' ):
+      if filename.endswith( '.gz' ) or filename.endswith( '.gzip' ):
         decompress = 'gzip'
-      elif filename.endswith('.tar.gz' ) or filename.endswith('.tgz' ):
+      elif filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
         decompress = 'tgz'
+      elif filename.endswith( '.gz.tar' ) or filename.endswith( '.tar' ):
+        decompress = 'tar'
       else:
         decompress = False
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
-    elif decompress == 'tgz':
-      f = tarfile.open(filename, 'r:gz')
-      o = []
-      for entry in f.getmembers():
-        if allowTmpFile:
-          tmpFolderPath=tempfile.mkdtemp()
-          f.extractall(path=tmpFolderPath)
-          for member in f.getmembers():
-            with open(os.path.join(tmpFolderPath,member.name)) as f_member:
-              o.append( __transformDataRawData( cPickle.load(f_member), useHighLevelObj ) )
-          import shutil
-          shutil.rmtree(tmpFolderPath)
-        else:
-          fileobj = f.extractfile(entry)
-          if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
-            fio = StringIO.StringIO(fileobj.read())
-            fzip = gzip.GzipFile(fileobj=fio)
-            o.append( __transformRawData( cPickle.load(fzip), useHighLevelObj ) )
-          else:
-            o.append( __transformRawData( cPickle.load(fileobj), useHighLevelObj ) )
-        f.close()
-      if len(o) == 1:
-        return o[0]
+    elif decompress in ('tgz','tar'):
+      if decompress == 'tar':
+        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData)
       else:
-        return o
+        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData)
+      if not useGenerator:
+        o = list(o)
+        if len(o) == 1: o = o[0]
+      return o
     else:
       f = open(filename,'r')
-    o = cPickle.load(f)
-    f.close()
-    return __transformDataRawData( o, useHighLevelObj )
+      o = cPickle.load(f)
+      f.close()
+      return transformDataRawData( o )
+  # end of (if filename)
+# end of (load) 
 
-def __transformDataRawData(o, useHighLevelObj):
+
+def __load_tar(filename, mode, allowTmpFile, transformDataRawData):
+  """
+  Internal method for reading tarfiles
+  """
+  f = tarfile.open(filename, mode, ignore_zeros = True)
+  for entry in f.getmembers():
+    if allowTmpFile:
+      tmpFolderPath=tempfile.mkdtemp()
+      f.extractall(path=tmpFolderPath, members=(entry,))
+      with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
+        yield transformDataRawData( cPickle.load(f_member) )
+      import shutil
+      shutil.rmtree(tmpFolderPath)
+    else:
+      fileobj = f.extractfile(entry)
+      if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
+        fio = StringIO.StringIO(fileobj.read())
+        fzip = gzip.GzipFile(fileobj=fio)
+        yield transformDataRawData( cPickle.load(fzip) )
+      else:
+        yield transformDataRawData( cPickle.load(fileobj) )
+  f.close()
+# end of (load_tar)
+
+class __TransformDataRawData( object ):
   """
   Transforms raw data if requested to use high level object
   """
-  if useHighLevelObj:
-    from RingerCore.RawDictStreamable import retrieveRawDict
-    o = retrieveRawDict( o )
-  return o
+
+  def __init__(self, useHighLevelObj = False):
+    self.useHighLevelObj = useHighLevelObj
+
+  def __call__(self, o):
+    """
+    Run transformation
+    """
+    if self.useHighLevelObj:
+      from RingerCore.RawDictStreamable import retrieveRawDict
+      from numpy.lib.npyio import NpzFile
+      if type(o) is NpzFile:
+        o = dict(o)
+      o = retrieveRawDict( o )
+    return o
  
 def expandFolders( pathList, filters = None):
   """
