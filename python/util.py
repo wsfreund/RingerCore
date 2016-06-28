@@ -4,7 +4,8 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
     'retrieve_kw', 'setDefaultKey', 'start_after',
-    'stdvector_to_list', 'traverse','trunc_at', 'progressbar']
+    'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
+    'select']
 
 import re, os, __main__
 import sys
@@ -74,7 +75,7 @@ class EnumStringification( object ):
   @classmethod
   def tostring(cls, val):
     "Transforms val into string."
-    for k,v in vars(cls).iteritems():
+    for k, v in get_attributes(cls, getProtected = False):
       if v==val:
         return k
     return None
@@ -211,62 +212,109 @@ def printArgs(args, fcn = None):
   except ImportError:
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
-def progressbar(it, count ,prefix="", size=60, disp=True, logger = None):
+def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None):
   """
     Display progressbar.
 
     Input arguments:
     -> it: the iterations collection;
     -> count: total number of iterations on collection;
+    -> prefix: the strings preceding the progressbar;
     -> size: number of chars to use on the progressbar;
+    -> step: the number of iterations needed for updating;
     -> disp: whether to display progressbar or not;
     -> logger: use this logger object instead o sys.stdout;
+    -> level: the output level used on logger;
   """
-  def _show(_i, logger = None):
+  from RingerCore.Logger import LoggingLevel
+  from logging import StreamHandler
+  if level is None: level = LoggingLevel.INFO
+  def _show(_i):
     x = int(size*_i/count)
+    if _i % step: return
     if logger:
-      fn, lno, func = logger.findCaller() 
-      record = LogRecord(logger.name, level, fn, lno, 
-                          "%s[%s%s] %i/%i\r",
-                          (prefix, "#"*x, "."*(size-x), _i, count,), 
-                          None, 
-                          func=func)
-      # emit message
-      logger.handle(record)
+      if logger.isEnabledFor(level):
+        fn, lno, func = logger.findCaller() 
+        record = logger.makeRecord(logger.name, level, fn, lno, 
+                            "%s[%s%s] %i/%i\r",
+                            (prefix, "#"*x, "."*(size-x), _i, count,), 
+                            None, 
+                            func=func)
+        # emit message
+        logger.handle(record)
     else:
       sys.stdout.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), _i, count))
       sys.stdout.flush()
   # end of (_show)
   # prepare for looping:
-  if disp: 
-    # override emit to emit_no_nl
-    if logger:
-      from RingerCore.Logger import emit_no_nl
-      prev_emit = []
-      for handler in Logger.handlers:
-        if type(handler) is StreamHandler:
-          prev_emit.append( handler.emit )
-          handler.emit = emit_no_nl
-    _show(0, logger)
-  # end of (looping preparation)
-  # loop
-  for i, item in enumerate(it):
-    yield item
-    if disp:  
-      _show(i+1, logger)
-  # end of (looping)
-  # final treatments
-  if disp:
-    if logger:
-      # override back
-      for handler in Logger.handlers:
-        if type(handler) is StreamHandler:
-          handler.emit = prev_emit.pop()
-      _show(i+1, logger)
-    else:
-      sys.stdout.write("\n")
-      sys.stdout.flush()
+  try:
+    if disp: 
+      # override emit to emit_no_nl
+      if logger:
+        from RingerCore.Logger import StreamHandler2
+        prev_emit = []
+        # TODO On python3, all we need to do is to change the Handler.terminator
+        for handler in logger.handlers:
+          if type(handler) is StreamHandler:
+            stream = StreamHandler2( handler )
+            prev_emit.append( handler.emit )
+            setattr(handler, StreamHandler.emit.__name__, stream.emit_no_nl)
+      _show(0)
+    # end of (looping preparation)
+    # loop
+    for i, item in enumerate(it):
+      yield item
+      if disp: _show(i+1)
+    # end of (looping)
+    # final treatments
+    step = 1 # Make sure we always display last printing
+    if disp:
+      if logger:
+        # override back
+        for handler in logger.handlers:
+          if type(handler) is StreamHandler:
+            setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+        _show(i+1)
+      else:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+  except (BaseException) as e:
+    #import traceback
+    #print traceback.format_exc()
+    step = 1 # Make sure we always display last printing
+    if disp:
+      if logger:
+        # override back
+        for handler in logger.handlers:
+          if type(handler) is StreamHandler:
+            setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+        try:
+          _show(i+1)
+        except NameError:
+          _show(0)
+        for handler in logger.handlers:
+          if type(handler) is StreamHandler:
+            handler.stream.flush()
+      else:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+    # re-raise:
+    raise e
   # end of (final treatments)
+
+def select( fl, filters ):
+  """
+  Return a selection from fl maching f
+
+  WARNING: This selection method retrieves the same string contained in fl
+  if it matches two different filters.
+  """
+  ret = []
+  for filt in filters:
+    taken = [obj for obj, _, _, _, _ in traverse(fl) if type(obj) is str and filt in obj]
+    ret.append(taken)
+  if len(ret) == 1: ret = ret[0]
+  return ret
 
 def reshape( input ):
   #sourceEnvFile()

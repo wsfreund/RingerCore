@@ -145,7 +145,7 @@ class __TransformDataRawData( object ):
       o = retrieveRawDict( o )
     return o
  
-def expandFolders( pathList, filters = None):
+def expandFolders( pathList, filters = None, logger = None, level = None):
   """
     Expand all files using the filters on pathList
   """
@@ -157,7 +157,10 @@ def expandFolders( pathList, filters = None):
   if not( type( filters ) in (list,tuple,) ):
     filters = [ filters ]
   retList = [[] for idx in range(len(filters))]
-  for path in pathList:
+  from RingerCore.util import progressbar
+  for path in progressbar( pathList, len(pathList), 'Expanding folders: ', 60, 50,
+                           True if logger is not None else False, logger = logger,
+                           level = level):
     path = os.path.abspath( os.path.expandvars( path ) )
     if not os.path.exists( path ):
       raise ValueError("Cannot reach path '%s'" % path )
