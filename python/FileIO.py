@@ -51,7 +51,7 @@ def save(o, filename, **kw):
 
 
 def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
-         useGenerator = False):
+         useGenerator = False, tarMember = None):
   """
     Loads an object from disk.
 
@@ -64,13 +64,18 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
        contents within the file, it will return a generator allowing each file
        to be read individually, thus reducing the amount of memory used in the
        process.
+    -> tarMember: the tarMember in the tarfile to read. When not specified: read
+    all.
   """
   filename = os.path.expandvars(filename)
   transformDataRawData = __TransformDataRawData( useHighLevelObj )
   if not os.path.isfile( os.path.expandvars( filename ) ):
     raise ValueError("Cannot reach file %s" % filename )
   if filename.endswith('.npy') or filename.endswith('.npz'):
-    return transformDataRawData( np.load(filename,mmap_mode='r') )
+    if useGenerator:
+      return transformDataRawData( np.load(filename,mmap_mode='r') ), None
+    else:
+      return transformDataRawData( np.load(filename,mmap_mode='r') )
   else:
     if decompress == 'auto':
       if filename.endswith( '.gz' ) or filename.endswith( '.gzip' ):
@@ -85,33 +90,42 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz','tar'):
       if decompress == 'tar':
-        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData)
+        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember)
       else:
-        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData)
+        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData, tarMember)
       if not useGenerator:
-        o = list(o)
+        o = list(map(lambda x: x[0], o))
         if len(o) == 1: o = o[0]
       return o
     else:
       f = open(filename,'r')
       o = cPickle.load(f)
       f.close()
-      return transformDataRawData( o )
+      if useGenerator:
+        return transformDataRawData( o ), None
+      else:
+        return transformDataRawData( o )
   # end of (if filename)
 # end of (load) 
 
 
-def __load_tar(filename, mode, allowTmpFile, transformDataRawData):
+def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember):
   """
   Internal method for reading tarfiles
   """
   f = tarfile.open(filename, mode, ignore_zeros = True)
-  for entry in f.getmembers():
+  if tarMember is None:
+    memberList = f.getmembers()
+  elif type(tarMember) is tarfile.TarInfo:
+    memberList = [tarMember]
+  else:
+    raise TypeError("tarMember argument must be TarInfo or None.")
+  for entry in memberList:
     if allowTmpFile:
       tmpFolderPath=tempfile.mkdtemp()
       f.extractall(path=tmpFolderPath, members=(entry,))
       with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
-        yield transformDataRawData( cPickle.load(f_member) )
+        yield transformDataRawData( cPickle.load(f_member) ), entry
       import shutil
       shutil.rmtree(tmpFolderPath)
     else:
@@ -119,9 +133,9 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData):
       if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
         fio = StringIO.StringIO(fileobj.read())
         fzip = gzip.GzipFile(fileobj=fio)
-        yield transformDataRawData( cPickle.load(fzip) )
+        yield transformDataRawData( cPickle.load(fzip) ), entry
       else:
-        yield transformDataRawData( cPickle.load(fileobj) )
+        yield transformDataRawData( cPickle.load(fileobj) ), entry
   f.close()
 # end of (load_tar)
 
@@ -147,7 +161,16 @@ class __TransformDataRawData( object ):
  
 def expandFolders( pathList, filters = None, logger = None, level = None):
   """
-    Expand all files using the filters on pathList
+    Expand all folders to the contained files using the filters on pathList
+
+    Input arguments:
+
+    -> pathList: a list containing paths to files and folders;
+    filters;
+    -> filters: return a list for each filter with the files contained on the
+    list matching the filter glob.
+    -> logger: whether to print progress using logger;
+    -> level: logging level to print messages with logger;
   """
   if not isinstance( pathList, (list,tuple,) ):
     pathList = [pathList]

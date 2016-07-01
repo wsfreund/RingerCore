@@ -311,7 +311,7 @@ def select( fl, filters ):
   """
   ret = []
   for filt in filters:
-    taken = [obj for obj, _, _, _, _ in traverse(fl) if type(obj) is str and filt in obj]
+    taken = filter(lambda obj: type(obj) is str and filt in obj, traverse(fl, simple_ret = True))
     ret.append(taken)
   if len(ret) == 1: ret = ret[0]
   return ret
