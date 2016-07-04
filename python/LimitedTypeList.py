@@ -217,7 +217,7 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
     dct = t1.__dict__.copy()
     return LimitedTypeList.__new__(cls, name, bases, dct)
 
-def inspect_list_attrs(var, nDepth, wantedType, tree_types = (list,tuple), dim = None, name = "" ):
+def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None ):
   """
   Check if list can be set into a LimitedTypeList of <wantedType> at the depth
   <nDepth>.
@@ -226,28 +226,37 @@ def inspect_list_attrs(var, nDepth, wantedType, tree_types = (list,tuple), dim =
   previous size was 1.
 
   Use <name> to dimension name.
+
+  <level> can be used to change the value of the logging level of the objects.
   """
+  from copy import deepcopy
   if nDepth == 0:
-    var = wantedType( var )
+    if level is not None and obj is not None:
+      var.level = level
+    if wantedType is not None:
+      var = wantedType( var )
     # And that its size spans over last dim:
-    lPar = len(var)
     if dim:
+      lPar = len(var)
       if lPar == 1:
-        var = wantedType( var * dim )
+        var = wantedType( [ deepcopy(var) for _ in range(dim) ] )
       elif lPar != dim:
         raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
     from RingerCore.util import traverse
-    for obj, idx, parent, depth_dist, level in traverse(var,
-                                                        tree_types = tree_types,
-                                                        max_depth = nDepth,
-                                                       ):
-      parent[idx] = wantedType(obj)
-      lPar = len(parent[idx])
+    for obj, idx, parent, _, _ in traverse( var
+                                          , tree_types = tree_types
+                                          , max_depth = nDepth
+                                          ):
+      if level is not None and obj is not None:
+        obj.level = level
+      if wantedType is not None:
+        parent[idx] = wantedType(obj)
       # Make sure that its size spans over dim:
       if dim:
+        lPar = len(parent[idx])
         if lPar == 1:
-          parent[idx] = wantedType( parent[idx] * dim )
+          parent[idx] = wantedType( [ deepcopy( parent[idx]) for _ in range(dim) ] )
         elif lPar != dim:
           raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   return var
