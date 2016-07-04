@@ -99,13 +99,13 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return o
     else:
       f = open(filename,'r')
-      o = cPickle.load(f)
-      f.close()
-      if useGenerator:
-        return transformDataRawData( o ), None
-      else:
-        return transformDataRawData( o )
-  # end of (if filename)
+    o = cPickle.load(f)
+    f.close()
+    if useGenerator:
+      return transformDataRawData( o ), None
+    else:
+      return transformDataRawData( o )
+# end of (if filename)
 # end of (load) 
 
 
