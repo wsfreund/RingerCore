@@ -217,7 +217,7 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
     dct = t1.__dict__.copy()
     return LimitedTypeList.__new__(cls, name, bases, dct)
 
-def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None ):
+def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False ):
   """
   Check if list can be set into a LimitedTypeList of <wantedType> at the depth
   <nDepth>.
@@ -239,7 +239,7 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
     if dim:
       lPar = len(var)
       if lPar == 1:
-        var = wantedType( [ deepcopy(var) for _ in range(dim) ] )
+        var = wantedType( var * dim )
       elif lPar != dim:
         raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
@@ -256,7 +256,10 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
       if dim:
         lPar = len(parent[idx])
         if lPar == 1:
-          parent[idx] = wantedType( [ deepcopy( parent[idx]) for _ in range(dim) ] )
+          parent[idx] = wantedType( parent[idx] * dim )
         elif lPar != dim:
           raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+  if deepcopy:
+    from copy import deepcopy
+    var = deepcopy( var )
   return var
