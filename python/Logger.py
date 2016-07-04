@@ -8,12 +8,13 @@ class LoggingLevel ( EnumStringification ):
     A wrapper for logging levels, which allows stringification of known log
     levels.
   """
-  VERBOSE = logging.DEBUG - 1
-  DEBUG = logging.DEBUG
-  INFO = logging.INFO
-  WARNING = logging.WARNING
-  ERROR = logging.ERROR
-  FATAL = logging.CRITICAL
+  VERBOSE  = logging.DEBUG - 1
+  DEBUG    = logging.DEBUG
+  INFO     = logging.INFO
+  WARNING  = logging.WARNING
+  ERROR    = logging.ERROR
+  CRITICAL = logging.CRITICAL
+  FATAL    = logging.CRITICAL
 
   @classmethod
   def toC(cls, val):
@@ -144,8 +145,7 @@ class Logger( object ):
     Simple class for giving inherited classes logging capability as well as the
     possibility for being serialized by pickle.
 
-    The logger states are not pickled. When unpickled, it will have to be
-    manually configured or it will use default configuration.
+    Logger will keep its logging level even after unpickled.
   """
 
   _formatter = getFormatter()
@@ -209,17 +209,17 @@ class Logger( object ):
     del odict['_logger']         # remove logger entry
     return odict
 
-  def __setstate__(self, dict):
+  def __setstate__(self, d):
     """
       Add logger to object if it doesn't have one:
     """
-    self.__dict__.update(dict)   # update attributes
+    self.__dict__.update(d)   # update attributes
     try: 
-      self._logger
+      if self._logger is None: # Also add a logger if it is set to None
+        self._logger = Logger.getModuleLogger(self.__class__.__name__, self._level )
     except AttributeError:
-      self._logger = Logger.getModuleLogger(self.__module__)
+      self._logger = Logger.getModuleLogger(self.__module__, self._level)
+    self._logger.setLevel( self._level )
 
-    if self._logger is None: # Also add a logger if it is set to None
-      self._logger = Logger.getModuleLogger(self.__module__)
 
 del getConsoleHandler, getFormatter

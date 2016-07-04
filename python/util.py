@@ -9,6 +9,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
 
 import re, os, __main__
 import sys
+import code
 import types
 import cPickle
 import gzip
@@ -236,10 +237,10 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
       if logger.isEnabledFor(level):
         fn, lno, func = logger.findCaller() 
         record = logger.makeRecord(logger.name, level, fn, lno, 
-                            "%s[%s%s] %i/%i\r",
-                            (prefix, "#"*x, "."*(size-x), _i, count,), 
-                            None, 
-                            func=func)
+                                   "%s[%s%s] %i/%i\r",
+                                   (prefix, "#"*x, "."*(size-x), _i, count,), 
+                                   None, 
+                                   func=func)
         # emit message
         logger.handle(record)
     else:
@@ -578,7 +579,12 @@ def traverse(o, tree_types=(list, tuple),
         yield o, idx, parent, 0, level
       return
     skipped = False
-    for idx, value in enumerate(o):
+    isDict = isinstance(o, dict)
+    if isDict:
+      loopingObj = o.iteritems()
+    else:
+      loopingObj = enumerate(o)
+    for idx, value in loopingObj:
       try:
         for subvalue, subidx, subparent, subdepth_dist, sublevel in traverse(value, tree_types, max_depth_dist, max_depth, level, idx, o ):
           if subdepth_dist == max_depth_dist:
@@ -614,7 +620,7 @@ def traverse(o, tree_types=(list, tuple),
       else:
         if level > (max_depth_dist - subdepth_dist):
           raise SetDepth(subdepth_dist+1)
-  else:   
+  else:
     if simple_ret:
       yield o
     else:
@@ -639,6 +645,12 @@ def checkForUnusedVars(d, fcn = None):
       fcn(msg)
     else:
       print 'WARNING:%s' % msg
+
+def keyboard():
+  """ 
+    Function that mimics the matlab keyboard command.
+  """
+  import pdb; pdb.set_trace()
 
 
 def createRootParameter( type_name, name, value):
