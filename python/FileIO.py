@@ -94,9 +94,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return o
     else:
       f = open(filename,'r')
-      o = cPickle.load(f)
-      f.close()
-      return transformDataRawData( o )
+    o = cPickle.load(f)
+    f.close()
+    return transformDataRawData( o )
   # end of (if filename)
 # end of (load) 
 
