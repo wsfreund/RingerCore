@@ -44,6 +44,12 @@ gridParserGroup.add_argument('--disableAutoRetry', action='store_true',
 gridParserGroup.add_argument('--followLinks', action='store_true',
     required = False, dest = 'grid_followLinks',
     help = """Flag to disable auto retrying jobs.""")
+gridParserGroup.add_argument('--mergeOutput', action='store_true',
+    required = False, dest = 'grid_mergeOutput',
+    help = """Flag to enable merging output.""")
+gridParserGroup.add_argument('--mergeScript', 
+    required = False, dest = 'grid_mergeScript',
+    help = """The script for merging the files. E.g.: 'your_merger.py -o %OUT -i %IN'""")
 gridParserGroup.add_argument('--extFile', nargs='?',
     required = False, dest = 'grid_extFile', default='',
     help = """External file to add.""")

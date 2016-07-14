@@ -45,6 +45,11 @@ def fatal(self, message, *args, **kws):
 logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
 
+# This will be a little buggy, as I can't control without changing every logger
+# the handling of this no new line variable. Either way, this will handle most
+# of the cases.
+_nl = True
+
 class StreamHandler2( logging.StreamHandler ):
   """
   Just in case we need a bounded method for emiting without newlines.
@@ -59,15 +64,23 @@ class StreamHandler2( logging.StreamHandler ):
     self.level = handler.level
     self.formatter = handler.formatter
     self.stream = handler.stream
+    # We use stream as carrier b/c other handlers may complicate things
 
   def emit_no_nl(self, record):
     """
     Monkey patching to emit a record without newline.
     """
+    nl = not(hasattr(record,'nl'))
     try:
       msg = self.format(record)
       stream = self.stream
-      fs = "%s"
+      global _nl
+      fs = ''
+      if nl and not _nl:
+        fs += '\n'
+      _nl = nl
+      fs += '%s'
+      if nl: fs += '\n'
       if not logging._unicode: #if no unicode support...
         stream.write(fs % msg)
       else:
@@ -116,6 +129,8 @@ def getFormatter():
       self.use_color = use_color
 
     def format(self, record):
+      global _nl
+      _nl = True
       levelname = record.levelname
       name = record.name
       msg = record.msg

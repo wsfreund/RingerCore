@@ -5,7 +5,8 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
-    'select']
+    'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
+    'apply_sort', 'scale10']
 
 import re, os, __main__
 import sys
@@ -213,7 +214,8 @@ def printArgs(args, fcn = None):
   except ImportError:
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
-def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None):
+def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
+                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0))) ):
   """
     Display progressbar.
 
@@ -241,6 +243,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
                                    (prefix, "#"*x, "."*(size-x), _i, count,), 
                                    None, 
                                    func=func)
+        record.no_nl = True
         # emit message
         logger.handle(record)
     else:
@@ -252,14 +255,15 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     if disp: 
       # override emit to emit_no_nl
       if logger:
-        from RingerCore.Logger import StreamHandler2
-        prev_emit = []
-        # TODO On python3, all we need to do is to change the Handler.terminator
-        for handler in logger.handlers:
-          if type(handler) is StreamHandler:
-            stream = StreamHandler2( handler )
-            prev_emit.append( handler.emit )
-            setattr(handler, StreamHandler.emit.__name__, stream.emit_no_nl)
+        if no_bl:
+          from RingerCore.Logger import StreamHandler2
+          prev_emit = []
+          # TODO On python3, all we need to do is to change the Handler.terminator
+          for handler in logger.handlers:
+            if type(handler) is StreamHandler:
+              stream = StreamHandler2( handler )
+              prev_emit.append( handler.emit )
+              setattr(handler, StreamHandler.emit.__name__, stream.emit_no_nl)
       _show(0)
     # end of (looping preparation)
     # loop
@@ -271,24 +275,29 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     step = 1 # Make sure we always display last printing
     if disp:
       if logger:
-        # override back
-        for handler in logger.handlers:
-          if type(handler) is StreamHandler:
-            setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
-        _show(i+1)
+        if no_bl:
+          # override back
+          for handler in logger.handlers:
+            if type(handler) is StreamHandler:
+              setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+          _show(i+1)
       else:
         sys.stdout.write("\n")
         sys.stdout.flush()
   except (BaseException) as e:
-    #import traceback
-    #print traceback.format_exc()
+    import traceback
+    print traceback.format_exc()
     step = 1 # Make sure we always display last printing
     if disp:
       if logger:
         # override back
-        for handler in logger.handlers:
-          if type(handler) is StreamHandler:
-            setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+        if no_bl:
+          for handler in logger.handlers:
+            if type(handler) is StreamHandler:
+              try:
+                setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+              except IndexError:
+                pass
         try:
           _show(i+1)
         except NameError:
@@ -657,3 +666,79 @@ def createRootParameter( type_name, name, value):
   from ROOT import TParameter
   return TParameter(type_name)(name,value)
 
+class WriteMethod( EnumStringification ):
+  """
+    Specificate how to write files on cat_files_py
+  """
+  _ignoreCase = True
+  Readlines = 0
+  Read = 1
+  ShUtil = 2
+
+def timed(f):
+  def func(*args):
+    import time
+    start = time.time()
+    ret = f(*args)
+    took = time.time() - start
+    print("%s took %f" % (f.__name__,took))
+    return ret
+  return func
+
+@timed
+def cat_files_py(flist, ofile, op, logger = None, level = None):
+  """
+    cat files using python.
+
+    taken from: https://gist.github.com/dimo414/2993381
+  """
+  op = WriteMethod.retrieve( op )
+  if not isinstance(flist, (list, tuple)):
+    flist = [flist]
+  from RingerCore.Logger import LoggingLevel
+  if level is None: level = LoggingLevel.INFO
+  with open(ofile, 'wb') as out:
+    for fname in progressbar(flist, len(flist), prefix="Merging: ", 
+														 disp = True if logger is not None else False, step = 10,
+														 logger = logger, level = level ):
+      with open(fname,'rb') as f:
+        if op is WriteMethod.Readlines:
+          out.writelines(f.readlines())
+        elif op is WriteMethod.Read:
+          out.write(f.read())
+        elif op is WriteMethod.ShUtil:
+          import shutil
+          shutil.copyfileobj(f, out)
+
+def getFilters( filtFinder, objs, idxs = None, printf = None):
+  """
+    Get filters using filter finder
+  """
+  filt = filtFinder
+  if hasattr(filtFinder,'__call__'):
+    if type(filtFinder) is type:
+      filtFinder = filtFinder()
+    filt = filtFinder( objs )
+    #Retrieve only the bin IDx selected by arg
+    if idxs is not None:
+      try:
+        filt = [filt[idx] for idx in idxs]
+      except IndexError:
+        raise IndexError('This bin index does not exist.')
+      if printf is not None:
+        printf('Analyzing only the bin index %r', idxs)
+    printf('Found following filters: %r', filt)
+  return filt
+
+def apply_sort( inputCollection, sortedIdx ):
+  """
+    Returns inputCollection sorted accordingly to sortedIdx
+  """
+  return [inputCollection[idx] for idx in sortedIdx]
+
+def scale10( num ):
+  """
+    Returns the scale 10 power index of num
+  """
+  import math
+  return math.ceil(math.log10(abs(num))) if num else 0

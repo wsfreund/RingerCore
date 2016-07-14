@@ -3,7 +3,6 @@ __all__ = ['LoopingBounds', 'MatlabLoopingBounds', 'PythonLoopingBounds',
            'transformToSeqBounds', 'LoopingBoundsCollection',
            'MatlabLoopingBoundsCollection', 'PythonLoopingBoundsCollection']
 from RingerCore.Logger import Logger
-import math
 
 class LoopingBounds ( Logger ):
   """
@@ -229,10 +228,7 @@ class LoopingBounds ( Logger ):
     """
     lb = self.lowerBound()
     ub = self.upperBound()
-    nfill = math.ceil( math.log10(abs(ub)) ) if ub else 4
-    if nfill < 4:
-      nfill = 4
-    nfill = int(nfill)
+    nfill = self.get_minNFill( ub, 4 )
     if lb != ub:
       return 'l%s.u%s' % ( str(lb).zfill(nfill), str(ub).zfill(nfill) )
     else:
@@ -246,14 +242,25 @@ class LoopingBounds ( Logger ):
     lb = self.lowerBound()
     ub = self.upperBound()
     if nfill is None:
-      nfill = math.ceil(math.log10(abs(ub))) if ub else 4
-      if nfill < 4:
-        nfill = 4
-    nfill = int(nfill)
+      nfill = self.get_minNFill( 4 )
+    else:
+      nfill = int( nfill )
     if lb != ub:
       return '%sl%s.%su%s' % ( s, str(lb).zfill(nfill), s, str(ub).zfill(nfill)  )
     else:
       return '%s%s' % (s, str(lb).zfill(nfill) )
+
+  def get_minNFill( self, minN = 0 ):
+    """
+      Return minimum number of filling chars to make sure that all numbers on
+      this looping bounds have the number of chars.
+    """
+    ub = self.upperBound()
+    from RingerCore.util import scale10
+    nfill = scale10(ub)
+    if nfill < minN:
+      nfill = minN
+    return int(nfill)
 
   def __len__(self):
     """

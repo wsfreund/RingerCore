@@ -225,12 +225,13 @@ class LoggerRawDictStreamer(RawDictStreamer):
     transientAttrs = set(transientAttrs) | LoggerRawDictStreamer.transientAttrs
     RawDictStreamer.__init__(self, transientAttrs, toPublicAttrs, **kw)
 
-LoggerStreamable = RawDictStreamable( 
-                                      "LoggerStreamable", (Logger,), 
-                                      { 
-                                        '_version' : 1, 
-                                        '_streamerObj' : LoggerRawDictStreamer,
-                                      }
-                                    )
+class LoggerStreamable( Logger ):
+  """
+  """
+  __metaclass__ = RawDictStreamable
+  _streamerObj = LoggerRawDictStreamer
+  _version = 1
 
+  def __init__(self, d = {}, **kw): 
+    Logger.__init__(self, d, **kw)
 
