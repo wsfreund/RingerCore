@@ -70,7 +70,12 @@ class StreamHandler2( logging.StreamHandler ):
     """
     Monkey patching to emit a record without newline.
     """
-    nl = not(hasattr(record,'nl'))
+    #print '\n record', record
+    #print '\n record.__dict__', record.__dict__
+    try:
+      nl = record.nl
+    except AttributeError:
+      nl = True
     try:
       msg = self.format(record)
       stream = self.stream
@@ -129,8 +134,8 @@ def getFormatter():
       self.use_color = use_color
 
     def format(self, record):
-      global _nl
-      _nl = True
+      if not(hasattr(record,'nl')): 
+        record.nl = True
       levelname = record.levelname
       name = record.name
       msg = record.msg

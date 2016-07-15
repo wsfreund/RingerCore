@@ -243,7 +243,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
                                    (prefix, "#"*x, "."*(size-x), _i, count,), 
                                    None, 
                                    func=func)
-        record.no_nl = True
+        record.nl = False
         # emit message
         logger.handle(record)
     else:
