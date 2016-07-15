@@ -105,7 +105,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return transformDataRawData( o ), None
     else:
       return transformDataRawData( o )
-# end of (if filename)
+  # end of (if filename)
 # end of (load) 
 
 
