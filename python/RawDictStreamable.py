@@ -87,17 +87,19 @@ class RawDictCnv( Logger ):
 
   baseAttrs = {'class' , '__version', '__module'}
 
-  def __init__(self, ignoreAttrs = set(), toProtectedAttrs = set(), **kw ):
+  def __init__(self, ignoreAttrs = set(), toProtectedAttrs = set(), ignoreRawChildren = False, **kw ):
     """
-      Add ignoreAttrs to not considering the written dictionary values.
-      Add toProtectedAttrs to change public attributes to protected or private
-      attributes. That is, suppose the dictionary value is 'val' and the class
-      value should be _val or __val, then add toProtectedAttrs = ['_val'] or
-      '__val'.
+      -> ignoreAttrs: not consider this attributes on the dictionary values.
+      -> toProtectedAttrs: change public attributes to protected or private
+        attributes. That is, suppose the dictionary value is 'val' and the class
+        value should be _val or __val, then add toProtectedAttrs = ['_val'] or
+        '__val'.
+      -> ignoreRawChildren: Do not attempt to conver raw children to higher level object.
     """
     Logger.__init__(self, kw)
     self.ignoreAttrs = set(ignoreAttrs) | RawDictCnv.baseAttrs
     self.toProtectedAttrs = set(toProtectedAttrs)
+    self.ignoreRawChildren = ignoreRawChildren
     checkForUnusedVars( kw, self._logger.warning )
 
   def _searchAttr(self, val):
@@ -118,12 +120,19 @@ class RawDictCnv( Logger ):
         nK = mangle_attr( self.__class__, 
                           list(self.toProtectedAttrs)[self._searchAttr(k)] 
                         )
-        obj.__dict__[nK] = retrieveRawDict( val )
+        if not self.ignoreRawChildren:
+          obj.__dict__[nK] = retrieveRawDict( val, logger = self._logger )
+        else:
+          obj.__dict__[nK] = val
         continue
       except ValueError:
         pass
-      obj.__dict__[k] = retrieveRawDict( val )
-    return self.treatObj( obj, d )
+      if not self.ignoreRawChildren:
+        obj.__dict__[k] = retrieveRawDict( val, logger = self._logger )
+      else:
+        obj.__dict__[k] = val
+    ret = self.treatObj( obj, d )
+    return ret
 
   def treatObj( self, obj, d ):
     """
@@ -142,18 +151,18 @@ def isRawDictFormat( d ):
   return isRawDictFormat
 
 
-def retrieveRawDict( val ):
+def retrieveRawDict( val, logger = mLogger ):
   """
   Transform rawDict to an instance from its respective python class
   """
   if isRawDictFormat( val ):
     try:
       from RingerCore.util import str_to_class
-      mLogger.debug( "Converting rawDict to an instance of type '%s'." % val['class'] )
+      logger.debug( "Converting rawDict to an instance of type '%s'." % val['class'] )
       cls = str_to_class( val['__module'], val['class'] )
       val = cls.fromRawObj( val )
     except KeyError, e:
-      mLogger.error("Couldn't convert rawDict to an instance of type '%s'!\n Reason: %s", val['class'], e)
+      logger.error("Couldn't convert rawDict to an instance of type '%s'!\n Reason: %s", val['class'], e)
   return val
 
 import re
@@ -177,6 +186,18 @@ def checkAttrOrSetDefault( key, dct, bases, defaultType ):
         raise ValueError("%s must be a %s instance." % (key, defaultType.__name__,) )
 
 class RawDictStreamable( type ):
+  """
+  Class factory which adds streaming to python raw dictionary capability when
+  using the _streamerObj attribute which should inherit from the
+  RawDictStreamer class. When not specified, it is set to a standard
+  RawDictStreamer instance.
+  
+  The dict can be transformed back into the python class using the _cnvObj
+  attribute which must inherit from the RawDictCnv class. When not specified,
+  it is set to a standard RawDictCnv instance.
+
+  The version is specified using the _version attribute. Default value is 0.
+  """
 
   def __new__(cls, name, bases, dct):
     import inspect
@@ -198,11 +219,12 @@ class RawDictStreamable( type ):
     dct['_readVersion'] = 0
     return type.__new__(cls, name, bases, dct)
 
-  def fromRawObj(cls, obj):
-		from copy import deepcopy
-		obj = deepcopy( obj )
-		self = cls().buildFromDict( obj )
-		return self
+  def fromRawObj(cls, obj, workOnCopy = False):
+    if workOnCopy:
+      from copy import deepcopy
+      obj = deepcopy( obj )
+    self = cls().buildFromDict( obj )
+    return self
 
 def _RawDictStreamable__toRawObj(self):
   "Return a raw dict object from itself"
@@ -227,6 +249,7 @@ class LoggerRawDictStreamer(RawDictStreamer):
 
 class LoggerStreamable( Logger ):
   """
+  Logger class with RawDictStreamer capabilities.
   """
   __metaclass__ = RawDictStreamable
   _streamerObj = LoggerRawDictStreamer
