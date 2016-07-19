@@ -253,6 +253,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   # prepare for looping:
   try:
     if disp: 
+      from time import time
+      start = time()
       # override emit to emit_no_nl
       if logger:
         if no_bl:
@@ -274,6 +276,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     # final treatments
     step = 1 # Make sure we always display last printing
     if disp:
+      end = time()
       if logger:
         if no_bl:
           # override back
@@ -281,8 +284,9 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
             if type(handler) is StreamHandler:
               setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
           _show(i+1)
+        logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
       else:
-        sys.stdout.write("\n")
+        sys.stdout.write("\n%s... finished task in %3fs.\n", prefix, end - start )
         sys.stdout.flush()
   except (BaseException) as e:
     import traceback
