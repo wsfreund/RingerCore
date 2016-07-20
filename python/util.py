@@ -215,7 +215,7 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0))), 
+                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0)) or not(sys.stdout.isatty())), 
                 measureTime = True):
   """
     Display progressbar.

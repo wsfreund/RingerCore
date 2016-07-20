@@ -1,4 +1,4 @@
-__all__ = ['save', 'load', 'expandFolders', 'ensureExtension', 'appendToFileName']
+__all__ = ['save', 'load', 'expandFolders', 'ensureExtension', 'appendToFileName',]
 
 import numpy as np
 import cPickle
@@ -285,5 +285,3 @@ def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz
     return str_.sub(repStr(lSep), filename)
   else:
     return filename + ( separator if not(filename.endswith(separator) or appendStr.startswith(separator)) else '') + appendStr
-
-
