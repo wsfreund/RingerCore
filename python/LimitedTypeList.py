@@ -172,7 +172,7 @@ class LimitedTypeListRDC( RawDictCnv ):
   method to deal with special cases.
   """
 
-  ignoreAttrs = {'items'}
+  ignoreAttrs = {'items',}
 
   def __init__(self, ignoreAttrs = set(), toProtectedAttrs = set(), **kw ):
     ignoreAttrs = set(ignoreAttrs) | LimitedTypeListRDC.ignoreAttrs
