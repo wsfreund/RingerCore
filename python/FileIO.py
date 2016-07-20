@@ -1,4 +1,4 @@
-__all__ = ['save', 'load', 'expandFolders']
+__all__ = ['save', 'load', 'expandFolders', 'ensureExtension', 'appendToFileName']
 
 import numpy as np
 import cPickle
@@ -37,11 +37,9 @@ def save(o, filename, **kw):
     else:
       raise ValueError("Unknown protocol '%s'" % protocol)
   elif type(protocol) is int:
-    if not filename.endswith('.pic'):
-      filename += '.pic'
+    filename = ensureExtension(filename, 'pic')
     if compress:
-      if not filename.endswith('.gz'):
-        filename += '.gz'
+      filename = ensureExtension(filename, 'gz')
       f = gzip.GzipFile(filename, 'wb')
     else:
       f = open(filename, 'w')
@@ -206,3 +204,86 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
   if len(filters) is 1:
     retList = retList[0]
   return retList
+
+def __extRE(ext, ignoreNumbersAfterExtension = True):
+  """
+  Returns a regular expression compiled object that will search for
+  """
+  import re
+  if not isinstance( ext, (list,tuple,)): ext = ext.split('|')
+  ext = [e[1:] if e[0] == '.' else e for e in ext]
+  # remove all first dots
+  return re.compile(r'(.*)\.(' + r'|'.join(ext) + r')' + \
+                    (r'(\.[0-9]*|)' if ignoreNumbersAfterExtension else '()') + r'$')
+
+def ensureExtension( filename, ext, ignoreNumbersAfterExtension = True ):
+  """
+  Ensure that filename extension is ext, else adds its extension.
+  """
+  if isinstance( ext, (list,tuple) ): ext = ['.' + e if e[0] != '.' else e for e in ext]
+  elif ext[0] != '.': ext = '.' + ext
+
+  if not __extRE(ext, ignoreNumbersAfterExtension).match( filename ):
+    ext = ext.partition('|')[0]
+    composed = ext.split('.')
+    if not composed[0]: composed = composed[1:]
+    lComposed = len(composed)
+    if lComposed > 1:
+      for idx in range(lComposed):
+        if filename.endswith( '.'.join(composed[0:idx+1]) ):
+          filename += '.' + '.'.join(composed[idx+1:])
+          break
+      else:
+        filename += ext
+    else:
+      filename += ext
+  return filename
+
+def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
+                                                                  'pic.gz', 'pic.xz', 'pic',
+                                                                  'npz', 'npy', 'root'],
+                      retryExtensions = ['gz', 'xz'],
+                      moreFileExtensions = [],
+                      moreRetryExtensions = [],
+                      ignoreNumbersAfterExtension = True,
+                      separator = '_'):
+  """
+  Append string to end of file name but keeping file extension in the end.
+
+  Inputs:
+    -> filename: the filename path;
+    -> appendStr: the string to be added to the filename;
+    -> knownFileExtensions: the known file extensions, use to override all file extensions;
+    -> retryExtensions: some extensions are inside other extensions, e.g.
+    tar.gz and .gz. This makes regexp operator | to match the smaller
+    extension, so the easiest solution is to retry the smaller extensions after
+    checking the larger ones.
+    -> moreFileExtensions: add more file extensions to consider without overriding all file extensions;
+    -> moreRetryExtensions: add more extensions to consider while retrying without overriding the retryExtensions;
+    -> ignoreNumbersAfterExtension: whether to ignore numbers after the file extensions or not.
+    -> separator: a string to add as separator
+
+  Output:
+    -> the filename with the string appended.
+  """
+  knownFileExtensions.extend( moreFileExtensions )
+  def repStr( lSep ):
+    return r'\g<1>' + lSep + appendStr + r'.\g<2>' + r'\g<3>'
+  str_ = __extRE(knownFileExtensions)
+  m = str_.match(filename)
+  if m:
+    lSep = ''
+    if not(m.group(1).endswith(separator) or appendStr.startswith(separator)):
+      lSep = separator
+    return str_.sub(repStr(lSep), filename)
+  str_ = __extRE(retryExtensions)
+  m = str_.match(filename)
+  if m:
+    lSep = ''
+    if not(m.group(1).endswith(separator) or appendStr.startswith(separator)):
+      lSep = separator
+    return str_.sub(repStr(lSep), filename)
+  else:
+    return filename + ( separator if not(filename.endswith(separator) or appendStr.startswith(separator)) else '') + appendStr
+
+

@@ -215,7 +215,8 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0))) ):
+                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0))), 
+                measureTime = True):
   """
     Display progressbar.
 
@@ -228,6 +229,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     -> disp: whether to display progressbar or not;
     -> logger: use this logger object instead o sys.stdout;
     -> level: the output level used on logger;
+    -> no_bl: whether to show messages without breaking lines;
+    -> measureTime: display time measurement for completing progressbar task.
   """
   from RingerCore.Logger import LoggingLevel
   from logging import StreamHandler
@@ -253,8 +256,9 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   # prepare for looping:
   try:
     if disp: 
-      from time import time
-      start = time()
+      if measureTime:
+        from time import time
+        start = time()
       # override emit to emit_no_nl
       if logger:
         if no_bl:
@@ -276,7 +280,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     # final treatments
     step = 1 # Make sure we always display last printing
     if disp:
-      end = time()
+      if measureTime:
+        end = time()
       if logger:
         if no_bl:
           # override back
@@ -284,9 +289,13 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
             if type(handler) is StreamHandler:
               setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
           _show(i+1)
-        logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
+        if measureTime:
+          logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
       else:
-        sys.stdout.write("\n%s... finished task in %3fs.\n", prefix, end - start )
+        if measureTime:
+          sys.stdout.write("\n%s... finished task in %3fs.\n", prefix, end - start )
+        else:
+          sys.stdout.write("\n" )
         sys.stdout.flush()
   except (BaseException) as e:
     import traceback
@@ -713,6 +722,9 @@ def cat_files_py(flist, ofile, op, logger = None, level = None):
         elif op is WriteMethod.ShUtil:
           import shutil
           shutil.copyfileobj(f, out)
+      # end of with open(fname)
+    # end of for fname in progressbar
+  # end of with open(ofile)
 
 def getFilters( filtFinder, objs, idxs = None, printf = None):
   """
