@@ -236,7 +236,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   from logging import StreamHandler
   if level is None: level = LoggingLevel.INFO
   def _show(_i):
-    x = int(size*_i/count)
+    x = int(size*_i/count) if count else 0
     if _i % step: return
     if logger:
       if logger.isEnabledFor(level):
@@ -255,7 +255,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   # end of (_show)
   # prepare for looping:
   try:
-    if disp: 
+    if disp:
       if measureTime:
         from time import time
         start = time()
