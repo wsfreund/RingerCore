@@ -76,17 +76,17 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return transformDataRawData( np.load(filename,mmap_mode='r') )
   else:
     if decompress == 'auto':
-      if filename.endswith( '.gz' ) or filename.endswith( '.gzip' ):
-        decompress = 'gzip'
-      elif filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
+      if filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
         decompress = 'tgz'
+      elif filename.endswith( '.gz' ) or filename.endswith( '.gzip' ):
+        decompress = 'gzip'
       elif filename.endswith( '.gz.tar' ) or filename.endswith( '.tar' ):
         decompress = 'tar'
       else:
         decompress = False
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
-    elif decompress in ('tgz','tar'):
+    elif decompress in ('tgz', 'tar'):
       if decompress == 'tar':
         o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember)
       else:
