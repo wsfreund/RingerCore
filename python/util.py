@@ -698,7 +698,7 @@ def timed(f):
     return ret
   return func
 
-@timed
+#@timed
 def cat_files_py(flist, ofile, op, logger = None, level = None):
   """
     cat files using python.
