@@ -47,9 +47,9 @@ def save(o, filename, **kw):
     f.close()
   return filename
 
-
 def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
-         useGenerator = False, tarMember = None):
+         useGenerator = False, tarMember = None, ignore_zeros = True, 
+         logger = None):
   """
     Loads an object from disk.
 
@@ -64,6 +64,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
        process.
     -> tarMember: the tarMember in the tarfile to read. When not specified: read
     all.
+    -> ignore_zeros: whether to ignore zeroed regions when reading tarfiles or
+    not. This property is important for reading only one file from merged files
+    in a fast manner.
   """
   filename = os.path.expandvars(filename)
   transformDataRawData = __TransformDataRawData( useHighLevelObj )
@@ -88,9 +91,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
       if decompress == 'tar':
-        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember)
+        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
       else:
-        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData, tarMember)
+        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
       if not useGenerator:
         o = list(map(lambda x: x[0], o))
         if len(o) == 1: o = o[0]
@@ -107,12 +110,15 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
 # end of (load) 
 
 
-def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember):
+def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
+               ignore_zeros, logger = None):
   """
   Internal method for reading tarfiles
   """
-  f = tarfile.open(filename, mode, ignore_zeros = True)
+  f = tarfile.open(filename, mode, ignore_zeros = ignore_zeros)
   if tarMember is None:
+    if logger:
+      logger.info("Retrieving tar file members (%s)...", "full" if ignore_zeros else "fast")
     memberList = f.getmembers()
   elif type(tarMember) is tarfile.TarInfo:
     memberList = [tarMember]
