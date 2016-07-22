@@ -6,6 +6,7 @@ import gzip
 import tarfile
 import tempfile
 import os
+import shutil
 import StringIO
 
 def save(o, filename, **kw):
@@ -140,18 +141,19 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)
         oFile = tmpFolderPath + '/' + memberName
         try:
-          os.rename( memberName, oFile) 
+          shutil.move( memberName, oFile) 
         except OSError:
           from time import sleep
           sleep(2) # FIXME
-          os.rename( memberName, oFile) 
+          shutil.move( memberName, oFile) 
         with open( oFile ) as f_member:
-          yield transformDataRawData( cPickle.load(f_member) ), entry
+          data = transformDataRawData( cPickle.load(f_member) ), entry
+        yield data
       else:
         f.extractall(path=tmpFolderPath, members=(entry,))
         with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
-          yield transformDataRawData( cPickle.load(f_member) ), entry
-      import shutil
+          data = transformDataRawData( cPickle.load(f_member) ), entry
+        yield data
       shutil.rmtree(tmpFolderPath)
     else:
       fileobj = f.extractfile(entry)
