@@ -87,11 +87,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
         decompress = 'tar'
       else:
         decompress = False
-    print decompress
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
-      print "Aqui2!"
       if decompress == 'tar':
         o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
       else:
@@ -102,7 +100,6 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return o
     else:
       f = open(filename,'r')
-    print "Aqui!"
     o = cPickle.load(f)
     f.close()
     if useGenerator:
