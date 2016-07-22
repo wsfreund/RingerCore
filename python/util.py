@@ -6,7 +6,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
-    'apply_sort', 'scale10']
+    'apply_sort', 'scale10', 'measureLoopTime']
 
 import re, os, __main__
 import sys
@@ -293,7 +293,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
           logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
       else:
         if measureTime:
-          sys.stdout.write("\n%s... finished task in %3fs.\n", prefix, end - start )
+          sys.stdout.write("\n%s... finished task in %3fs.\n" % ( prefix, end - start) )
         else:
           sys.stdout.write("\n" )
         sys.stdout.flush()
@@ -324,6 +324,30 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     # re-raise:
     raise e
   # end of (final treatments)
+
+def measureLoopTime(it, prefix = 'Iteration', prefix_end = '', 
+                    logger = None, level = None, showLoopBenchmarks = True):
+  from time import time
+  if level is None:
+    from RingerCore.Logger import LoggingLevel
+    level = LoggingLevel.DEBUG
+  start = time()
+  for i, item in enumerate(it):
+    lStart = time()
+    yield item
+    end = time()
+    if showLoopBenchmarks:
+      if logger:
+        logger.log( level, '%s %d took %.2fs.', prefix, i, end - lStart)
+      else:
+        sys.stdout.write( level, '%s %d took %.2fs.\n' % ( prefix, i, end - lStart ) )
+        sys.stdout.flush()
+  if logger:
+    logger.log( level, 'Finished looping (%s) in %.2fs.', prefix_end, end - start)
+  else:
+    sys.stdout.write( level, 'Finished looping (%s) in %.2fs.\n' % ( prefix_end, end - start) )
+    sys.stdout.flush()
+
 
 def select( fl, filters ):
   """
