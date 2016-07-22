@@ -8,6 +8,7 @@ import tempfile
 import os
 import shutil
 import StringIO
+from time import sleep
 
 def save(o, filename, **kw):
   """
@@ -141,9 +142,9 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         with untar_ps.stdout:
           for line in iter(untar_ps.stdout.readline, b''): 
             while not os.path.isfile(memberName):
-              sys.sleep(0.001)
+              sleep(0.001)
             while not os.path.getsize(memberName) == tarMember.size:
-              sys.sleep(0.001)
+              sleep(0.001)
             untar_ps.kill()
             break
         untar_ps.wait()
@@ -153,7 +154,6 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         try:
           shutil.move( memberName, oFile) 
         except OSError:
-          from time import sleep
           sleep(2) # FIXME
           shutil.move( memberName, oFile) 
         with open( oFile ) as f_member:
