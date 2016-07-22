@@ -87,9 +87,11 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
         decompress = 'tar'
       else:
         decompress = False
+    print decompress
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
+      print "Aqui2!"
       if decompress == 'tar':
         o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
       else:
@@ -100,6 +102,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       return o
     else:
       f = open(filename,'r')
+    print "Aqui!"
     o = cPickle.load(f)
     f.close()
     if useGenerator:
@@ -115,21 +118,42 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
   """
   Internal method for reading tarfiles
   """
-  f = tarfile.open(filename, mode, ignore_zeros = ignore_zeros)
+  useSubprocess = False
   if tarMember is None:
+    f = tarfile.open(filename, mode, ignore_zeros = ignore_zeros)
     if logger:
       logger.info("Retrieving tar file members (%s)...", "full" if ignore_zeros else "fast")
     memberList = f.getmembers()
-  elif type(tarMember) is tarfile.TarInfo:
+  elif type(tarMember) in (tarfile.TarInfo, str):
+    useSubprocess = True
     memberList = [tarMember]
   else:
     raise TypeError("tarMember argument must be TarInfo or None.")
   for entry in memberList:
     if allowTmpFile:
       tmpFolderPath=tempfile.mkdtemp()
-      f.extractall(path=tmpFolderPath, members=(entry,))
-      with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
-        yield transformDataRawData( cPickle.load(f_member) ), entry
+      if useSubprocess:
+        from subprocess import Popen, PIPE, check_output
+        # TODO This will crash if someday someone uses a member in file that is
+        # not in root path at the tarfile.
+        memberName = tarMember.name if type(tarMember) is tarfile.TarInfo else tarMember
+        untar_ps = Popen(['gtar', '-xzif', filename, memberName,
+                          #'-C', tmpFolderPath,
+                          ], stdout=PIPE)
+        head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)
+        oFile = tmpFolderPath + '/' + memberName
+        try:
+          os.rename( memberName, oFile) 
+        except OSError:
+          from time import sleep
+          sleep(2) # FIXME
+          os.rename( memberName, oFile) 
+        with open( oFile ) as f_member:
+          yield transformDataRawData( cPickle.load(f_member) ), entry
+      else:
+        f.extractall(path=tmpFolderPath, members=(entry,))
+        with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
+          yield transformDataRawData( cPickle.load(f_member) ), entry
       import shutil
       shutil.rmtree(tmpFolderPath)
     else:
@@ -140,7 +164,8 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         yield transformDataRawData( cPickle.load(fzip) ), entry
       else:
         yield transformDataRawData( cPickle.load(fileobj) ), entry
-  f.close()
+  if not useSubprocess:
+    f.close()
 # end of (load_tar)
 
 class __TransformDataRawData( object ):
