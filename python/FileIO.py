@@ -137,8 +137,14 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         memberName = tarMember.name if type(tarMember) is tarfile.TarInfo else tarMember
         untar_ps = Popen(['gtar', '-xzif', filename, memberName,
                           #'-C', tmpFolderPath,
-                          ], stdout=PIPE)
-        head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)
+                          ], stdout = PIPE, bufsize = 1)
+        with untar_ps.stdout:
+          for line in iter(untar_ps.stdout.readline, b''): 
+            while not os.path.isfile(memberName):
+              sys.sleep(0.001)
+            break
+
+        #head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)
         oFile = tmpFolderPath + '/' + memberName
         try:
           shutil.move( memberName, oFile) 
