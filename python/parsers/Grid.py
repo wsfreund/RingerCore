@@ -49,7 +49,7 @@ gridParserGroup.add_argument('--mergeOutput', action='store_true',
     help = """Flag to enable merging output.""")
 gridParserGroup.add_argument('--mergeScript', 
     required = False, dest = 'grid_mergeScript',
-    help = """The script for merging the files. E.g.: 'your_merger.py -o %OUT -i %IN'""")
+    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
 gridParserGroup.add_argument('--extFile', nargs='?',
     required = False, dest = 'grid_extFile', default='',
     help = """External file to add.""")

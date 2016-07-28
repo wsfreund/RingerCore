@@ -6,6 +6,7 @@ import gzip
 import tarfile
 import tempfile
 import os
+import sys
 import shutil
 import StringIO
 from time import sleep
@@ -140,13 +141,15 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
                           #'-C', tmpFolderPath,
                           ), stdout = PIPE, bufsize = 1)
         with untar_ps.stdout:
-          for line in iter(untar_ps.stdout.readline, b''): 
-            while not os.path.isfile(memberName):
-              sleep(0.001)
-            while not os.path.getsize(memberName) == tarMember.size:
-              sleep(0.001)
-            untar_ps.kill()
-            break
+          sys.stdout.write("Waiting output\r")
+          while not os.path.isfile(memberName):
+            sys.stdout.write("Waiting member be created\r")
+            sleep(0.001)
+          while os.path.getsize(memberName) != tarMember.size:
+            sys.stdout.write("Waiting member size\r")
+            sleep(0.001)
+          sys.stdout.write("kill\r")
+          untar_ps.kill()
         untar_ps.wait()
 
         #head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)

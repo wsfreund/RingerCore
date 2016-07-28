@@ -229,7 +229,6 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
 
   <level> can be used to change the value of the logging level of the objects.
   """
-  from copy import deepcopy
   if nDepth == 0:
     if level is not None and obj is not None:
       var.level = level

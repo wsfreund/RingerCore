@@ -6,7 +6,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
-    'apply_sort', 'scale10', 'measureLoopTime']
+    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard']
 
 import re, os, __main__
 import sys
@@ -230,7 +230,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     -> logger: use this logger object instead o sys.stdout;
     -> level: the output level used on logger;
     -> no_bl: whether to show messages without breaking lines;
-    -> measureTime: display time measurement for completing progressbar task.
+    -> measureTime: display time measurement when completing progressbar task.
   """
   from RingerCore.Logger import LoggingLevel
   from logging import StreamHandler
@@ -273,9 +273,12 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
       _show(0)
     # end of (looping preparation)
     # loop
-    for i, item in enumerate(it):
-      yield item
-      if disp: _show(i+1)
+    try:
+      for i, item in enumerate(it):
+        yield item
+        if disp: _show(i+1)
+    except GeneratorExit:
+      pass
     # end of (looping)
     # final treatments
     step = 1 # Make sure we always display last printing
@@ -358,7 +361,7 @@ def select( fl, filters ):
   """
   ret = []
   for filt in filters:
-    taken = filter(lambda obj: type(obj) is str and filt in obj, traverse(fl, simple_ret = True))
+    taken = filter(lambda obj: type(obj) in (str,unicode) and filt in obj, traverse(fl, simple_ret = True))
     ret.append(taken)
   if len(ret) == 1: ret = ret[0]
   return ret
