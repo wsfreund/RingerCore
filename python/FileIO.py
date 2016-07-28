@@ -141,12 +141,12 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
                           #'-C', tmpFolderPath,
                           ), stdout = PIPE, bufsize = 1)
         with untar_ps.stdout:
-          sys.stdout.write("Waiting output\r")
+          #sys.stdout.write("Waiting output\r")
           while not os.path.isfile(memberName):
-            sys.stdout.write("Waiting member be created\r")
+            #sys.stdout.write("Waiting member be created\r")
             sleep(0.001)
           while os.path.getsize(memberName) != tarMember.size:
-            sys.stdout.write("Waiting member size\r")
+            #sys.stdout.write("Waiting member size\r")
             sleep(0.001)
           sys.stdout.write("kill\r")
           untar_ps.kill()

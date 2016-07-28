@@ -481,6 +481,8 @@ class Roc(object):
   """
     Create ROC information holder
   """
+  #from RingerCore.RawDictStreamable import RawDictStreamable
+  #__metaclass__ = RawDictStreamable
 
   def __init__( self, label, input_, target = NotSet, numPts = 1000, npConst = NotSet ):
     """

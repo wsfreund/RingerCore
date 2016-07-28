@@ -3,7 +3,6 @@ __all__ = ['RawDictStreamable', 'RawDictStreamer', 'RawDictCnv', 'mangle_attr',
            'isRawDictFormat', 'retrieveRawDict']
 
 from RingerCore.Logger import Logger
-from RingerCore.util import checkForUnusedVars
 
 mLogger = Logger.getModuleLogger( __name__ )
 
@@ -32,6 +31,7 @@ class RawDictStreamer( Logger ):
     Logger.__init__(self, kw)
     self.transientAttrs = set(transientAttrs)
     self.toPublicAttrs = set(toPublicAttrs)
+    from RingerCore.util import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
   def __call__(self, obj):
@@ -100,6 +100,7 @@ class RawDictCnv( Logger ):
     self.ignoreAttrs = set(ignoreAttrs) | RawDictCnv.baseAttrs
     self.toProtectedAttrs = set(toProtectedAttrs)
     self.ignoreRawChildren = ignoreRawChildren
+    from RingerCore.util import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
   def _searchAttr(self, val):
@@ -219,10 +220,18 @@ class RawDictStreamable( type ):
     dct['_readVersion'] = 0
     return type.__new__(cls, name, bases, dct)
 
-  def fromRawObj(cls, obj, workOnCopy = False):
+  def fromRawObj(cls, obj, workOnCopy = False, **kw):
+    """
+      Builds an instance of this class using RawDict obj.
+      -> workOnCopy: if set to false, it will change the input rawDict values,
+      otherwise work on a deep copy.
+      -> kw: Changes attributes from RawDictCnv object.
+    """
     if workOnCopy:
       from copy import deepcopy
       obj = deepcopy( obj )
+    for key, val in kw.iteritems():
+      setattr( cls._cnvObj, key, val)
     self = cls().buildFromDict( obj )
     return self
 
