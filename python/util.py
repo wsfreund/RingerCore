@@ -6,7 +6,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
-    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard']
+    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput']
 
 import re, os, __main__
 import sys
@@ -787,3 +787,13 @@ def scale10( num ):
   """
   import math
   return math.ceil(math.log10(abs(num))) if num else 0
+
+def appendToOutput( o, cond, what):
+  """
+  When multiple outputs are configurable, use this method to append to output in case some option is True.
+  """
+  if cond:
+    if type(o) is tuple: o = o + (what,)
+    else: o = o, what
+  return o
+

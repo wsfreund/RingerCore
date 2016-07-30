@@ -52,6 +52,8 @@ def save(o, filename, **kw):
 
 def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
          useGenerator = False, tarMember = None, ignore_zeros = True, 
+         extractAll = False, eraseTmpTarMembers = True,
+         returnFileName = False, returnFileMember = False,
          logger = None):
   """
     Loads an object from disk.
@@ -70,16 +72,17 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     -> ignore_zeros: whether to ignore zeroed regions when reading tarfiles or
     not. This property is important for reading only one file from merged files
     in a fast manner.
+    -> extractAll: expand every tar file members at once
+    -> eraseTmpTarMembers: whether to erase tar members after reading them
+    -> returnFileName: whether to return file name
+    -> returnFileMember: whether to return file member object at the tar file
   """
   filename = os.path.expandvars(filename)
-  transformDataRawData = __TransformDataRawData( useHighLevelObj )
+  transformDataRawData = __TransformDataRawData( useHighLevelObj, returnFileName, returnFileMember )
   if not os.path.isfile( os.path.expandvars( filename ) ):
     raise ValueError("Cannot reach file %s" % filename )
   if filename.endswith('.npy') or filename.endswith('.npz'):
-    if useGenerator:
-      return transformDataRawData( np.load(filename,mmap_mode='r') ), None
-    else:
-      return transformDataRawData( np.load(filename,mmap_mode='r') )
+    return transformDataRawData( np.load(filename,mmap_mode='r'), filename, None )
   else:
     if decompress == 'auto':
       if filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
@@ -93,89 +96,109 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
+      args = (allowTmpFile, transformDataRawData, 
+              tarMember, extractAll, eraseTmpTarMembers,
+              ignore_zeros, logger,)
       if decompress == 'tar':
-        o = __load_tar(filename, 'r:', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
+        o = __load_tar(filename, 'r:', *args)
       else:
-        o = __load_tar(filename, 'r:gz', allowTmpFile, transformDataRawData, tarMember, ignore_zeros, logger)
+        o = __load_tar(filename, 'r:gz', *args)
       if not useGenerator:
-        o = list(map(lambda x: x[0], o))
+        #o = list(map(lambda x: x[0], o))
+        o = list(o)
         if len(o) == 1: o = o[0]
       return o
     else:
       f = open(filename,'r')
     o = cPickle.load(f)
     f.close()
-    if useGenerator:
-      return transformDataRawData( o ), None
-    else:
-      return transformDataRawData( o )
+    return transformDataRawData( o, filename, None )
   # end of (if filename)
 # end of (load) 
 
 
 def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
-               ignore_zeros, logger = None):
+               extractAll, eraseTmpTarMembers, ignore_zeros, logger = None):
   """
   Internal method for reading tarfiles
   """
-  useSubprocess = False
+  #useSubprocess = False
+  useSubprocess = True
   if tarMember is None:
     f = tarfile.open(filename, mode, ignore_zeros = ignore_zeros)
-    if logger:
-      logger.info("Retrieving tar file members (%s)...", "full" if ignore_zeros else "fast")
-    memberList = f.getmembers()
+    if not extractAll:
+      if logger:
+        logger.info("Retrieving tar file members (%s)...", "full" if ignore_zeros else "fast")
+      memberList = f.getmembers()
   elif type(tarMember) in (tarfile.TarInfo, str):
     useSubprocess = True
     memberList = [tarMember]
   else:
     raise TypeError("tarMember argument must be TarInfo or None.")
-  for entry in memberList:
+  for entry in memberList if not extractAll else [None]:
     if allowTmpFile:
       tmpFolderPath=tempfile.mkdtemp()
       if useSubprocess:
         from subprocess import Popen, PIPE, check_output
         # TODO This will crash if someday someone uses a member in file that is
         # not in root path at the tarfile.
-        memberName = tarMember.name if type(tarMember) is tarfile.TarInfo else tarMember
-        untar_ps = Popen(('gtar', '-xvzif', filename, memberName,
-                          #'-C', tmpFolderPath,
-                          ), stdout = PIPE, bufsize = 1)
-        with untar_ps.stdout:
-          #sys.stdout.write("Waiting output\r")
-          while not os.path.isfile(memberName):
-            #sys.stdout.write("Waiting member be created\r")
+        if extractAll:
+          logger.info("Proceeding to untar all members.")
+          untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename,
+                          ), stdout = PIPE, bufsize = 1, 
+                          cwd = tmpFolderPath)
+          untar_ps.wait()
+          with untar_ps.stdout:
+            memberList = untar_ps.stdout.read().split('\n')
+            if memberList[-1] == '': memberList.pop()
+            memberList = [(int(size), name) for _, _, size, _, _, name in member.split(' ') for member in memberList]
+        else:
+          memberName = entry.name if type(entry) is tarfile.TarInfo else entry
+          untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename, memberName,
+                           ), stdout = PIPE, bufsize = 1, cwd = tmpFolderPath)
+          with untar_ps.stdout:
+            for line in iter(untar_ps.stdout.readline, b''):
+              line = line.strip('\n')
+              _, _, size, _, _, name = line.split(' ')
+              memberList = [(int(size), name)]
+        for entry in memberList:
+          memberSize, memberName = (entry.size, entry.name, ) if type(entry) is tarfile.TarInfo else entry
+          oFile = os.path.join( tmpFolderPath, memberName )
+          while not os.path.isfile( oFile ):
             sleep(0.001)
-          while os.path.getsize(memberName) != tarMember.size:
-            #sys.stdout.write("Waiting member size\r")
+          while os.path.getsize( oFile ) != memberSize:
             sleep(0.001)
-          sys.stdout.write("kill\r")
-          untar_ps.kill()
-        untar_ps.wait()
-
-        #head_ps = Popen(('head', '-n 0'), stdin=untar_ps.stdout, stdout=PIPE)
-        oFile = tmpFolderPath + '/' + memberName
-        try:
-          shutil.move( memberName, oFile) 
-        except OSError:
-          sleep(2) # FIXME
-          shutil.move( memberName, oFile) 
-        with open( oFile ) as f_member:
-          data = transformDataRawData( cPickle.load(f_member) ), entry
-        yield data
-      else:
-        f.extractall(path=tmpFolderPath, members=(entry,))
-        with open(os.path.join(tmpFolderPath,entry.name)) as f_member:
-          data = transformDataRawData( cPickle.load(f_member) ), entry
-        yield data
-      shutil.rmtree(tmpFolderPath)
+          if not extractAll:
+            untar_ps.kill()
+            untar_ps.wait()
+          os.listdir( tmpFolderPath )
+          with open( oFile ) as f_member:
+            data = transformDataRawData( cPickle.load(f_member), oFile if extractAll else filename, entry )
+            yield data
+        if extractAll:
+          break
+      #else:
+      #  if extractAll:
+      #    logger.info("Untaring all members to %s...", tmpFolderPath)
+      #    f.extractall(path=tmpFolderPath, )
+      #  else:
+      #    f.extractall(path=tmpFolderPath, members=(entry,))
+      #  for entry in memberList if extractAll else [entry]:
+      #    memberName = entry.name if type(entry) is tarfile.TarInfo else entry
+      #    oFile = os.path.join(tmpFolderPath, memberName)
+      #    print oFile
+      #    with open(oFile) as f_member:
+      #      yield transformDataRawData( cPickle.load(f_member), oFile if extractAll else filename, entry )
+      #  if extractAll:
+      #    break
+      if eraseTmpTarMembers:
+        shutil.rmtree(tmpFolderPath)
     else:
       fileobj = f.extractfile(entry)
       if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
-        fio = StringIO.StringIO(fileobj.read())
-        fzip = gzip.GzipFile(fileobj=fio)
-        yield transformDataRawData( cPickle.load(fzip) ), entry
-      else:
-        yield transformDataRawData( cPickle.load(fileobj) ), entry
+        fio = StringIO.StringIO( fileobj.read() )
+        fileobj = gzip.GzipFile( fileobj = fio )
+      yield transformDataRawData( cPickle.load(fileobj), filename, entry )
   if not useSubprocess:
     f.close()
 # end of (load_tar)
@@ -185,10 +208,12 @@ class __TransformDataRawData( object ):
   Transforms raw data if requested to use high level object
   """
 
-  def __init__(self, useHighLevelObj = False):
+  def __init__(self, useHighLevelObj, returnFileName, returnFileMember,):
     self.useHighLevelObj = useHighLevelObj
+    self.returnFileName = returnFileName
+    self.returnFileMember = returnFileMember
 
-  def __call__(self, o):
+  def __call__(self, o, fname, tmember):
     """
     Run transformation
     """
@@ -198,6 +223,9 @@ class __TransformDataRawData( object ):
       if type(o) is NpzFile:
         o = dict(o)
       o = retrieveRawDict( o )
+    from RingerCore.util import appendToOutput
+    o = appendToOutput( o, self.returnFileName,   fname   )
+    o = appendToOutput( o, self.returnFileMember, tmember )
     return o
  
 def expandFolders( pathList, filters = None, logger = None, level = None):
