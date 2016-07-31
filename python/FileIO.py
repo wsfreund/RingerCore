@@ -147,7 +147,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
     if allowTmpFile:
       tmpFolderPath=tempfile.mkdtemp()
       if useSubprocess:
-        from subprocess import Popen, PIPE, check_output
+        from subprocess import Popen, PIPE
         # TODO This will crash if someday someone uses a member in file that is
         # not in root path at the tarfile.
         if extractAll:
@@ -159,7 +159,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           with untar_ps.stdout:
             memberList = untar_ps.stdout.read().split('\n')
             if memberList[-1] == '': memberList.pop()
-            memberList = [(int(size), name) for _, _, size, _, _, name in member.split(' ') for member in memberList]
+            memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: member.split(' '), memberList)]
         else:
           memberName = entry.name if type(entry) is tarfile.TarInfo else entry
           untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename, memberName,
@@ -169,6 +169,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
               line = line.strip('\n')
               _, _, size, _, _, name = line.split(' ')
               memberList = [(int(size), name)]
+              break
         for entry in memberList:
           memberSize, memberName = (entry.size, entry.name, ) if type(entry) is tarfile.TarInfo else entry
           oFile = os.path.join( tmpFolderPath, memberName )
@@ -246,9 +247,9 @@ def getExtension( filename, nDots = None):
   """
   filename = filename.split('.')
   lParts = len(filename)
-  if nDots is None: nDots = - ( lParts - 1 )
+  if nDots is None: nDots = (lParts - 1)
   nDots = - nDots
-  if nDots <= -lParts: nDots = -(lParts - + 1)
+  if nDots <= -lParts: nDots = - (lParts - 1)
   if nDots > -1:
     return ''
   return '.'.join(filename[nDots:])
