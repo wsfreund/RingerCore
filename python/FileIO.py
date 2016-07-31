@@ -1,4 +1,6 @@
-__all__ = ['save', 'load', 'expandFolders', 'ensureExtension', 'appendToFileName',]
+__all__ = ['save', 'load', 'expandFolders', 
+           'getExtension',
+           'ensureExtension', 'appendToFileName',]
 
 import numpy as np
 import cPickle
@@ -82,7 +84,8 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
   if not os.path.isfile( os.path.expandvars( filename ) ):
     raise ValueError("Cannot reach file %s" % filename )
   if filename.endswith('.npy') or filename.endswith('.npz'):
-    return transformDataRawData( np.load(filename,mmap_mode='r'), filename, None )
+    o = transformDataRawData( np.load(filename,mmap_mode='r'), filename, None )
+    return [o] if useGenerator else o
   else:
     if decompress == 'auto':
       if filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
@@ -91,8 +94,12 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
         decompress = 'gzip'
       elif filename.endswith( '.gz.tar' ) or filename.endswith( '.tar' ):
         decompress = 'tar'
-      else:
+      elif filename.endswith( '.pic' ):
         decompress = False
+      else:
+        raise RuntimeError("It is not possible to read format: '.%s'. Input file was: '%s'." % (
+          getExtension(filename, None), 
+          filename) )
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
@@ -112,7 +119,8 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
       f = open(filename,'r')
     o = cPickle.load(f)
     f.close()
-    return transformDataRawData( o, filename, None )
+    o = transformDataRawData( o, filename, None )
+    return [o] if useGenerator else o
   # end of (if filename)
 # end of (load) 
 
@@ -228,6 +236,23 @@ class __TransformDataRawData( object ):
     o = appendToOutput( o, self.returnFileMember, tmember )
     return o
  
+def getExtension( filename, nDots = None):
+  """
+    Get file extension.
+
+    Inputs:
+    -> filename;
+    -> nDots: the maximum number of dots extesions should have.
+  """
+  filename = filename.split('.')
+  lParts = len(filename)
+  if nDots is None: nDots = - ( lParts - 1 )
+  nDots = - nDots
+  if nDots <= -lParts: nDots = -(lParts - + 1)
+  if nDots > -1:
+    return ''
+  return '.'.join(filename[nDots:])
+
 def expandFolders( pathList, filters = None, logger = None, level = None):
   """
     Expand all folders to the contained files using the filters on pathList

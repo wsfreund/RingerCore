@@ -237,7 +237,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   if level is None: level = LoggingLevel.INFO
   def _show(_i):
     x = int(size*_i/count) if count else 0
-    if _i % step: return
+    if _i % (step if step else 1): return
     if logger:
       if logger.isEnabledFor(level):
         fn, lno, func = logger.findCaller() 
