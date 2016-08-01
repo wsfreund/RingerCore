@@ -147,26 +147,31 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
     if allowTmpFile:
       tmpFolderPath=tempfile.mkdtemp()
       if useSubprocess:
-        from subprocess import Popen, PIPE
+        from subprocess import Popen, PIPE, CalledProcessError
         # TODO This will crash if someday someone uses a member in file that is
         # not in root path at the tarfile.
         if extractAll:
           start = time()
           logger.info("Proceeding to untar all members.")
-          untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename,
-                          ), stdout = PIPE, bufsize = 1, 
+          process_args = ('gtar', '--verbose', '-xvzif', filename,)
+          untar_ps = Popen(process_args, stdout = PIPE, bufsize = 1, 
                           cwd = tmpFolderPath)
           memberList = []
           with untar_ps.stdout:
             while True:
               outputLine = untar_ps.stdout.readline().strip('\n')
-              if outputLine == '' and untar_ps.poll() is not None:
-                break
-              memberList.append(outputLine)
-              logger.debug(outputLine)
+              if outputLine == '':
+                if untar_ps.poll() is not None:
+                  break
+              else:
+                memberList.append(outputLine)
+                logger.debug(outputLine)
+          return_code = untar_ps.wait()
+          if return_code != 0:
+            raise CalledProcessError(return_code, process_args)
           memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: member.split(' '), memberList)]
-          logger.info("Untar file content took %.2fs", end - start )
           end = time()
+          logger.info("Untar file content took %.2fs", end - start )
         else:
           memberName = entry.name if type(entry) is tarfile.TarInfo else entry
           untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename, memberName,
