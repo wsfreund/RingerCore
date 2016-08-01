@@ -160,7 +160,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           with untar_ps.stdout:
             while True:
               outputLine = untar_ps.stdout.readline().strip('\n')
-              if outputLine == '' and process.poll() is not None:
+              if outputLine == '' and untar_ps.poll() is not None:
                 break
               memberList.append(outputLine)
               logger.debug(outputLine)
