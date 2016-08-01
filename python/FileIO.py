@@ -194,7 +194,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
             untar_ps.wait()
           os.listdir( tmpFolderPath )
           with open( oFile ) as f_member:
-            data = transformDataRawData( cPickle.load(f_member), oFile if extractAll else filename, entry )
+            data = transformDataRawData( cPickle.load(f_member), oFile if extractAll else filename, memberName )
             yield data
         if extractAll:
           break
@@ -219,7 +219,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
       if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
         fio = StringIO.StringIO( fileobj.read() )
         fileobj = gzip.GzipFile( fileobj = fio )
-      yield transformDataRawData( cPickle.load(fileobj), filename, entry )
+      yield transformDataRawData( cPickle.load(fileobj), filename, memberName )
   if not useSubprocess:
     f.close()
 # end of (load_tar)

@@ -45,9 +45,7 @@ def fatal(self, message, *args, **kws):
 logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
 
-# This will be a little buggy, as I can't control without changing every logger
-# the handling of this no new line variable. Either way, this will handle most
-# of the cases.
+# This won't handle print and sys.stdout, but most of the cases are handled.
 _nl = True
 
 class StreamHandler2( logging.StreamHandler ):
