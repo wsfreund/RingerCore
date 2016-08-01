@@ -11,7 +11,7 @@ import os
 import sys
 import shutil
 import StringIO
-from time import sleep
+from time import sleep, time
 
 def save(o, filename, **kw):
   """
@@ -151,15 +151,22 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         # TODO This will crash if someday someone uses a member in file that is
         # not in root path at the tarfile.
         if extractAll:
+          start = time()
           logger.info("Proceeding to untar all members.")
           untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename,
                           ), stdout = PIPE, bufsize = 1, 
                           cwd = tmpFolderPath)
-          untar_ps.wait()
+          memberList = []
           with untar_ps.stdout:
-            memberList = untar_ps.stdout.read().split('\n')
-            if memberList[-1] == '': memberList.pop()
-            memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: member.split(' '), memberList)]
+            while True:
+              outputLine = untar_ps.stdout.readline().strip('\n')
+              if outputLine == '' and process.poll() is not None:
+                break
+              memberList.append(outputLine)
+              logger.debug(outputLine)
+          memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: member.split(' '), memberList)]
+          logger.info("Untar file content took %.2fs", end - start )
+          end = time()
         else:
           memberName = entry.name if type(entry) is tarfile.TarInfo else entry
           untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename, memberName,
