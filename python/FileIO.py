@@ -79,9 +79,9 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     -> returnFileName: whether to return file name
     -> returnFileMember: whether to return file member object at the tar file
   """
-  filename = os.path.expandvars(filename)
+  filename = os.path.abspath( os.path.expandvars(filename) )
   transformDataRawData = __TransformDataRawData( useHighLevelObj, returnFileName, returnFileMember )
-  if not os.path.isfile( os.path.expandvars( filename ) ):
+  if not os.path.isfile( filename ):
     raise ValueError("Cannot reach file %s" % filename )
   if filename.endswith('.npy') or filename.endswith('.npz'):
     o = transformDataRawData( np.load(filename,mmap_mode='r'), filename, None )
