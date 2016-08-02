@@ -284,13 +284,11 @@ class GridNamespace( LoggerNamespace, Logger ):
             oList = output.split(':')
             if len(oList) == 2:
               did = value + '_' + oList[1].replace('"','')
-              print did, len(did)
               if len(did) > 132:
                 raise LargeDIDError(did)
             else:
               if '*' in output and not output.endswith('.tgz'): output += '.tgz'
               did = value + '_' + output.replace('*','XYZ').replace('"','')
-              print did, len(did)
               if len(did) > 132:
                 raise LargeDIDError(did)
       elif 'gridExpand_' in name:
