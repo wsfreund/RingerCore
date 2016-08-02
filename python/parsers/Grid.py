@@ -283,7 +283,7 @@ class GridNamespace( LoggerNamespace, Logger ):
           for output in self.grid_outputs.split(','):
             oList = output.split(':')
             if len(oList) == 2:
-              did = value + '_' + oList[1].replace('"','')
+              did = value + '_' + oList[0].replace('"','')
               if len(did) > 132:
                 raise LargeDIDError(did)
             else:
