@@ -47,9 +47,9 @@ gridParserGroup.add_argument('--followLinks', action='store_true',
 gridParserGroup.add_argument('--mergeOutput', action='store_true',
     required = False, dest = 'grid_mergeOutput',
     help = """Flag to enable merging output.""")
-gridParserGroup.add_argument('--mergeScript', 
-    required = False, dest = 'grid_mergeScript',
-    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
+#gridParserGroup.add_argument('--mergeScript', 
+#    required = False, dest = 'grid_mergeScript',
+#    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
 gridParserGroup.add_argument('--extFile', nargs='?',
     required = False, dest = 'grid_extFile', default='',
     help = """External file to add.""")
@@ -139,6 +139,13 @@ outGridParser = argparse.ArgumentParser(add_help = False,
                                         parents = [_outParser, gridParser])
 # Remove temp classes
 del _inParser, _outParser
+
+class LargeDIDError(ValueError):
+  def __init__(self, in_):
+    ValueError.__init__(self, ('Size of --outDS is larger (%d) than 132 char, '
+                        'the maximum value allowed by CERN grid. '
+                        'Current DID is valid until: %s') % (len(in_), in_[:132]))
+
 ################################################################################
 ## GridNamespace
 # Make sure to use GridNamespace specialization for the used package when
@@ -178,6 +185,16 @@ class GridNamespace( LoggerNamespace, Logger ):
     if len(value) < 2 or value[-1] != '"':
       value += '"'
     self.exec_ = value 
+
+  def setMergeExec(self, value):
+    """
+      Add the merge execution command on grid.
+    """
+    if len(value) < 1 or value[0] != '"':
+      value = '"' + value
+    if len(value) < 2 or value[-1] != '"':
+      value += '"'
+    self.mergeExec_ = value 
 
   def pre_download(self):
     """
@@ -231,6 +248,21 @@ class GridNamespace( LoggerNamespace, Logger ):
         else:
           moreSpaces = 4
         full_cmd_str += (' ' * (nSpaces + moreSpaces) ) + l + ' \\\n'
+    if hasattr(self,'mergeExec_'):
+      full_cmd_str += (' ' * nSpaces) + '--mergeScript' + ' \\\n'
+      merge_exec_str = [textwrap.dedent(l) for l in self.mergeExec_.split('\n')]
+      merge_exec_str = [l for l in merge_exec_str if l not in (';','"','')]
+      if merge_exec_str[-1][-1:] != '"': 
+        merge_exec_str[-1] += '"' 
+      for i, l in enumerate(merge_exec_str):
+        if i == 0:
+          moreSpaces = 2
+        else:
+          moreSpaces = 4
+        full_cmd_str += (' ' * (nSpaces + moreSpaces) ) + l + ' \\\n'
+      if not 'grid_mergeOutput' in get_attributes(self, onlyVars = True) or \
+          not(self.grid_mergeOutput):
+        self.grid_mergeOutput = True
     # Add needed external files:
     if self.extFile() and not self.extFile() in self.grid_extFile:
       if len(self.grid_extFile):
@@ -247,10 +279,20 @@ class GridNamespace( LoggerNamespace, Logger ):
     for name, value in get_attributes(self):
       if 'grid_' in name:
         name = name.replace('grid_','--')
-        if name == '--outDS' and len(value) > 132:
-          raise ValueError(('Size of --outDS is larger (%d) than 132 char, '
-              'the maximum value allowed by CERN grid. '
-              'Container name is valid until: %s') % (len(value), value[:132]))
+        if name == '--outDS':
+          for output in self.grid_outputs.split(','):
+            oList = output.split(':')
+            if len(oList) == 2:
+              did = value + '_' + oList[1].replace('"','')
+              print did, len(did)
+              if len(did) > 132:
+                raise LargeDIDError(did)
+            else:
+              if '*' in output and not output.endswith('.tgz'): output += '.tgz'
+              did = value + '_' + output.replace('*','XYZ').replace('"','')
+              print did, len(did)
+              if len(did) > 132:
+                raise LargeDIDError(did)
       elif 'gridExpand_' in name:
         if value:
           name = value
