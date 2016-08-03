@@ -6,7 +6,8 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'retrieve_kw', 'setDefaultKey', 'start_after',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
-    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput']
+    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput',
+    'is_tool']
 
 import re, os, __main__
 import sys
@@ -184,6 +185,15 @@ def csvStr2List( csvStr ):
     csvStr = [csvStr]
   return csvStr
 
+def is_tool(name):
+  import subprocess
+  try:
+    devnull = open(os.devnull)
+    subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
+  except OSError as e:
+    if e.errno == os.errno.ENOENT:
+      return False
+  return True
 
 def get_attributes(o, **kw):
   """
