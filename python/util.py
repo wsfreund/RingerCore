@@ -1,5 +1,6 @@
+#coding: utf-8
 __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
-    'NotSet', 'NotSetType', 'str_to_class', 'Roc', 'SetDepth', 'calcSP',
+    'NotSet', 'NotSetType', 'StdPair','str_to_class', 'Roc', 'SetDepth', 'calcSP',
     'checkForUnusedVars', 'conditionalOption', 'findFile',
     'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
     'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
@@ -34,6 +35,16 @@ class Holder( object ):
     self.obj = obj
   def __call__(self):
     return self.obj
+
+class StdPair( object ): 
+  def __init__(self, a, b):
+    self.first  = a
+    self.second = b
+  def __call__(self):
+    return (self.first,self.second)
+
+
+
 
 loadedEnvFile = False
 def sourceEnvFile():
@@ -243,7 +254,7 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
         fn, lno, func = logger.findCaller() 
         record = logger.makeRecord(logger.name, level, fn, lno, 
                                    "%s[%s%s] %i/%i\r",
-                                   (prefix, "#"*x, "."*(size-x), _i, count,), 
+                                   (prefix, "█"*x, "."*(size-x), _i, count,), 
                                    None, 
                                    func=func)
         record.nl = False
