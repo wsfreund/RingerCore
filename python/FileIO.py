@@ -1,5 +1,5 @@
 __all__ = ['save', 'load', 'expandFolders', 
-           'getExtension',
+           'getExtension', 'checkExtension',
            'ensureExtension', 'appendToFileName',]
 
 import numpy as np
@@ -83,18 +83,18 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
   transformDataRawData = __TransformDataRawData( useHighLevelObj, returnFileName, returnFileMember )
   if not os.path.isfile( filename ):
     raise ValueError("Cannot reach file %s" % filename )
-  if filename.endswith('.npy') or filename.endswith('.npz'):
+  if checkExtension( filename, 'npy|npz'):
     o = transformDataRawData( np.load(filename,mmap_mode='r'), filename, None )
     return [o] if useGenerator else o
   else:
     if decompress == 'auto':
-      if filename.endswith( '.tar.gz' ) or filename.endswith( '.tgz' ):
+      if checkExtension( filename, 'tar.gz|tgz' ):
         decompress = 'tgz'
-      elif filename.endswith( '.gz' ) or filename.endswith( '.gzip' ):
+      elif checkExtension( filename, 'gz|gzip' ): 
         decompress = 'gzip'
-      elif filename.endswith( '.gz.tar' ) or filename.endswith( '.tar' ):
+      elif checkExtension( filename, 'tar' ):
         decompress = 'tar'
-      elif filename.endswith( '.pic' ):
+      elif checkExtension( filename, '.pic' ):
         decompress = False
       else:
         raise RuntimeError("It is not possible to read format: '.%s'. Input file was: '%s'." % (
@@ -148,12 +148,14 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
       tmpFolderPath=tempfile.mkdtemp()
       if useSubprocess:
         from subprocess import Popen, PIPE, CalledProcessError
+        from RingerCore import is_tool
+        tar_cmd = 'gtar' if is_tool('gtar') else 'tar'
         # TODO This will crash if someday someone uses a member in file that is
         # not in root path at the tarfile.
         if extractAll:
           start = time()
           logger.info("Proceeding to untar all members.")
-          process_args = ('gtar', '--verbose', '-xvzif', filename,)
+          process_args = (tar_cmd, '--verbose', '-xvzif', filename,)
           untar_ps = Popen(process_args, stdout = PIPE, bufsize = 1, 
                           cwd = tmpFolderPath)
           memberList = []
@@ -174,7 +176,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           logger.info("Untar file content took %.2fs", end - start )
         else:
           memberName = entry.name if type(entry) is tarfile.TarInfo else entry
-          untar_ps = Popen(('gtar', '--verbose', '-xvzif', filename, memberName,
+          untar_ps = Popen((tar_cmd, '--verbose', '-xvzif', filename, memberName,
                            ), stdout = PIPE, bufsize = 1, cwd = tmpFolderPath)
           with untar_ps.stdout:
             for line in iter(untar_ps.stdout.readline, b''):
@@ -216,7 +218,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
         shutil.rmtree(tmpFolderPath)
     else:
       fileobj = f.extractfile(entry)
-      if entry.name.endswith( '.gz' ) or entry.name.endswith( '.gzip' ):
+      if checkExtension( entry.name, 'gz|gzip' ):
         fio = StringIO.StringIO( fileobj.read() )
         fileobj = gzip.GzipFile( fileobj = fio )
       yield transformDataRawData( cPickle.load(fileobj), filename, memberName )
@@ -248,23 +250,6 @@ class __TransformDataRawData( object ):
     o = appendToOutput( o, self.returnFileName,   fname   )
     o = appendToOutput( o, self.returnFileMember, tmember )
     return o
- 
-def getExtension( filename, nDots = None):
-  """
-    Get file extension.
-
-    Inputs:
-    -> filename;
-    -> nDots: the maximum number of dots extesions should have.
-  """
-  filename = filename.split('.')
-  lParts = len(filename)
-  if nDots is None: nDots = (lParts - 1)
-  nDots = - nDots
-  if nDots <= -lParts: nDots = - (lParts - 1)
-  if nDots > -1:
-    return ''
-  return '.'.join(filename[nDots:])
 
 def expandFolders( pathList, filters = None, logger = None, level = None):
   """
@@ -313,10 +298,35 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
   if len(filters) is 1:
     retList = retList[0]
   return retList
+ 
+def getExtension( filename, nDots = None):
+  """
+    Get file extension.
+
+    Inputs:
+    -> filename;
+    -> nDots: the maximum number of dots extesions should have.
+  """
+  filename = filename.split('.')
+  lParts = len(filename)
+  if nDots is None: nDots = (lParts - 1)
+  nDots = - nDots
+  if nDots <= -lParts: nDots = - (lParts - 1)
+  if nDots > -1:
+    return ''
+  return '.'.join(filename[nDots:])
+
+def checkExtension( filename, ext, ignoreNumbersAfterExtension = True):
+  """
+    Check if file matches extension(s) ext. If checking for multiple
+    extensions, use | to separate the extensions.
+  """
+  return bool(__extRE(ext, ignoreNumbersAfterExtension).match( filename ))
 
 def __extRE(ext, ignoreNumbersAfterExtension = True):
   """
   Returns a regular expression compiled object that will search for
+  extension ext
   """
   import re
   if not isinstance( ext, (list,tuple,)): ext = ext.split('|')
@@ -332,7 +342,7 @@ def ensureExtension( filename, ext, ignoreNumbersAfterExtension = True ):
   if isinstance( ext, (list,tuple) ): ext = ['.' + e if e[0] != '.' else e for e in ext]
   elif ext[0] != '.': ext = '.' + ext
 
-  if not __extRE(ext, ignoreNumbersAfterExtension).match( filename ):
+  if not checkExtension(ext, filename, ignoreNumbersAfterExtension):
     ext = ext.partition('|')[0]
     composed = ext.split('.')
     if not composed[0]: composed = composed[1:]
