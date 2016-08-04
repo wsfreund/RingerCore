@@ -224,7 +224,8 @@ class GridNamespace( LoggerNamespace, Logger ):
                        )
     self.check_retrieve("$ROOTCOREBIN/../Downloads/numpy.tgz"
                        ,"3cb325c3dff03b5bc15206c757a26116"
-                       ,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
+                       ,"https://github.com/numpy/numpy/archive/v1.10.4.tar.gz"
+                       #,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
                        )
 
   def extFile(self):
