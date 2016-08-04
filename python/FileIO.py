@@ -1,6 +1,7 @@
 __all__ = ['save', 'load', 'expandFolders', 
            'getExtension', 'checkExtension',
-           'ensureExtension', 'appendToFileName',]
+           'ensureExtension', 'appendToFileName',
+           'getMD5','checkFile']
 
 import numpy as np
 import cPickle
@@ -404,3 +405,30 @@ def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz
     return str_.sub(repStr(lSep), filename)
   else:
     return filename + ( separator if not(filename.endswith(separator) or appendStr.startswith(separator)) else '') + appendStr
+
+def getMD5(filepath):
+  """
+  Get files md5 hash
+  """
+  import os.path
+  import hashlib
+  md5_returned = ''
+  with open(os.path.expandvars(filepath),'rb') as file_to_check:
+    # read contents of the file
+    data = file_to_check.read()    
+    # pipe contents of the file through
+    md5_returned = hashlib.md5(data).hexdigest()
+  return md5_returned
+
+def checkFile(filepath, md5sum = None):
+  """
+  Checks if file exists and if md5sum matches
+  """
+  import os.path
+  filepath = os.path.expandvars(filepath)
+  return os.path.isfile(filepath) and \
+         (
+           md5sum is None or
+           getMD5(filepath) == md5sum
+         )
+
