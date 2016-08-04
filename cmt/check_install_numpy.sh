@@ -33,7 +33,8 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   numpy_version="1.10.4"
 
   # Protect against corrupt files:
-  if test -n $(find $(dirname $numpy_tgz_file) -size 1M -name "$(basename $numpy_tgz_file)" 2>/dev/null); then
+  if test ! -f $numpy_tgz_file -a \
+           $(md5sum -b $numpy_tgz_file | cut -f1 -d ' ') != "90bb9034652cefbada19cf7d141a6a61"; then
     echo "downloading ${numpy_tgz_file}..."
     numpy_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/numpy.tgz"
     if test -f $numpy_afs_path; then
