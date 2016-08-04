@@ -7,8 +7,8 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
   cython_version=Cython-0.23.4.tar.gz
 
   # Protect against corrupt files:
-  if test ! -f $cython_tgz_file -o \
-             $(md5sum -b $cython_tgz_file | cut -f1 -d ' ') != "baeb004575d58a7b186737a3be6d5f07"; then
+  if test ! -f "$cython_tgz_file" -o \
+             "$(md5sum -b "$cython_tgz_file" | cut -f1 -d ' ')" != "baeb004575d58a7b186737a3be6d5f07"; then
     echo "Downloading \"${cython_tgz_file}\"..."
     cython_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/cython.tgz"
     if test -f $cython_afs_path; then
@@ -21,7 +21,6 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
         || { echo "Couldn't download cython!" && return 1; }
     fi
   fi
-
 
   echo "installing cython..."
   cython_source_tmp_dir=$(mktemp -d)
