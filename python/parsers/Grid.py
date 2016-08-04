@@ -223,7 +223,7 @@ class GridNamespace( LoggerNamespace, Logger ):
                        ,"http://cython.org/release/Cython-0.23.4.tar.gz"
                        )
     self.check_retrieve("$ROOTCOREBIN/../Downloads/numpy.tgz"
-                       ,"90bb9034652cefbada19cf7d141a6a61"
+                       ,"3cb325c3dff03b5bc15206c757a26116"
                        ,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
                        )
 
