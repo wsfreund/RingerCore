@@ -77,12 +77,15 @@ gridParserGroup.add_argument('--long', action='store_true',
 gridParserGroup.add_argument('--useNewCode', action='store_true',
     required = False, dest = 'grid_useNewCode',
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--dry-run', action='store_true',
-    help = """Only print grid resulting command, but do not execute it.
-            Used for debugging submission.""")
 gridParserGroup.add_argument('--allowTaskDuplication', action='store_true',
     required = False, dest = 'grid_allowTaskDuplication',
     help = """Flag to disable auto retrying jobs.""")
+gridParserGroup.add_argument('--crossSite', 
+    required = False, dest = 'grid_crossSite', type=int,
+    help = """Split jobs over many sites.""")
+gridParserGroup.add_argument('--dry-run', action='store_true',
+    help = """Only print grid resulting command, but do not execute it.
+            Used for debugging submission.""")
 mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
 mutuallyEx1.add_argument('-itar','--inTarBall', 
     metavar='InTarBall', nargs = '?', dest = 'grid_inTarBall',
@@ -163,7 +166,7 @@ class GridNamespace( LoggerNamespace, Logger ):
     LoggerNamespace.__init__( self, **kw )
     self.prog = prog
 
-  def __call__(self):   
+  def __call__(self):
     self.run_cmd()
 
   def setBExec(self, value):
@@ -196,12 +199,33 @@ class GridNamespace( LoggerNamespace, Logger ):
       value += '"'
     self.mergeExec_ = value 
 
+  def check_retrieve(self, filename, md5sum, dlurl):
+    basefile=os.path.basename(filename)
+    from RingerCore.FileIO import checkFile
+    if not checkFile(filename, md5sum):
+      self._logger.info('Downloading %s to avoid doing it on server side.', basefile)
+      import urllib
+      urllib.urlretrieve(dlurl, filename=os.path.expandvars(filename))
+    else:
+      self._logger.info('%s already downloaded.',filename)
+
   def pre_download(self):
     """
       Packages which need special libraries downloads to install should inherit
       from this class and overload this method to download needed libraries.
     """
-    pass
+    self.check_retrieve("$ROOTCOREBIN/../Downloads/boost.tgz"
+                       ,"5a5d5614d9a07672e1ab2a250b5defc5"
+                       ,"http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz"
+                       )
+    self.check_retrieve("$ROOTCOREBIN/../Downloads/cython.tgz"
+                       ,"baeb004575d58a7b186737a3be6d5f07"
+                       ,"http://cython.org/release/Cython-0.23.4.tar.gz"
+                       )
+    self.check_retrieve("$ROOTCOREBIN/../Downloads/numpy.tgz"
+                       ,"90bb9034652cefbada19cf7d141a6a61"
+                       ,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
+                       )
 
   def extFile(self):
     """
