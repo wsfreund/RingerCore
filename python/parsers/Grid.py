@@ -219,8 +219,8 @@ class GridNamespace( LoggerNamespace, Logger ):
                        ,"http://sourceforge.net/projects/boost/files/boost/1.58.0/boost_1_58_0.tar.gz"
                        )
     self.check_retrieve("$ROOTCOREBIN/../Downloads/cython.tgz"
-                       ,"baeb004575d58a7b186737a3be6d5f07"
-                       ,"http://cython.org/release/Cython-0.23.4.tar.gz"
+                       ,"890b494a12951f1d6228c416a5789554"
+                       ,"https://pypi.python.org/packages/c6/fe/97319581905de40f1be7015a0ea1bd336a756f6249914b148a17eefa75dc/Cython-0.24.1.tar.gz"
                        )
     self.check_retrieve("$ROOTCOREBIN/../Downloads/numpy.tgz"
                        ,"3cb325c3dff03b5bc15206c757a26116"

@@ -4,11 +4,11 @@ cython_install_path="$INSTALL_AREA/cython"; cython_install_path_bslash="$INSTALL
 test -d "$cython_install_path/site-packages" && add_to_env PYTHONPATH "$cython_install_path/site-packages"
 
 if ! python -c "import Cython" > /dev/null 2> /dev/null; then
-  cython_version=Cython-0.23.4.tar.gz
+  cython_version=Cython-0.24.1.tar.gz
 
   # Protect against corrupt files:
   if test ! -f "$cython_tgz_file" -o \
-             "$(md5sum -b "$cython_tgz_file" | cut -f1 -d ' ')" != "baeb004575d58a7b186737a3be6d5f07"; then
+             "$(md5sum -b "$cython_tgz_file" | cut -f1 -d ' ')" != "890b494a12951f1d6228c416a5789554"; then
     echo "Downloading \"${cython_tgz_file}\"..."
     cython_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/cython.tgz"
     if test -f $cython_afs_path; then
@@ -17,7 +17,7 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
       if test  "$RCM_GRID_ENV" -eq "1"; then
         echo "Cannot reach cython source files. Cannot download it from grid." && exit 1;
       fi
-      curl -L -s -o "$cython_tgz_file" "http://cython.org/release/${cython_version}" \
+      curl -L -s -o "$cython_tgz_file" "https://pypi.python.org/packages/c6/fe/97319581905de40f1be7015a0ea1bd336a756f6249914b148a17eefa75dc/$cython_version" \
         || { echo "Couldn't download cython!" && return 1; }
     fi
   fi
@@ -29,7 +29,7 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
         && echo "done" \
         || { echo "Couldn't extract cython files!" && exit 1; }
 	else
-    echo -n "extracting files... " && cython_folder=$(tar xfzv "$cython_tgz_file" --skip-old-files -C $cython_source_tmp_dir  2> /dev/null) \
+    echo -n "extracting files... " && cython_folder=$(tar xfzv "$cython_tgz_file" --skip-old-files -C $cython_source_tmp_dir ) \
         && echo "done" \
         || { echo "Couldn't extract cython files!" && exit 1; }
   fi
