@@ -336,27 +336,34 @@ def __extRE(ext, ignoreNumbersAfterExtension = True):
   return re.compile(r'(.*)\.(' + r'|'.join(ext) + r')' + \
                     (r'(\.[0-9]*|)' if ignoreNumbersAfterExtension else '()') + r'$')
 
-def ensureExtension( filename, ext, ignoreNumbersAfterExtension = True ):
+def ensureExtension( filename, extL, ignoreNumbersAfterExtension = True ):
   """
   Ensure that filename extension is ext, else adds its extension.
   """
-  if isinstance( ext, (list,tuple) ): ext = ['.' + e if e[0] != '.' else e for e in ext]
-  elif ext[0] != '.': ext = '.' + ext
+  if isinstance(extL, basestring) and '|' in extL: 
+    extL = extL.split('|')
+  if not isinstance(extL, (list,tuple)):
+    extL = [extL]
+  extL = ['.' + e if e[0] != '.' else e for e in extL]
 
-  if not checkExtension(ext, filename, ignoreNumbersAfterExtension):
-    ext = ext.partition('|')[0]
-    composed = ext.split('.')
-    if not composed[0]: composed = composed[1:]
-    lComposed = len(composed)
-    if lComposed > 1:
-      for idx in range(lComposed):
-        if filename.endswith( '.'.join(composed[0:idx+1]) ):
-          filename += '.' + '.'.join(composed[idx+1:])
-          break
-      else:
-        filename += ext
+  # FIXME: This can be returned earlier by using filter
+  if any([checkExtension(filename, ext, ignoreNumbersAfterExtension) for ext in extL]):
+    return filename
+
+  # FIXME We should check every extension and see how many composed matches we had before doing this
+  ext = extL[0]
+  composed = ext.split('.')
+  if not composed[0]: composed = composed[1:]
+  lComposed = len(composed)
+  if lComposed > 1:
+    for idx in range(lComposed):
+      if filename.endswith( '.'.join(composed[0:idx+1]) ):
+        filename += '.' + '.'.join(composed[idx+1:])
+        break
     else:
       filename += ext
+  else:
+    filename += ext
   return filename
 
 def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
