@@ -114,39 +114,40 @@ class StreamHandler2( logging.StreamHandler ):
 
 def getFormatter():
   class Formatter(logging.Formatter):
-    black, red, green, yellow, blue, magenta, cyan, white = range(8)
+    import numpy as np
+    black, red, green, yellow, blue, magenta, cyan, white = ['0;%d' % int(d) for d in (90 + np.arange(8))]
+    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ['1;%d' % d for d in 90 + np.arange(8)]
+    gray = '1;30'
     reset_seq = "\033[0m"
-    color_seq = "\033[1;%dm"
-    bold_seq = "\033[1m"
-    colors = { 
-							 'WARNING':  yellow,
-							 'INFO':     green,
-							 'DEBUG':    blue,
-							 'CRITICAL': magenta,
-							 'ERROR':    red,
-							 'VERBOSE':  cyan
-						 }
+    color_seq = "\033[%(color)sm"
+    colors = {
+               'VERBOSE':  gray,
+               'DEBUG':    cyan,
+               'INFO':     green,
+               'WARNING':  bold_yellow,
+               'ERROR':    bold_red,
+               'CRITICAL': bold_magenta,
+             }
 
     def __init__(self, msg, use_color = False):
-      logging.Formatter.__init__(self, msg)
+      if use_color:
+        logging.Formatter.__init__(self, self.color_seq + msg + self.reset_seq )
+      else:
+        logging.Formatter.__init__(self, msg)
       self.use_color = use_color
 
     def format(self, record):
-      if not(hasattr(record,'nl')): 
+      if not(hasattr(record,'nl')):
         record.nl = True
       levelname = record.levelname
-      name = record.name
-      msg = record.msg
       if self.use_color and levelname in self.colors:
-        msg_color = self.color_seq % (30 + self.colors[levelname]) + msg + self.reset_seq
-        levelname_color = self.color_seq % (30 + self.colors[levelname]) + levelname + self.reset_seq
-        name_color = self.color_seq % (30 + self.colors[levelname]) + name + self.reset_seq
-        record.msg = msg_color
-        record.levelname = levelname_color
-        record.name = name_color
+        record.color = self.colors[levelname]
       return logging.Formatter.format(self, record)
-  #formatter = Formatter("Py.%(name)-41.41s%(levelname)-14.14s %(message)s")
-  formatter = Formatter("Py.%(name)-33.33s %(levelname)7.7s %(message)s")
+  import os, sys
+  formatter = Formatter(
+                        "Py.%(name)-33.33s %(levelname)7.7s %(message)s", 
+                        not(int(os.environ.get('RCM_GRID_ENV',0)) or not(sys.stdout.isatty()))
+                       )
   return formatter
 
 # create console handler and set level to notset

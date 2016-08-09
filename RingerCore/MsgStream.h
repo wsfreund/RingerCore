@@ -160,22 +160,36 @@ class MsgStreamMirror
         /// Number of charatecters before displaying message
         static constexpr unsigned space_between_log_and_msg = 45;
 
+        ///
+        static constexpr const char* color[] = { 
+                                                WHITE,
+                                                GRAY,
+                                                CYAN,
+                                                GREEN,
+                                                YELLOW,
+                                                RED,
+                                                MAGENTA,
+                                               };
+
         /// Ctor
         explicit Message( const std::string &logName, 
                  const MSG::Level level,
+                 const bool useColor,
                  const std::string &message ) 
           : m_formatted_msg("")
         {
+          if (useColor){ m_formatted_msg += color[level]; }
           const char* lvl_str = to_str(level);
           const size_t end_log_name = space_between_log_and_msg 
                                       - (std::strlen(lvl_str) + 2);
           m_formatted_msg += logName.substr(0, end_log_name );
           m_formatted_msg.append( end_log_name 
-                                  - m_formatted_msg.length() + 1
+                                  - m_formatted_msg.length() + ((useColor)?5:0) + 1
                                   , 0x20);
           m_formatted_msg += lvl_str;
           m_formatted_msg += 0x20;
           m_formatted_msg += message;
+          if (useColor){ m_formatted_msg += RESET; }
         }
 
         /// Overloads std::cout printing capabilities
@@ -194,6 +208,7 @@ class MsgStreamMirror
       : m_streamName("RingerCore_Log"),
         m_level(MSG::INFO),
         m_currentLevel(MSG::INFO),
+        m_useColor(false),
         m_active(true){;}
 
     /// Ctor using integer for setting logname and msgLevel
@@ -205,6 +220,7 @@ class MsgStreamMirror
                                              )
                ),
         m_currentLevel(MSG::INFO),
+        m_useColor(false),
         m_active( m_level <= m_currentLevel )
         {;}
 
@@ -213,6 +229,29 @@ class MsgStreamMirror
       : m_streamName(logname),
         m_level(msgLevel),
         m_currentLevel(MSG::INFO),
+        m_useColor(false),
+        m_active(m_level <= m_currentLevel)
+        {;}
+
+    /// Ctor using integer for setting logname and msgLevel and color
+    explicit MsgStreamMirror(const std::string &logname, const int msgLevel, const bool useColor)
+      : m_streamName(logname),
+        m_level( ( msgLevel > MSG::FATAL ) ? ( MSG::FATAL )
+                                           : ( ( msgLevel < MSG::VERBOSE ) ? ( MSG::VERBOSE )
+                                                                           : ( static_cast<MSG::Level>( msgLevel ) ) 
+                                             )
+               ),
+        m_currentLevel(MSG::INFO),
+        m_useColor(useColor),
+        m_active( m_level <= m_currentLevel )
+        {;}
+
+    /// Ctor setting logname and msgLevel
+    explicit MsgStreamMirror(const std::string &logname, const MSG::Level msgLevel, const bool useColor)
+      : m_streamName(logname),
+        m_level(msgLevel),
+        m_currentLevel(MSG::INFO),
+        m_useColor(useColor),
         m_active(m_level <= m_currentLevel)
         {;}
 
@@ -221,6 +260,7 @@ class MsgStreamMirror
       : m_streamName(msg.m_streamName),
         m_level(msg.m_level),
         m_currentLevel(msg.m_currentLevel),
+        m_useColor(msg.m_useColor),
         m_active(msg.m_active)
     {
       try { // ignore exception if we cannot copy the string
@@ -242,6 +282,11 @@ class MsgStreamMirror
     {
       return m_streamName;
     }
+
+    /// Change logger level
+    bool useColor(){
+      return m_useColor;
+    }
     
     /// Change logger level
     void setLevel(MSG::Level msgLevel){
@@ -250,6 +295,10 @@ class MsgStreamMirror
         // Report change of level:
         report(m_currentLevel);
       }
+    }
+    /// Change logger level
+    void setUseColor(const bool useColor){
+      m_useColor = useColor;
     }
 
     /// Change this logger name
@@ -399,6 +448,8 @@ class MsgStreamMirror
     MSG::Level m_level;
     /// Message level for the current input string
     MSG::Level m_currentLevel;
+    /// Whether stream uses color
+    bool m_useColor;
 
     /// The auxiliary caching string:
     std::ostringstream m_stream;
@@ -530,21 +581,27 @@ class IMsgService
     /// Default level for this interface
     MSG::Level m_defLevel;
 
+    /// Default useColor for this interface
+    bool m_defUseColor;
+
   public:
     /**
      * @brief Builds default interface
      **/
     IMsgService()
       : m_defName("MsgStreamMirror"),
-        m_defLevel( MSG::INFO ){;}
+        m_defLevel( MSG::INFO ),
+        m_defUseColor( false ){;}
 
     /**
      * @brief Defines default log name and default level for Messaging Service
      **/
     IMsgService( const std::string& defName, 
-                 const MSG::Level defLevel = MSG::INFO )
+                 const MSG::Level defLevel = MSG::INFO ,
+                 const bool defUseColor = false )
       : m_defName(defName),
-        m_defLevel(defLevel){;}
+        m_defLevel(defLevel),
+        m_defUseColor( defUseColor ){;}
 
     virtual ~IMsgService(){;}
 
@@ -564,6 +621,18 @@ class IMsgService
     MSG::Level getMsgLevel() const 
     {
       return msg().level();
+    }
+
+    /// Change whether stream use colored messages
+    void setUseColor(const bool useColor)
+    {
+      msg().setUseColor(useColor);
+    }
+
+    /// Get whether stream use colored messages
+    bool getUseColor() const 
+    {
+      return msg().useColor();
     }
 
     /// Change stream display name
@@ -597,16 +666,22 @@ class MsgService : virtual public IMsgService
      *        interface
      **/
     MsgService() :
-      m_log( m_defName,  m_defLevel ){;}
+      m_log( m_defName,  m_defLevel, m_defUseColor ){;}
 
     explicit MsgService(const int lvl)
-      : m_log( m_defName, lvl){;}
+      : m_log( m_defName, lvl, m_defUseColor ){;}
 
     /**
      * @brief Builds Message service changing level
      **/
     explicit MsgService(const MSG::Level lvl)
-      : m_log( m_defName, lvl){;}
+      : m_log( m_defName, lvl, m_defUseColor ){;}
+
+    explicit MsgService(const int lvl, const bool useColor)
+      : m_log( m_defName, lvl, useColor ){;}
+
+    explicit MsgService(const MSG::Level lvl, const bool useColor)
+      : m_log( m_defName, lvl, useColor ){;}
 
     /// Retrieve log
     MsgStreamMirror& msg() override final {
