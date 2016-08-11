@@ -172,7 +172,9 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           return_code = untar_ps.wait()
           if return_code != 0:
             raise CalledProcessError(return_code, process_args)
-          memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: member.split(' '), memberList)]
+          from re import compile
+          rexp = compile('\s+')
+          memberList = [(int(size), name) for _, _, size, _, _, name in map(lambda member: rexp.split(member), memberList)]
           end = time()
           logger.info("Untar file content took %.2fs", end - start )
         else:
