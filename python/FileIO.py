@@ -182,9 +182,11 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           untar_ps = Popen((tar_cmd, '--verbose', '-xvzif', filename, memberName,
                            ), stdout = PIPE, bufsize = 1, cwd = tmpFolderPath)
           with untar_ps.stdout:
+            from re import compile
+            rexp = compile('\s+')
             for line in iter(untar_ps.stdout.readline, b''):
               line = line.strip('\n')
-              _, _, size, _, _, name = line.split(' ')
+              _, _, size, _, _, name = rexp.split(line)
               memberList = [(int(size), name)]
               break
         for entry in memberList:
