@@ -35,15 +35,31 @@ def verbose(self, message, *args, **kws):
   if self.isEnabledFor(LoggingLevel.VERBOSE):
     self._log(LoggingLevel.VERBOSE, message, args, **kws) 
 
+class FatalError(RuntimeError):
+  pass
+
 def fatal(self, message, *args, **kws):
   """
     Attempt to emit fatal message
   """
+  exceptionType = [issubclass(arg,BaseException) if type(arg) is type else False for arg in args]
+  if any(exceptionType):
+    # Check if any args message is the exception type that should be raised
+    args = list(args)
+    Exc = args.pop( exceptionType.index( True ) )
+    args = tuple(args)
+  else:
+    Exc = FatalError
   if self.isEnabledFor(LoggingLevel.FATAL):
-    self._log(LoggingLevel.FATAL, message, args, **kws) 
+    self._log(LoggingLevel.FATAL, message, *args, **kws) 
+  if args:
+    raise Exc(message % (args if len(args) > 1 else args[0]))
+  else:
+    raise Exc(message)
 
 logging.Logger.verbose = verbose
 logging.Logger.fatal = fatal
+logging.Logger.critical = fatal
 
 # This won't handle print and sys.stdout, but most of the cases are handled.
 _nl = True
@@ -115,7 +131,7 @@ class StreamHandler2( logging.StreamHandler ):
 def getFormatter():
   class Formatter(logging.Formatter):
     import numpy as np
-    black, red, green, yellow, blue, magenta, cyan, white = ['0;%d' % int(d) for d in (90 + np.arange(8))]
+    gray, red, green, yellow, blue, magenta, cyan, white = ['0;%d' % int(d) for d in (30 + np.arange(8))]
     bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ['1;%d' % d for d in 90 + np.arange(8)]
     gray = '1;30'
     reset_seq = "\033[0m"
@@ -125,8 +141,9 @@ def getFormatter():
                'DEBUG':    cyan,
                'INFO':     green,
                'WARNING':  bold_yellow,
-               'ERROR':    bold_red,
-               'CRITICAL': bold_magenta,
+               'ERROR':    red,
+               'CRITICAL': bold_red,
+               'FATAL':    bold_red,
              }
 
     def __init__(self, msg, use_color = False):

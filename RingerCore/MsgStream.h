@@ -168,7 +168,7 @@ class MsgStreamMirror
                                                 GREEN,
                                                 YELLOW,
                                                 RED,
-                                                MAGENTA,
+                                                BOLDRED,
                                                };
 
         /// Ctor
