@@ -51,7 +51,7 @@ def fatal(self, message, *args, **kws):
   else:
     Exc = FatalError
   if self.isEnabledFor(LoggingLevel.FATAL):
-    self._log(LoggingLevel.FATAL, message, *args, **kws) 
+    self._log(LoggingLevel.FATAL, message, args, **kws) 
   if args:
     raise Exc(message % (args if len(args) > 1 else args[0]))
   else:

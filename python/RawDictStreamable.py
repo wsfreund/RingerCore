@@ -29,14 +29,13 @@ class RawDictStreamer( Logger ):
   def __init__(self, transientAttrs = set(), toPublicAttrs = set(), **kw):
     "Initialize streamer and declare transient variables."
     Logger.__init__(self, kw)
-    self.transientAttrs = set(transientAttrs)
+    self.transientAttrs = set(transientAttrs) | {'_readVersion',}
     self.toPublicAttrs = set(toPublicAttrs)
     from RingerCore.util import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
   def __call__(self, obj):
     "Return a raw dict object from itself"
-    from copy import deepcopy
     raw = { key : val for key, val in obj.__dict__.iteritems() if key not in self.transientAttrs }
     for searchKey in self.toPublicAttrs:
       publicKey = searchKey.lstrip('_')
@@ -47,7 +46,7 @@ class RawDictStreamer( Logger ):
                               publicKey )
         raw[publicKey] = raw.pop(searchKey)
       else:
-        raise KeyError("Cannot transform to public key attribute '%s'" % searchKey)
+        self._logger.fatal("Cannot transform to public key attribute '%s'", searchKey, KeyError)
     for key, val in raw.iteritems():
       try:
         streamable = issubclass( val.__metaclass__, RawDictStreamable)
@@ -62,20 +61,31 @@ class RawDictStreamer( Logger ):
                             cl.__name__,
                             key )
         raw[key] = val.toRawObj()
-    raw = deepcopy( raw )
-    return self.treatDict( obj, raw )
-
-  def treatDict(self, obj, raw):
-    """
-    Method dedicated to modifications on raw dictionary
-    """
+    from copy import copy
+    raw = copy( raw )
     raw['class'] = obj.__class__.__name__
     raw['__module'] = obj.__class__.__module__
     try:
       raw['__version'] = raw.pop('_version')
     except KeyError:
       raw['__version'] = obj.__class__._version
+    return self.treatDict( obj, raw )
+
+  def treatDict(self, obj, raw):
+    """
+    Method dedicated to modifications on raw dictionary
+    """
     return raw
+
+  def deepCopyKey(self, raw, key):
+    """
+    Helper method for deepcopying dict key.
+    """
+    if key in raw:
+      from copy import deepcopy
+      raw[key] = deepcopy(raw[key])
+    else:
+      self._logger.warning("Cannot deepcopy key(%s) as it does not exists on rawDict.", key)
 
 class RawDictCnv( Logger ):
   """
@@ -97,7 +107,9 @@ class RawDictCnv( Logger ):
       -> ignoreRawChildren: Do not attempt to conver raw children to higher level object.
     """
     Logger.__init__(self, kw)
-    self.ignoreAttrs = set(ignoreAttrs) | RawDictCnv.baseAttrs
+    ignoreAttrs = list(set(ignoreAttrs) | RawDictCnv.baseAttrs)
+    import re
+    self.ignoreAttrs = [re.compile(ignoreAttr) for ignoreAttr in ignoreAttrs]
     self.toProtectedAttrs = set(toProtectedAttrs)
     self.ignoreRawChildren = ignoreRawChildren
     from RingerCore.util import checkForUnusedVars
@@ -115,7 +127,7 @@ class RawDictCnv( Logger ):
     except KeyError:
       obj._readVersion = 0
     for k, val in d.iteritems():
-      if k in self.ignoreAttrs: 
+      if any([bool(ignoreAttr.match(k)) for ignoreAttr in self.ignoreAttrs]): 
         continue
       try:
         nK = mangle_attr( self.__class__, 
