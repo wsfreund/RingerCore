@@ -8,7 +8,7 @@ __all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
     'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput',
-    'is_tool']
+    'is_tool', 'secureExtractNpItem']
 
 import re, os, __main__
 import sys
@@ -818,3 +818,8 @@ def appendToOutput( o, cond, what):
     else: o = o, what
   return o
 
+def secureExtractNpItem( npArray ):
+  try:
+    return npArray.item()
+  except AttributeError:
+    return npArray

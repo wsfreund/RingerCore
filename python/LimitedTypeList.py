@@ -249,7 +249,7 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
                                           ):
       if level is not None and obj is not None:
         obj.level = level
-      if wantedType is not None:
+      if wantedType is not None and type(obj) is not wantedType:
         parent[idx] = wantedType(obj)
       # Make sure that its size spans over dim:
       if dim:
