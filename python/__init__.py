@@ -29,3 +29,4 @@ __all__.extend( StoreGate.__all__ )
 from .StoreGate import *
 from . import RucioTools
 __all__.extend( RucioTools.__all__ )
+from .RucioTools import *

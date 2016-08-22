@@ -2,11 +2,17 @@ __all__ = ['RucioTools']
 
 from RingerCore import Logger
 
-
+#Rucio Class
 class RucioTools( Logger ):
 
   def __init__(self):
     Logger.__init__(self)
+    try:# Check if rucio was set
+      import os
+      os.system('rucio --version')
+    except RuntimeError:
+      self._logger.fatal('Rucio was not set! please setup this!')
+      raise RuntimeError('Rucio command not found!')
 
   # Get all files name for the dataset (ds) passed
   def get_list_files( self, ds ):
