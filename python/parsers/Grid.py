@@ -200,15 +200,17 @@ class GridNamespace( LoggerNamespace, Logger ):
     self.mergeExec_ = value 
 
   def check_retrieve(self, filename, md5sum, dlurl):
-    basefile=os.path.basename(filename)
+    filename = os.path.expandvars(filename)
+    basefile = os.path.basename(filename)
+    dirname = os.path.dirname( filename )
     from RingerCore.FileIO import checkFile
     if not checkFile(filename, md5sum):
       self._logger.info('Downloading %s to avoid doing it on server side.', basefile)
       import urllib
-      if not os.path.exists( os.path.dirname( filename ) ):
+      if not os.path.isdir( dirname ):
         from RingerCore import mkdir_p
-        mkdir_p( filename )
-      urllib.urlretrieve(dlurl, filename=os.path.expandvars(filename))
+        mkdir_p( dirname )
+      urllib.urlretrieve(dlurl, filename=filename)
     else:
       self._logger.info('%s already downloaded.',filename)
 
