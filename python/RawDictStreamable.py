@@ -34,8 +34,13 @@ class RawDictStreamer( Logger ):
     from RingerCore.util import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
+  def preCall(self, obj):
+    "Overload this method if you want to make special treatments before streaming the object."
+    pass
+
   def __call__(self, obj):
     "Return a raw dict object from itself"
+    self.preCall(obj)
     raw = { key : val for key, val in obj.__dict__.iteritems() if key not in self.transientAttrs }
     for searchKey in self.toPublicAttrs:
       publicKey = searchKey.lstrip('_')

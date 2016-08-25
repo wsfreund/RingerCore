@@ -489,14 +489,14 @@ def geomean(nums):
 def mean(nums):
   return (sum(nums)/len(nums))
 
-def calcSP( pd, pf ):
+def calcSP( pd, pj ):
   """
     ret  = calcSP(x,y) - Calculates the normalized [0,1] SP value.
     effic is a vector containing the detection efficiency [0,1] of each
     discriminating pattern.  
   """
   from numpy import sqrt
-  return sqrt(geomean([pd,pf]) * mean([pd,pf]))
+  return sqrt(geomean([pd,pj]) * mean([pd,pj]))
 
 class Roc(object):
   """
@@ -762,8 +762,8 @@ def cat_files_py(flist, ofile, op, logger = None, level = None):
   if level is None: level = LoggingLevel.INFO
   with open(ofile, 'wb') as out:
     for fname in progressbar(flist, len(flist), prefix="Merging: ", 
-														 disp = True if logger is not None else False, step = 10,
-														 logger = logger, level = level ):
+                             disp = True if logger is not None else False, step = 10,
+                             logger = logger, level = level ):
       with open(fname,'rb') as f:
         if op is WriteMethod.Readlines:
           out.writelines(f.readlines())

@@ -205,6 +205,9 @@ class GridNamespace( LoggerNamespace, Logger ):
     if not checkFile(filename, md5sum):
       self._logger.info('Downloading %s to avoid doing it on server side.', basefile)
       import urllib
+      if not os.path.exists( os.path.dirname( filename ) ):
+        from RingerCore import mkdir_p
+        mkdir_p( filename )
       urllib.urlretrieve(dlurl, filename=os.path.expandvars(filename))
     else:
       self._logger.info('%s already downloaded.',filename)
