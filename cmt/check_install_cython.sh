@@ -46,11 +46,11 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
       || { echo "Couldn't remove old installed cython. Please remove it manually on path \"$cython_install_path\" and try again." && return 1; }
   fi
   mkdir -p "$cython_install_path"
-  cd "$cython_folder"; tmp_cython_install_folder="$cython_install_path/lib/$PYTHON_LIB_VERSION/site-packages/"
-  mkdir -p "$tmp_cython_install_folder"
-  export PYTHONPATH="$tmp_cython_install_folder:$PYTHONPATH"
+  cd "$cython_folder"; lib_cython_install_folder="$cython_install_path/lib/$PYTHON_LIB_VERSION/site-packages/"
+  mkdir -p "$lib_cython_install_folder"
+  export PYTHONPATH="$lib_cython_install_folder:$PYTHONPATH"
   echo -n "compiling cython... "
-  python setup.py install --prefix "$cython_install_path" > /dev/null 2>/dev/null || { echo "Couldn't install cython." && return 1;}
+  python setup.py install --prefix "$cython_install_path" --install-lib=$lib_cython_install_folder > /dev/null  || { echo "Couldn't install cython." && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $cython_install_path -name "site-packages" -type d) "$cython_install_path"
