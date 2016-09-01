@@ -232,6 +232,10 @@ class GridNamespace( LoggerNamespace, Logger ):
                        ,"https://github.com/numpy/numpy/archive/v1.10.4.tar.gz"
                        #,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
                        )
+    self.check_retrieve("$ROOTCOREBIN/../Downloads/scipy.tgz"
+                       ,"967cdb8588a4249f820344d8264a2143"
+                       ,"http://downloads.sourceforge.net/project/scipy/scipy/0.16.1/scipy-0.16.1.tar.gz"
+                       )
 
   def extFile(self):
     """

@@ -50,16 +50,16 @@ if test "$INSTALL_NUMPY" -eq "1"; then
 
   echo "installing numpy..."
   numpy_source_tmp_dir=$(mktemp -d)
-	if test "$arch" = "macosx64"; then
+  if test "$arch" = "macosx64"; then
     echo -n "extracting files... " && numpy_folder=$(tar xfzv "$numpy_tgz_file" -C $numpy_source_tmp_dir  2>&1 ) \
         && echo "done" \
         || { echo "Couldn't extract numpy files!" && exit 1; }
-	else
+  else
     echo -n "extracting files... " && numpy_folder=$(tar xfzv "$numpy_tgz_file" --skip-old-files -C $numpy_source_tmp_dir  2> /dev/null) \
         && echo "done" \
         || { echo "Couldn't extract numpy files!" && exit 1; }
   fi
-	test -z "$numpy_folder" && { echo "couldn't extract numpy!" && return 2;}
+  test -z "$numpy_folder" && { echo "couldn't extract numpy!" && return 2;}
   if test "$arch" = "macosx64"; then
     numpy_folder=$(echo ${numpy_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
     numpy_folder=$numpy_source_tmp_dir/${numpy_folder%%\/*};

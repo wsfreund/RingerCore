@@ -10,21 +10,21 @@
 # endif
 #endif
 
-/**
- * Comment this to remove omp usage even if it is available on system
- **/
-#if !defined(__CINT__) && !defined(__CLING__)
-# define USING_MULTI_THREAD
-#endif
-
-#if defined(USING_MULTI_THREAD)
-# include <omp.h>
-#endif
+//#if !defined(__CINT__) && !defined(__CLING__)
+//# define USING_MULTI_THREAD
+//#endif
 
 /**
  * Do not change this macro
  **/
-#define USE_OMP (defined(_OPENMP) && defined(USING_MULTI_THREAD))
+#if (defined(_OPENMP) && defined(USING_MULTI_THREAD))
+# define USE_OMP
+#endif
+
+#ifdef USEOMP
+# include <omp.h>
+#endif
+
 
 //the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET       "\033[0m"

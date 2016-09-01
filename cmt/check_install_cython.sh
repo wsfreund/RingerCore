@@ -24,16 +24,16 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
 
   echo "installing cython..."
   cython_source_tmp_dir=$(mktemp -d)
-	if test "$arch" = "macosx64"; then
+  if test "$arch" = "macosx64"; then
     echo -n "extracting files... " && cython_folder=$(tar xfzv "$cython_tgz_file" -C $cython_source_tmp_dir  2>&1 ) \
         && echo "done" \
         || { echo "Couldn't extract cython files!" && exit 1; }
-	else
+  else
     echo -n "extracting files... " && cython_folder=$(tar xfzv "$cython_tgz_file" --skip-old-files -C $cython_source_tmp_dir ) \
         && echo "done" \
         || { echo "Couldn't extract cython files!" && exit 1; }
   fi
-	test -z "$cython_folder" && { echo "Couldn't extract cython!" && return 2;}
+  test -z "$cython_folder" && { echo "Couldn't extract cython!" && return 2;}
   if test "$arch" = "macosx64"; then
     cython_folder=$(echo ${cython_folder} | sed "s#x # #" | tr '\n' ' ' | cut -f2 -d ' ')
     cython_folder=$cython_source_tmp_dir/${cython_folder%%\/*};
@@ -50,7 +50,8 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
   mkdir -p "$lib_cython_install_folder"
   export PYTHONPATH="$lib_cython_install_folder:$PYTHONPATH"
   echo -n "compiling cython... "
-  python setup.py install --prefix "$cython_install_path" --install-lib=$lib_cython_install_folder > /dev/null  || { echo "Couldn't install cython." && return 1;}
+  python setup.py install --prefix "$cython_install_path" --install-lib=$lib_cython_install_folder > /dev/null 2> /dev/null \
+    || { echo "Couldn't install cython." && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $cython_install_path -name "site-packages" -type d) "$cython_install_path"
