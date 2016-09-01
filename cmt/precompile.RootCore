@@ -20,7 +20,7 @@ ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
 add_to_env_file PYTHONPATH "$ROOTCORELIBPATH"
 
 # Add openmp
-if check_openmp; then
+if check_openmp && test "$RCM_GRID_ENV" -eq "0"; then
   OPENMP_CXX_OPTS="-DUSING_MULTI_THREAD"
   old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_OBJFLAGS)
   if test "${old_field#*$OPENMP_CXX_OPTS}" = "$old_field"; then

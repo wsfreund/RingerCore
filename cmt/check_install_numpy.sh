@@ -28,7 +28,7 @@ fi
 if test "$INSTALL_NUMPY" -eq "1"; then
 
   # Cython is a dependency for numpy.
-  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_cython.sh"
+  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_cython.sh" || { echo "Couldn't install Cython and it is a dependency for numpy!" && return 1; }
 
   numpy_version="1.10.4"
 

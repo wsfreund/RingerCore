@@ -3,7 +3,14 @@ scipy_install_path="$INSTALL_AREA/scipy"; scipy_install_path_bslash="$INSTALL_AR
 
 test -d "$scipy_install_path/site-packages" && add_to_env PYTHONPATH "$scipy_install_path/site-packages"
 
-if ! python -c "import scipy.linalg" > /dev/null 2>&1; then
+if ! python -c "import scipy.io" > /dev/null 2>&1; then
+
+  test -z "$SCIPY" && echo "WARN: scipy is not installed, please install it with pip/easy_install." && return;
+
+  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_setup_tools.sh" || { echo "Couldn't install setup-tools which is a dependency for scipy." && return 1; }
+  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_cython.sh" || { echo "Couldn't install Cython and it is a dependency for scipy!" && return 1; }
+  source "$ROOTCOREBIN/../RingerCore/cmt/check_install_numpy.sh" || { echo "Couldn't install numpy and it is a dependency for scipy!" && return 1; }
+
   # Protect against corrupt files:
   if test ! -f "$scipy_tgz_file" -o \
              "$(md5sum -b "$scipy_tgz_file" 2> /dev/null | cut -f1 -d ' ')" != "9c6bc68693d7307acffce690fe4f1076"; then
@@ -48,8 +55,8 @@ if ! python -c "import scipy.linalg" > /dev/null 2>&1; then
   mkdir -p "$lib_scipy_install_folder"
   export PYTHONPATH="$lib_scipy_install_folder:$PYTHONPATH"
   echo -n "compiling scipy... "
-  python setup.py install --prefix "$scipy_install_path" --install-lib=$lib_scipy_install_folder > /dev/null  2> /dev/null \
-    || { echo "Couldn't install scipy." && return 1;}
+  python setup.py install --prefix "$scipy_install_path" --install-lib=$lib_scipy_install_folder > /dev/null \
+    || { echo "Couldn't install scipy." && test "$RCM_GRID_ENV" -eq "1" && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $scipy_install_path -name "site-packages" -type d) "$scipy_install_path"

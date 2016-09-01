@@ -21,7 +21,7 @@
 # define USE_OMP
 #endif
 
-#ifdef USEOMP
+#ifdef USE_OMP
 # include <omp.h>
 #endif
 
