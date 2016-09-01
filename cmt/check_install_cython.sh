@@ -8,7 +8,7 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
 
   # Protect against corrupt files:
   if test ! -f "$cython_tgz_file" -o \
-             "$(md5sum -b "$cython_tgz_file" | cut -f1 -d ' ')" != "890b494a12951f1d6228c416a5789554"; then
+             "$(md5sum -b "$cython_tgz_file" 2> /dev/null | cut -f1 -d ' ')" != "890b494a12951f1d6228c416a5789554"; then
     echo "Downloading \"${cython_tgz_file}\"..."
     cython_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/cython.tgz"
     if test -f $cython_afs_path; then

@@ -215,7 +215,7 @@ fi
 
 # Run boost installation
 if test "$INSTALL_LOCAL_BOOST" -eq "1"; then
-  if test \( \! -f "$boost_file" \) -o \( "$(md5sum -b $boost_file | cut -f1 -d ' ')" != "5a5d5614d9a07672e1ab2a250b5defc5" \) ; then
+  if test \( \! -f "$boost_file" \) -o \( "$(md5sum -b $boost_file 2> /dev/null | cut -f1 -d ' ')" != "5a5d5614d9a07672e1ab2a250b5defc5" \) ; then
     if test "$RCM_GRID_ENV" -eq "1"; then
       echo "Boost sources are unavailable, cannot download it from grid." && exit 1;
     fi

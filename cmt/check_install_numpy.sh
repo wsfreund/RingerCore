@@ -34,7 +34,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
 
   # Protect against corrupt files:
   if test \( ! -f "$numpy_tgz_file" \) -o \
-    \( "$(md5sum -b "$numpy_tgz_file" | cut -f1 -d ' ')" != "3cb325c3dff03b5bc15206c757a26116" \) ; then
+    \( "$(md5sum -b "$numpy_tgz_file" 2> /dev/null | cut -f1 -d ' ')" != "3cb325c3dff03b5bc15206c757a26116" \) ; then
     echo "downloading ${numpy_tgz_file}..."
     numpy_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/numpy.tgz"
     if test -f $numpy_afs_path; then

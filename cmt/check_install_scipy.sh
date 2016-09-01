@@ -6,7 +6,7 @@ test -d "$scipy_install_path/site-packages" && add_to_env PYTHONPATH "$scipy_ins
 if ! python -c "import scipy.linalg" > /dev/null 2>&1; then
   # Protect against corrupt files:
   if test ! -f "$scipy_tgz_file" -o \
-             "$(md5sum -b "$scipy_tgz_file" | cut -f1 -d ' ')" != "967cdb8588a4249f820344d8264a2143"; then
+             "$(md5sum -b "$scipy_tgz_file" 2> /dev/null | cut -f1 -d ' ')" != "9c6bc68693d7307acffce690fe4f1076"; then
     echo "Downloading \"${scipy_tgz_file}\"..."
     scipy_afs_path="/afs/cern.ch/user/w/wsfreund/public/misc/scipy.tar.gz"
     if test -f $scipy_afs_path; then
@@ -15,7 +15,7 @@ if ! python -c "import scipy.linalg" > /dev/null 2>&1; then
       if test  "$RCM_GRID_ENV" -eq "1"; then
         echo "Cannot reach scipy source files. Cannot download it from grid." && exit 1;
       fi
-      curl -s -L -o "$scipy_tgz_file" "http://downloads.sourceforge.net/project/scipy/scipy/0.16.1/scipy-0.16.1.tar.gz" \
+      curl -s -L -o "$scipy_tgz_file" "https://github.com/scipy/scipy/archive/v0.18.0-1.tar.gz" \
         || { echo "Couldn't download scipy!" && return 1; }
     fi
   fi
