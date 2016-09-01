@@ -232,6 +232,10 @@ class GridNamespace( LoggerNamespace, Logger ):
                        ,"https://github.com/numpy/numpy/archive/v1.10.4.tar.gz"
                        #,"http://sourceforge.net/projects/numpy/files/NumPy/1.10.4/numpy-1.10.4.tar.gz/download"
                        )
+    self.check_retrieve("$ROOTCOREBIN/../Downloads/setuptools.tgz"
+                       ,"0744ee90ad266fb117d59f94334185d0"
+                       ,"https://pypi.python.org/packages/32/3c/e853a68b703f347f5ed86585c2dd2828a83252e1216c1201fa6f81270578/setuptools-26.1.1.tar.gz"
+                       )
     self.check_retrieve("$ROOTCOREBIN/../Downloads/scipy.tgz"
                        ,"9c6bc68693d7307acffce690fe4f1076"
                        ,"https://github.com/scipy/scipy/archive/v0.18.0-1.tar.gz"
