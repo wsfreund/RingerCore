@@ -53,10 +53,9 @@ if ! python -c "import scipy.io" > /dev/null 2>&1; then
   mkdir -p "$scipy_install_path"
   cd "$scipy_folder"; lib_scipy_install_folder="$scipy_install_path/lib/$PYTHON_LIB_VERSION/site-packages/"
   mkdir -p "$lib_scipy_install_folder"
-  export PYTHONPATH="$lib_scipy_install_folder:$PYTHONPATH"
   echo -n "compiling scipy... "
   python setup.py install --prefix "$scipy_install_path" --install-lib=$lib_scipy_install_folder > /dev/null \
-    || { echo "Couldn't install scipy." && test "$RCM_GRID_ENV" -eq "1" && return 1;}
+    || { echo "Couldn't install scipy." && cd - > /dev/null && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $scipy_install_path -name "site-packages" -type d) "$scipy_install_path"
@@ -64,7 +63,8 @@ if ! python -c "import scipy.io" > /dev/null 2>&1; then
   rm -r $scipy_source_tmp_dir
 fi
 
-test -d "$scipy_install_path"                                  && export scipy_install_path_bslash
-test -d "$scipy_install_path/site-packages"                    && add_to_env_file    PYTHONPATH   "$scipy_install_path_bslash/site-packages"
+test -d "$scipy_install_path"                && export scipy_install_path_bslash
+test -d "$scipy_install_path/site-packages"  && add_to_env_file  PYTHONPATH "$scipy_install_path_bslash/site-packages"
+test -d "$scipy_install_path/site-packages"  && add_to_env PYTHONPATH "$scipy_install_path_bslash/site-packages"
 
 source "$NEW_ENV_FILE"

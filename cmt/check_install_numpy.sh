@@ -76,7 +76,7 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   mkdir -p "$tmp_numpy_install_folder"
   export PYTHONPATH="$tmp_numpy_install_folder:$PYTHONPATH"
   echo -n "compiling numpy... "
-  python setup.py install --prefix "$numpy_install_path" > /dev/null 2>/dev/null || { echo "Couldn't install numpy." && return 1;}
+  python setup.py install --prefix "$numpy_install_path" > /dev/null 2>/dev/null || { echo "Couldn't install numpy." && cd - > /dev/null && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $numpy_install_path -name "site-packages" -type d) "$numpy_install_path"
@@ -84,9 +84,11 @@ if test "$INSTALL_NUMPY" -eq "1"; then
   rm -r $numpy_source_tmp_dir
 fi
 
+set -x
 test -d "$numpy_install_path"                                  && export numpy_install_path_bslash
 test -d "$numpy_install_path/bin"                              && add_to_env_file   PATH        "$numpy_install_path_bslash/bin"
 test -d "$numpy_install_path/site-packages"                    && add_to_env_file   PYTHONPATH  "$numpy_install_path_bslash/site-packages"
 test -d "$numpy_install_path/site-packages/numpy/core/include" && add_to_env_file   CPATH       "$numpy_install_path_bslash/site-packages/numpy/core/include"
+set +x
 
 source "$NEW_ENV_FILE"

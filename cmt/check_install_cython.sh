@@ -51,7 +51,7 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
   export PYTHONPATH="$lib_cython_install_folder:$PYTHONPATH"
   echo -n "compiling cython... "
   python setup.py install --prefix "$cython_install_path" --install-lib=$lib_cython_install_folder > /dev/null 2> /dev/null \
-    || { echo "Couldn't install cython." && return 1;}
+    || { echo "Couldn't install cython." && cd - > /dev/null && return 1;}
   echo "done"
   cd - > /dev/null
   mv $(find $cython_install_path -name "site-packages" -type d) "$cython_install_path"
@@ -59,9 +59,9 @@ if ! python -c "import Cython" > /dev/null 2> /dev/null; then
   rm -r $cython_source_tmp_dir
 fi
 
-test -d "$cython_install_path"                                  && export cython_install_path_bslash
-test -d "$cython_install_path/bin"                              && add_to_env_file    PATH         "$cython_install_path_bslash/bin"
-test -d "$cython_install_path/site-packages"                    && add_to_env_file    PYTHONPATH   "$cython_install_path_bslash/site-packages"
+test -d "$cython_install_path"                && export cython_install_path_bslash
+test -d "$cython_install_path/bin"            && add_to_env_file    PATH         "$cython_install_path_bslash/bin"
+test -d "$cython_install_path/site-packages"  && add_to_env_file    PYTHONPATH   "$cython_install_path_bslash/site-packages"
 #test -d "$cython_install_path/site-packages/cython/core/include" && add_to_env_file CPATH "$cython_install_path_bslash/site-packages/cython/core/include"
 
 source "$NEW_ENV_FILE"

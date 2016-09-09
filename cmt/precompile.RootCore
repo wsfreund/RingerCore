@@ -12,6 +12,7 @@ source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load bas
 echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
 
+source gcc_python_compiler_path.sh
 source check_install_numpy.sh
 source check_install_scipy.sh
 
