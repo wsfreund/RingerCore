@@ -25,6 +25,7 @@ def save(o, filename, **kw):
   filename = os.path.expandvars(filename)
   if type(protocol) is str:
     if protocol == "savez_compressed":
+      filename = ensureExtension(filename, 'npz')
       if type(o) is dict:
         np.savez_compressed(filename, **o)
       else:
@@ -32,6 +33,7 @@ def save(o, filename, **kw):
           o = (o,)
         np.savez_compressed(filename, *o)
     elif protocol == "savez":
+      filename = ensureExtension(filename, 'npz')
       if type(o) is dict:
         np.savez(filename, **o)
       else:
@@ -39,6 +41,7 @@ def save(o, filename, **kw):
           o = (o,)
         np.savez(filename, *o)
     elif protocol == "save":
+      filename = ensureExtension(filename, 'npy')
       np.save(filename, o)
     else:
       raise ValueError("Unknown protocol '%s'" % protocol)
