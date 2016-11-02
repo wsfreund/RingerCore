@@ -210,6 +210,7 @@ class Logger( object ):
     # Retrieve the logger
     logger = logging.getLogger( logName )
     # Retrieve handles:
+    # TODO allow to set handlers filters
     handlers = logger.handlers
     if not cls._ch in handlers:
       # add ch to logger

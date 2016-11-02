@@ -1,5 +1,5 @@
 #coding: utf-8
-__all__ = ['EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
+__all__ = ['GRID_ENV', 'EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
     'NotSet', 'NotSetType', 'StdPair','str_to_class', 'Roc', 'SetDepth', 'calcSP',
     'checkForUnusedVars', 'conditionalOption', 'findFile',
     'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
@@ -18,6 +18,8 @@ import cPickle
 import gzip
 import inspect
 import numpy as np
+
+GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
 
 class NotSetType( type ):
   def __bool__(self):
@@ -236,7 +238,7 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(int(os.environ.get('RCM_GRID_ENV',0)) or not(sys.stdout.isatty())), 
+                no_bl = not(GRID_ENV or not(sys.stdout.isatty())), 
                 measureTime = True):
   """
     Display progressbar.
