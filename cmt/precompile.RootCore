@@ -13,8 +13,8 @@ echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
 
 source gcc_python_compiler_path.sh
-source check_install_numpy.sh
-source check_install_scipy.sh
+source check_install_numpy.sh || { echo "Couldn't install numpy." && exit 1; }
+source check_install_scipy.sh || { echo "Couldn't install scipy." && exit 1; }
 
 # Add rootcore libs to python env file
 ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
