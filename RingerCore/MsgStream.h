@@ -12,7 +12,7 @@
 #include "RingerCore/defines.h"
 
 /**
- * Macro for using within MsgService inherited classes.
+ * Macro to be used within MsgService inherited classes.
  *
  * It will check if message is above level before requesting to enter it into
  * MsgStreamMirror to check it.

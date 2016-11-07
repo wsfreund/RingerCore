@@ -14,6 +14,7 @@ chmod +x "$NEW_ENV_FILE"
 
 source gcc_python_compiler_path.sh
 source check_install_numpy.sh
+# NOTE: SCIPY installation should be able to fail on the grid.
 source check_install_scipy.sh
 
 # Add rootcore libs to python env file
