@@ -1,24 +1,5 @@
-
 __all__ = ['StoreGate']
-
 import sys
-
-def progressbar(it, prefix="", size=60):
-    count = len(it)
-    def _show(_i):
-        x = int(size*_i/count)
-        sys.stdout.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), _i, count))
-        sys.stdout.flush()
-
-    _show(0)
-    for i, item in enumerate(it):
-        yield item
-        _show(i+1)
-    sys.stdout.write("\n")
-    sys.stdout.flush()
-
-
-
 from RingerCore.Logger  import Logger, LoggingLevel
 
 class StoreGate( Logger) :
@@ -28,8 +9,8 @@ class StoreGate( Logger) :
     if not outputFile.endswith('.root'):
       outputFile += '.root'
     #Create TFile object to hold everything
+    from ROOT import TFile
     self._file = TFile( outputFile, "recreate")
-    self._holdObj = True
     self._currentDir = ""
     self._objects    = dict()
     self._dirs       = list()
@@ -49,50 +30,36 @@ class StoreGate( Logger) :
       self._currentDir = fullpath
       self._logger.verbose('Created directory with name %s', theDir)
 
-  #Go to the root base dir
-  def root(self):
-    self._currentDir = ''
-    self._file.cd()
-
   #Go to the pointed directory
   def cd(self, theDir):
-    self.root()
+    self._currentDir = ''
+    self._file.cd()
     fullpath = (theDir).replace('//','/')
     if fullpath in self._dirs:
       self._currentDir = fullpath
       self._file.cd(fullpath)
 
-  def attach( self, obj, **kw ):
-    hold = kw.pop('hold',True)
+  def addHistogram( self, obj ):
     feature = obj.GetName()
     fullpath = (self._currentDir + '/' + feature).replace('//','/')
     if not fullpath in self._dirs:
       self._dirs.append(fullpath)
-      if self._holdObj:  self._objects[fullpath] = obj
+      self._objects[fullpath] = obj
       obj.Write()
-      self._logger.verbose('Saving object type %s into %s',type(obj), fullpath)
+      self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
   
-  def retrieve(self, feature):
-    if self._holdObj is False:
-      self._logger.warning('There is no object in store, maybe you set holdObj to False after create the storegate. Dont \
-          set this to store the object and enable the retrieve method')
-      return None
-    fullpath = (self._currentDir + '/' + feature).replace('//','/')
+  def histogram(self, feature):
+    #self._currentDir = ''
+    self._file.cd()
+    fullpath = (feature).replace('//','/')
     if fullpath in self._dirs:
-      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
-      return self._objects[fullpath]
+      obj = self._objects[fullpath]
+      self._logger.debug('Retrieving object type %s into %s',type(obj), fullpath)
+      return obj
     else:
       #None object if doesnt exist into the store
       self._logger.warning('Object with path %s doesnt exist', fullpath)
       return None
-
-  def setProperty(self, **kw):
-    self._holdObj = kw.pop('holdObj', True)
-    del kw
-    #Properties
-    if self._holdObj is False:
-      self._logger.warning('setProperty: holdObj is False, The storage will not hold the objects in the memory, retrieve method is not allow.')
-    
 
   def collect(self):
     self._objects.clear()
