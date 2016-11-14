@@ -17,7 +17,7 @@ class StoreGate( Logger) :
 
   #Save objects and delete storegate
   def __del__(self):
-    #self._file.Write()
+    self._file.Write()
     self._file.Close()
 
   #Create a folder
@@ -45,7 +45,7 @@ class StoreGate( Logger) :
     if not fullpath in self._dirs:
       self._dirs.append(fullpath)
       self._objects[fullpath] = obj
-      obj.Write()
+      #obj.Write()
       self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
   
   def histogram(self, feature):
@@ -60,6 +60,22 @@ class StoreGate( Logger) :
       #None object if doesnt exist into the store
       self._logger.warning('Object with path %s doesnt exist', fullpath)
       return None
+
+  # Use this to set labels into the histogram
+  def setLabels(self, feature, labels):
+    histo = self.histogram(feature)
+    if not histo is None:
+      try:
+	      if ( len(labels)>0 ):
+	        for i in range( min( len(labels), histo.GetNbinsX() ) ):
+	          bin = i+1;  histo.GetXaxis().SetBinLabel(bin, labels[i])
+	        for i in range( histo.GetNbinsX(), min( len(labels), histo.GetNbinsX()+histo.GetNbinsY() ) ):
+	          bin = i+1-histo.GetNbinsX();  histo.GetYaxis().SetBinLabel(bin, labels[i])
+      except:
+        self._logger.fatal("Can not set the labels! abort.")
+    else:
+      self._logger.warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
+
 
   def collect(self):
     self._objects.clear()
