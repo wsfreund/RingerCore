@@ -1,5 +1,5 @@
 __all__ = ['save', 'load', 'expandFolders', 
-           'getExtension', 'checkExtension',
+           'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName',
            'getMD5','checkFile']
 
@@ -372,6 +372,46 @@ def ensureExtension( filename, extL, ignoreNumbersAfterExtension = True ):
   else:
     filename += ext
   return filename
+
+def changeExtension( filename, newExtension, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
+                                                                    'pic.gz', 'pic.xz', 'pic',
+                                                                    'npz', 'npy', 'root'],
+                      retryExtensions = ['gz', 'xz'],
+                      moreFileExtensions = [],
+                      moreRetryExtensions = [],
+                      ignoreNumbersAfterExtension = True,
+                    ):
+  """
+  Append string to end of file name but keeping file extension in the end.
+
+  Inputs:
+    -> filename: the filename path;
+    -> newExtension: the extension to be used by the file;
+    -> knownFileExtensions: the known file extensions, use to override all file extensions;
+    -> retryExtensions: some extensions are inside other extensions, e.g.
+    tar.gz and .gz. This makes regexp operator | to match the smaller
+    extension, so the easiest solution is to retry the smaller extensions after
+    checking the larger ones.
+    -> moreFileExtensions: add more file extensions to consider without overriding all file extensions;
+    -> moreRetryExtensions: add more extensions to consider while retrying without overriding the retryExtensions;
+    -> ignoreNumbersAfterExtension: whether to ignore numbers after the file extensions or not.
+
+  Output:
+    -> the filename with the string appended.
+  """
+  knownFileExtensions.extend( moreFileExtensions )
+  def repStr( newExt ):
+    return r'\g<1>' + ( newExt if newExt.startswith('.') else ( '.' + newExt ) )
+  str_ = __extRE( knownFileExtensions )
+  m = str_.match( filename )
+  if m:
+    return str_.sub( repStr(newExtension), filename )
+  str_ = __extRE( retryExtensions )
+  m = str_.match( filename )
+  if m:
+    return str_.sub( repStr(newExtension), filename )
+  else:
+    return filename + newExtension
 
 def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
                                                                   'pic.gz', 'pic.xz', 'pic',
