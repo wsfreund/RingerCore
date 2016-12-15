@@ -1,6 +1,7 @@
 __all__ = ['StoreGate']
 import sys
 from RingerCore.Logger  import Logger, LoggingLevel
+import numpy as np
 
 class StoreGate( Logger) :
 
@@ -17,8 +18,10 @@ class StoreGate( Logger) :
 
   #Save objects and delete storegate
   def __del__(self):
-    self._file.Write()
     self._file.Close()
+
+  def write(self):
+    self._file.Write()
 
   #Create a folder
   def mkdir(self, theDir):
@@ -77,6 +80,35 @@ class StoreGate( Logger) :
       self._logger.warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
 
 
+  def histogram_FillN1(self,feature, value1):
+    try:
+      if value1.shape[1] > value1.shape[0]:
+        np_array_value1 = np.array(value1.T)
+      else:
+        np_array_value1 = np.array(value1)
+      weights = np.ones(np_array_value1.shape)
+      self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
+    except:
+      self._logger.warning("Can not attach the vector into the feature: %s", feature)
+
+
+  def histogram_FillN2(self,feature, value1, value2):
+    try:
+      np_array_value1 = np.array(value1).astype('float')
+      np_array_value2 = np.array(value2).astype('float')
+      if np_array_value1.shape[1] > np_array_value1.shape[0]:
+        np_arrar_value1=np_array_value1.T
+      if np_array_value2.shape[1] > np_array_value2.shape[0]:
+        np_arrar_value2=np_array_value2.T
+      if np_array_value1.shape[0] != np_array_value2.shape[0]:
+        self._logger.warning('Value1 and Value2 must be the same length.')
+      else:
+        # do fast
+        weights = np.ones(np_array_value1.shape).astype('float')
+        self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,np_array_value2,weights)
+    except:
+      self._logger.warning("Can not attach the vector into the feature: %s", feature)
+
   def collect(self):
     self._objects.clear()
     self._dirs = list()
@@ -86,6 +118,7 @@ class StoreGate( Logger) :
 
   def getDirs(self):
     return self._dirs
+
 
 
 
