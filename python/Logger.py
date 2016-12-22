@@ -146,6 +146,9 @@ def getFormatter():
                'FATAL':    bold_red,
              }
 
+    # It's possible to overwrite the message color by doing:
+    # logger.info('MSG IN MAGENTA', extra={'color' : Logger._formatter.bold_magenta})
+
     def __init__(self, msg, use_color = False):
       if use_color:
         logging.Formatter.__init__(self, self.color_seq + msg + self.reset_seq )
@@ -157,7 +160,7 @@ def getFormatter():
       if not(hasattr(record,'nl')):
         record.nl = True
       levelname = record.levelname
-      if self.use_color and levelname in self.colors:
+      if not 'color' in record.__dict__ and self.use_color and levelname in self.colors:
         record.color = self.colors[levelname]
       return logging.Formatter.format(self, record)
   import os, sys
