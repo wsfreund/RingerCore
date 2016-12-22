@@ -7,7 +7,7 @@ source "$ROOTCOREBIN/../RootCoreMacros/retrieve_python_info.sh" --numpy-info \
     || { echo "Couldn't load python information." && exit 1;}
 
 # Check if we need to install numpy:
-if test -n "$PYTHON_NUMPY_PATH"; then
+if test -d "$PYTHON_NUMPY_PATH"; then
   # No need to install it...
   echo "no need to install numpy."
   if test -n "$RINGERCORE_DBG_LEVEL"; then

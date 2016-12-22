@@ -1,25 +1,7 @@
-
 __all__ = ['StoreGate']
-
 import sys
-
-def progressbar(it, prefix="", size=60):
-    count = len(it)
-    def _show(_i):
-        x = int(size*_i/count)
-        sys.stdout.write("%s[%s%s] %i/%i\r" % (prefix, "#"*x, "."*(size-x), _i, count))
-        sys.stdout.flush()
-
-    _show(0)
-    for i, item in enumerate(it):
-        yield item
-        _show(i+1)
-    sys.stdout.write("\n")
-    sys.stdout.flush()
-
-
-
 from RingerCore.Logger  import Logger, LoggingLevel
+import numpy as np
 
 class StoreGate( Logger) :
 
@@ -28,16 +10,18 @@ class StoreGate( Logger) :
     if not outputFile.endswith('.root'):
       outputFile += '.root'
     #Create TFile object to hold everything
+    from ROOT import TFile
     self._file = TFile( outputFile, "recreate")
-    self._holdObj = True
     self._currentDir = ""
     self._objects    = dict()
     self._dirs       = list()
 
   #Save objects and delete storegate
   def __del__(self):
-    #self._file.Write()
     self._file.Close()
+
+  def write(self):
+    self._file.Write()
 
   #Create a folder
   def mkdir(self, theDir):
@@ -49,50 +33,81 @@ class StoreGate( Logger) :
       self._currentDir = fullpath
       self._logger.verbose('Created directory with name %s', theDir)
 
-  #Go to the root base dir
-  def root(self):
-    self._currentDir = ''
-    self._file.cd()
-
   #Go to the pointed directory
   def cd(self, theDir):
-    self.root()
+    self._currentDir = ''
+    self._file.cd()
     fullpath = (theDir).replace('//','/')
     if fullpath in self._dirs:
       self._currentDir = fullpath
       self._file.cd(fullpath)
 
-  def attach( self, obj, **kw ):
-    hold = kw.pop('hold',True)
+  def addHistogram( self, obj ):
     feature = obj.GetName()
     fullpath = (self._currentDir + '/' + feature).replace('//','/')
     if not fullpath in self._dirs:
       self._dirs.append(fullpath)
-      if self._holdObj:  self._objects[fullpath] = obj
-      obj.Write()
-      self._logger.verbose('Saving object type %s into %s',type(obj), fullpath)
+      self._objects[fullpath] = obj
+      #obj.Write()
+      self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
   
-  def retrieve(self, feature):
-    if self._holdObj is False:
-      self._logger.warning('There is no object in store, maybe you set holdObj to False after create the storegate. Dont \
-          set this to store the object and enable the retrieve method')
-      return None
-    fullpath = (self._currentDir + '/' + feature).replace('//','/')
+  def histogram(self, feature):
+    #self._currentDir = ''
+    self._file.cd()
+    fullpath = (feature).replace('//','/')
     if fullpath in self._dirs:
-      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
-      return self._objects[fullpath]
+      obj = self._objects[fullpath]
+      self._logger.debug('Retrieving object type %s into %s',type(obj), fullpath)
+      return obj
     else:
       #None object if doesnt exist into the store
       self._logger.warning('Object with path %s doesnt exist', fullpath)
       return None
 
-  def setProperty(self, **kw):
-    self._holdObj = kw.pop('holdObj', True)
-    del kw
-    #Properties
-    if self._holdObj is False:
-      self._logger.warning('setProperty: holdObj is False, The storage will not hold the objects in the memory, retrieve method is not allow.')
-    
+  # Use this to set labels into the histogram
+  def setLabels(self, feature, labels):
+    histo = self.histogram(feature)
+    if not histo is None:
+      try:
+	      if ( len(labels)>0 ):
+	        for i in range( min( len(labels), histo.GetNbinsX() ) ):
+	          bin = i+1;  histo.GetXaxis().SetBinLabel(bin, labels[i])
+	        for i in range( histo.GetNbinsX(), min( len(labels), histo.GetNbinsX()+histo.GetNbinsY() ) ):
+	          bin = i+1-histo.GetNbinsX();  histo.GetYaxis().SetBinLabel(bin, labels[i])
+      except:
+        self._logger.fatal("Can not set the labels! abort.")
+    else:
+      self._logger.warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
+
+
+  def histogram_FillN1(self,feature, value1):
+    try:
+      if value1.shape[1] > value1.shape[0]:
+        np_array_value1 = np.array(value1.T)
+      else:
+        np_array_value1 = np.array(value1)
+      weights = np.ones(np_array_value1.shape)
+      self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
+    except:
+      self._logger.warning("Can not attach the vector into the feature: %s", feature)
+
+
+  def histogram_FillN2(self,feature, value1, value2):
+    try:
+      np_array_value1 = np.array(value1).astype('float')
+      np_array_value2 = np.array(value2).astype('float')
+      if np_array_value1.shape[1] > np_array_value1.shape[0]:
+        np_arrar_value1=np_array_value1.T
+      if np_array_value2.shape[1] > np_array_value2.shape[0]:
+        np_arrar_value2=np_array_value2.T
+      if np_array_value1.shape[0] != np_array_value2.shape[0]:
+        self._logger.warning('Value1 and Value2 must be the same length.')
+      else:
+        # do fast
+        weights = np.ones(np_array_value1.shape).astype('float')
+        self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,np_array_value2,weights)
+    except:
+      self._logger.warning("Can not attach the vector into the feature: %s", feature)
 
   def collect(self):
     self._objects.clear()
@@ -103,6 +118,7 @@ class StoreGate( Logger) :
 
   def getDirs(self):
     return self._dirs
+
 
 
 

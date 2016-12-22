@@ -20,6 +20,8 @@ source check_install_scipy.sh
 # Add rootcore libs to python env file
 ROOTCORELIBPATH="\$ROOTCOREBIN/lib/\$ROOTCORECONFIG/"
 add_to_env_file PYTHONPATH "$ROOTCORELIBPATH"
+# Make sure that python library is added to path always
+add_to_env_file LD_LIBRARY_PATH "${PYTHON_LIBRARY_PATH[@]:2}"
 
 # Add openmp
 if check_openmp && test "$RCM_GRID_ENV" -eq "0"; then
