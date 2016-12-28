@@ -177,6 +177,9 @@ DO_NOT_CHECK=0 # Whether to check local installation
 LOCAL_BOOST_INSTALLED=0 # Whether boost was locally installed
 INSTALL_LOCAL_BOOST=0 # Whether to install boost locally
 
+boost_dir_libpath=$(dirname $(find $(echo -n $LD_LIBRARY_PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -name "libboost*" -print 2> /dev/null| head -n 1))
+boost_dir_incpath=$(dirname $(find $(echo -n $PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -type d -name "boost" -print  2> /dev/null | head -n 1))
+
 test ! -f "$CHECK_HEADER" && echo "Header \"$CHECK_HEADER\" for checking boost compilation does not exist." && exit 1;
 
 # Check if we need to install boost locally or add it to environment path:
@@ -202,10 +205,33 @@ else
       boost_needed_libs=$(echo $boost_needed_libs | sed -e 's/^[ \t]*//')
       echo "requested to check the following libraries: $boost_needed_libs"
     fi 
-    if ! $CXX $CHECK_HEADER $boost_needed_libs $EXTRA_TEST_ARGS -o $CHECK_HEADER.o > /dev/null 2> /dev/null
+
+    test -n "$boost_dir_libpath" && extra_libpath=-L$boost_dir_libpath
+    test -n "$boost_dir_incpath" && extra_incpath=-I$boost_dir_incpath
+
+    if ! $CXX $CHECK_HEADER $extra_incpath $extra_libpath $boost_needed_libs $EXTRA_TEST_ARGS -o $CHECK_HEADER.o > /dev/null 2> /dev/null
     then
       INSTALL_LOCAL_BOOST=1
     else
+      if test -n "$extra_libpath"; then
+        old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_LDFLAGS)
+        if test "${old_field#*$extra_libpath}" = "$old_field"
+        then
+          $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_LDFLAGS "$old_field $extra_libpath"
+        fi
+      fi
+      if test -n "$extra_incpath"; then
+        old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_CXXFLAGS)
+        if test "${old_field#*$extra_incpath}" = "$old_field"
+        then
+          $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_CXXFLAGS "$old_field $extra_incpath"
+        fi
+        old_field=$($ROOTCOREDIR/scripts/get_field.sh $MAKEFILE PACKAGE_OBJFLAGS)
+        if test "${old_field#*$extra_incpath}" = "$old_field"
+        then
+          $ROOTCOREDIR/scripts/set_field.sh $MAKEFILE PACKAGE_OBJFLAGS "$old_field $extra_incpath"
+        fi
+      fi
       echo "boost installed at file system" && return 0;
     fi
   else
