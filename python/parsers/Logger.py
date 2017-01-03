@@ -35,6 +35,12 @@ class LoggerNamespace( argparse.Namespace ):
       return LoggingLevel.retrieve( self.__dict__['_outputLevel'] )
     else:
       return LoggingLevel.INFO
+
+  def __call__(self):
+    try:
+      self.setLevel( self.output_level )
+    except AttributeError:
+      pass
 ###############################################################################
 
 

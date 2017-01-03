@@ -1,145 +1,140 @@
 import os
 import re
-import textwrap
 __all__ = ['GridNamespace',  'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser']
 
 from RingerCore.Logger import Logger
-from RingerCore.util import get_attributes
 from RingerCore.parsers.Logger import LoggerNamespace
-
-try:
-  import argparse
-except ImportError:
-  from RingerCore.parsers import __py_argparse as argparse
+from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNamespace
 
 ################################################################################
 # Grid parser related objects
 ################################################################################
+class GridJobArgumentParser( JobSubmitArgumentParser ):
+  prefix = 'grid'
+
 # Basic grid parser
-gridParser = argparse.ArgumentParser(add_help = False)
+gridParser = GridJobArgumentParser(add_help = False)
 gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
-gridParserGroup.add_argument('--site',default = 'AUTO',
+gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
     help = "The site location where the job should run.",
-    nargs='?', required = False,
-    dest = 'grid_site')
-grid_shortSites = 'ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT'
-gridParserGroup.add_argument('--excludedSite', 
+    required = False,)
+grid__shortSites = 'ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT'
+gridParserGroup.add_job_submission_option('--excludedSite', 
     #default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
     #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
-    help = "The excluded site location.", nargs='?',
-    required = False, dest = 'grid_excludedSite')
-gridParserGroup.add_argument('--debug', default = '--skipScout',
-    const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode', dest='gridExpand_debug',
+    help = "The excluded site location.", 
+    required = False, )
+gridParserGroup.add_job_submission_option_group('--debug', default = '--skipScout',
+    const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
-gridParserGroup.add_argument('--nJobs', nargs='?', type=int,
-    required = False, dest = 'grid_nJobs',
-    help = """Number of jobs to submit.""")
-gridParserGroup.add_argument('--excludeFile', nargs='?', 
-    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*"', dest = 'grid_excludeFile',
+gridParserGroup.add_job_submission_option('--nJobs', type=int,
+    required = False, help = """Number of jobs to submit.""")
+gridParserGroup.add_job_submission_option('--excludeFile', 
+    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*"',
     help = """Files to exclude from environment copied to grid.""")
-gridParserGroup.add_argument('--disableAutoRetry', action='store_true',
-    required = False, dest = 'grid_disableAutoRetry',
+gridParserGroup.add_job_submission_option('--disableAutoRetry', action='store_true',
+    required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--followLinks', action='store_true',
-    required = False, dest = 'grid_followLinks',
+gridParserGroup.add_job_submission_option('--followLinks', action='store_true',
+    required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--mergeOutput', action='store_true',
-    required = False, dest = 'grid_mergeOutput',
+gridParserGroup.add_job_submission_option('--mergeOutput', action='store_true',
+    required = False,
     help = """Flag to enable merging output.""")
-#gridParserGroup.add_argument('--mergeScript', 
-#    required = False, dest = 'grid_mergeScript',
+#gridParserGroup.add_job_submission_option('--mergeScript', 
+#    required = False, 
 #    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
-gridParserGroup.add_argument('--extFile', nargs='?',
-    required = False, dest = 'grid_extFile', default='',
+gridParserGroup.add_job_submission_option('--extFile', 
+    required = False, default='',
     help = """External file to add.""")
-gridParserGroup.add_argument('--match', 
-    required = False, dest = 'grid_match',
+gridParserGroup.add_job_submission_option('--match', 
+    required = False, 
     help = """Use only files matching with given pattern.""")
-gridParserGroup.add_argument('--antiMatch', 
-    required = False, dest = 'grid_antiMatch',
+gridParserGroup.add_job_submission_option('--antiMatch', 
+    required = False,
     help = """Use all files but those matching with given pattern.""")
-gridParserGroup.add_argument('--cloud', nargs='?',
-    required = False, default=False, dest = 'grid_cloud',
+gridParserGroup.add_job_submission_option('--cloud', 
+    required = False, default=False,
     help = """The cloud where to submit the job.""")
-gridParserGroup.add_argument('--nGBPerJob', nargs='?',
-    required = False, dest = 'grid_nGBPerJob',
+gridParserGroup.add_job_submission_option('--nGBPerJob', 
+    required = False,
     help = """Maximum number of GB per job.""")
-gridParserGroup.add_argument('--skipScout', action='store_true',
-    required = False, dest = 'grid_skipScout',
+gridParserGroup.add_job_submission_option('--skipScout', action='store_true',
+    required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--memory', type=int,
-    required = False, dest = 'grid_memory',
+gridParserGroup.add_job_submission_option('--memory', type=int,
+    required = False,
     help = """Needed memory to run in MB.""")
-gridParserGroup.add_argument('--long', action='store_true',
-    required = False, dest = 'grid_long',
+gridParserGroup.add_job_submission_option('--long', action='store_true',
+    required = False,
     help = """Submit for long queue.""")
-gridParserGroup.add_argument('--useNewCode', action='store_true',
-    required = False, dest = 'grid_useNewCode',
+gridParserGroup.add_job_submission_option('--useNewCode', action='store_true',
+    required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--allowTaskDuplication', action='store_true',
-    required = False, dest = 'grid_allowTaskDuplication',
+gridParserGroup.add_job_submission_option('--allowTaskDuplication', action='store_true',
+    required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_argument('--crossSite', 
-    required = False, dest = 'grid_crossSite', type=int,
+gridParserGroup.add_job_submission_option('--crossSite', 
+    required = False, type=int,
     help = """Split jobs over many sites.""")
-gridParserGroup.add_argument('--dry-run', action='store_true',
-    help = """Only print grid resulting command, but do not execute it.
-            Used for debugging submission.""")
 mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
-mutuallyEx1.add_argument('-itar','--inTarBall', 
-    metavar='InTarBall', nargs = '?', dest = 'grid_inTarBall',
+mutuallyEx1.add_job_submission_option('-itar','--inTarBall', 
+    metavar='InTarBall', 
     help = "The environemnt tarball for posterior usage.")
-mutuallyEx1.add_argument('-otar','--outTarBall',
-    metavar='OutTarBall',  nargs = '?', dest = 'grid_outTarBall',
+mutuallyEx1.add_job_submission_option('-otar','--outTarBall',
+    metavar='OutTarBall',  
     help = "The environemnt tarball for posterior usage.")
 ################################################################################
 ## Temporary classes only to deal with diamond inherit scheme
-_inParser = argparse.ArgumentParser(add_help = False)
+_inParser = GridJobArgumentParser(add_help = False)
 _inParserGroup = _inParser.add_argument_group('GRID Input Dataset Arguments', '')
-_inParserGroup.add_argument('--inDS','-i', action='store', 
-                       required = True, dest = 'grid_inDS',
+_inParserGroup.add_job_submission_option('--inDS','-i', action='store', 
+                       required = True,
                        help = "The input Dataset ID (DID)")
-_inParserGroup.add_argument('--secondaryDSs', action='store', nargs='+',
-                       required = False, dest = 'grid_secondaryDS',
+_inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store', nargs='+',
+                       required = False, 
                        help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
-_inParserGroup.add_argument('--forceStaged', action='store_true',
-    required = False,  dest = 'grid_forceStaged', default = False,
+_inParserGroup.add_job_submission_option('--forceStaged', action='store_true',
+    required = False, default = False,
     help = """Force files from primary DS to be staged to local
     disk, even if direct-access is possible.""")
-_inParserGroup.add_argument('--forceStagedSecondary', action='store_true',
-    required = False, dest = 'grid_forceStagedSecondary',
+_inParserGroup.add_job_submission_option('--forceStagedSecondary', action='store_true',
+    required = False,
     help = """Force files from secondary DS to be staged to local
               disk, even if direct-access is possible.""")
-_inParserGroup.add_argument('--reusableSecondary', nargs='?',
-    required = False, dest = 'grid_reusableSecondary',
+_inParserGroup.add_job_submission_option('--reusableSecondary', 
+    required = False,
     help = """Allow reuse secondary dataset.""")
-_inParserGroup.add_argument('--nFiles', nargs='?', type=int,
-    required = False, dest = 'grid_nFiles',
+_inParserGroup.add_job_submission_option('--nFiles', type=int,
+    required = False,
     help = """Number of files to run.""")
-_inParserGroup.add_argument('--nFilesPerJob', nargs='?', type=int,
-    required = False, dest = 'grid_nFilesPerJob',
+_inParserGroup.add_job_submission_option('--nFilesPerJob', type=int,
+    required = False,
     help = """Number of files to run per job.""")
 ################################################################################
-_outParser = argparse.ArgumentParser(add_help = False)
+_outParser = GridJobArgumentParser(add_help = False)
 _outParserGroup = _inParser.add_argument_group('GRID Output Dataset Arguments', '')
-_outParserGroup.add_argument('--outDS','-o', action='store', 
-                        required = True, dest = 'grid_outDS',
+_outParserGroup.add_job_submission_option('--outDS','-o', action='store', 
+                        required = True,
                         help = "The output Dataset ID (DID)")
-_outParserGroup.add_argument('--outputs', required = True, dest = 'grid_outputs',
+_outParserGroup.add_job_submission_csv_option('--outputs', required = True,
     help = """The output format.""")
 ################################################################################
 ## Input and output grid parser
-ioGridParser = argparse.ArgumentParser(add_help = False, 
-                                       parents = [_inParser, _outParser, gridParser])
+ioGridParser = GridJobArgumentParser(add_help = False, 
+                                     parents = [_inParser, _outParser, gridParser],
+                                     conflict_handler = 'resolve')
 
 ## Input grid parser
-inGridParser = argparse.ArgumentParser(add_help = False, 
-                                       parents = [_inParser, gridParser])
+inGridParser = GridJobArgumentParser(add_help = False, 
+                                     parents = [_inParser, gridParser],
+                                     conflict_handler = 'resolve')
 
 ## Output grid parser
-outGridParser = argparse.ArgumentParser(add_help = False, 
-                                        parents = [_outParser, gridParser])
+outGridParser = GridJobArgumentParser(add_help = False, 
+                                      parents = [_outParser, gridParser],
+                                      conflict_handler = 'resolve')
 # Remove temp classes
 del _inParser, _outParser
 
@@ -153,7 +148,7 @@ class LargeDIDError(ValueError):
 ## GridNamespace
 # Make sure to use GridNamespace specialization for the used package when
 # parsing arguments.
-class GridNamespace( LoggerNamespace, Logger ):
+class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
   """
     Improves argparser workspace object to support creating a string object
     with the input options.
@@ -161,13 +156,16 @@ class GridNamespace( LoggerNamespace, Logger ):
 
   #noNumyPySites = ['ANALY_SWT2_CPB','ANALY_BNL_EC2E1']
 
-  def __init__(self, prog = 'prun', **kw):
-    Logger.__init__( self, kw )
+  prog = 'prun'
+  ParserClass = GridJobArgumentParser
+
+  def __init__(self, prog = None, **kw):
     LoggerNamespace.__init__( self, **kw )
-    self.prog = prog
+    JobSubmitNamespace.__init__( self, prog = prog)
 
   def __call__(self):
-    self.run_cmd()
+    LoggerNamespace.__call__(self)
+    JobSubmitNamespace.__call__(self)
 
   def setBExec(self, value):
     """
@@ -197,7 +195,72 @@ class GridNamespace( LoggerNamespace, Logger ):
       value = '"' + value
     if len(value) < 2 or value[-1] != '"':
       value += '"'
-    self.mergeExec_ = value 
+    self.mergeExec = value 
+
+  def extFile(self):
+    """
+      Return a comma separated list of extFiles needed by this GridNamespace.
+    """
+    return ''
+
+  def run(self, str_):
+    """
+      Run the command
+    """
+    self.pre_download()
+    workDir=os.path.expandvars("$ROOTCOREBIN/..")
+     # We need to cd to this dir so that prun accepts the submission
+    os.chdir(workDir)
+    os.system(str_)
+
+  def parse_exec(self):
+    full_cmd_str = ''
+    # Add execute grid command if available
+    if hasattr(self,'bexec'):
+      full_cmd_str += self._formated_line( '--bexec' )
+      full_cmd_str += self.parseExecStr(self.bexec)
+    if hasattr(self,'exec_'):
+      full_cmd_str += self._formated_line( '--exec' )
+      full_cmd_str += self.parseExecStr(self.exec_)
+    if hasattr(self,'mergeExec'):
+      full_cmd_str += self._formated_line( '--mergeScript' )
+      full_cmd_str += self.parseExecStr(self.mergeExec)
+    return full_cmd_str
+
+  def parse_special_args(self):
+    if hasattr(self,'mergeExec'):
+      if not(hasattr(self,'grid__mergeOutput')) or not(self.grid__mergeOutput):
+        self.grid__mergeOutput = True
+    if hasattr(self, 'grid__outDS'):
+      value = self.grid__outputs
+      if len(value) > 132:
+        raise LargeDIDError(value)
+      if hasattr(self, 'grid__outputs'):
+        for output in self.grid__outputs.split(','):
+          oList = output.split(':')
+          if len(oList) == 2:
+            did = value + '_' + oList[0].replace('"','')
+            if len(did) > 132:
+              raise LargeDIDError(did)
+          else:
+            if '*' in output and not output.endswith('.tgz'): output += '.tgz'
+            did = value + '_' + output.replace('*','XYZ').replace('"','')
+            if len(did) > 132:
+              raise LargeDIDError(did)
+    if self.extFile() and not self.extFile() in self.grid__extFile:
+      # FIXME This will fail b/c not all permutations will be tested in grid__extFile
+      if len(self.grid__extFile):
+        self.grid__extFile += ','
+      self.grid__extFile += self.extFile()
+    if self.grid__long:
+      if self.grid_excludedSite:
+        for shortSite in grid__shortSites.split(','):
+          if not shortSite in self.grid__excludedSite:
+            self.grid__excludedSite += ',' + shortSite
+      else:
+        self.grid__excludedSite = grid__shortSites
+    return ''
+
 
   def check_retrieve(self, filename, md5sum, dlurl):
     filename = os.path.expandvars(filename)
@@ -240,120 +303,4 @@ class GridNamespace( LoggerNamespace, Logger ):
                        ,"9c6bc68693d7307acffce690fe4f1076"
                        ,"https://github.com/scipy/scipy/archive/v0.18.0-1.tar.gz"
                        )
-
-  def extFile(self):
-    """
-      Return a comma separated list of extFiles needed by this GridNamespace.
-    """
-    return ''
-
-  def __run(self, str_):
-    """
-      Run the command
-    """
-    self.pre_download()
-    workDir=os.path.expandvars("$ROOTCOREBIN/..")
-     # We need to cd to this dir so that prun accepts the submission
-    os.chdir(workDir)
-    os.system(str_)
-
-  def nSpaces(self):
-    return len(self.prog) + 1
-    
-  def run_cmd(self):
-    """
-      Execute parsed arguments.
-    """
-    # Try to change our level if we have an output_level option:
-    try:
-      self.setLevel( self.output_level )
-    except AttributeError:
-      pass
-    # Add program to exec and build exec if available
-    full_cmd_str = self.prog + (' --bexec ' + self.bexec if hasattr(self,'bexec') else '') + ' \\\n'
-    # The number of spaces to add to each following option to improve readability:
-    nSpaces = self.nSpaces()
-    # Add execute grid command if available
-    if hasattr(self,'exec_'):
-      full_cmd_str += (' ' * nSpaces) + '--exec' + ' \\\n'
-      exec_str = [textwrap.dedent(l) for l in self.exec_.split('\n')]
-      exec_str = [l for l in exec_str if l not in (';','"','')]
-      if exec_str[-1][-2:] != ';"': 
-        exec_str[-1] += ';"' 
-      for i, l in enumerate(exec_str):
-        if i == 0:
-          moreSpaces = 2
-        else:
-          moreSpaces = 4
-        full_cmd_str += (' ' * (nSpaces + moreSpaces) ) + l + ' \\\n'
-    if hasattr(self,'mergeExec_'):
-      full_cmd_str += (' ' * nSpaces) + '--mergeScript' + ' \\\n'
-      merge_exec_str = [textwrap.dedent(l) for l in self.mergeExec_.split('\n')]
-      merge_exec_str = [l for l in merge_exec_str if l not in (';','"','')]
-      if merge_exec_str[-1][-1:] != '"': 
-        merge_exec_str[-1] += '"' 
-      for i, l in enumerate(merge_exec_str):
-        if i == 0:
-          moreSpaces = 2
-        else:
-          moreSpaces = 4
-        full_cmd_str += (' ' * (nSpaces + moreSpaces) ) + l + ' \\\n'
-      if not 'grid_mergeOutput' in get_attributes(self, onlyVars = True) or \
-          not(self.grid_mergeOutput):
-        self.grid_mergeOutput = True
-    # Add needed external files:
-    if self.extFile() and not self.extFile() in self.grid_extFile:
-      if len(self.grid_extFile):
-        self.grid_extFile += ','
-      self.grid_extFile += self.extFile()
-    if self.grid_long:
-      if self.grid_excludedSite:
-        for shortSite in grid_shortSites.split(','):
-          if not shortSite in self.grid_excludedSite:
-            self.grid_excludedSite += ',' + shortSite
-      else:
-        self.grid_excludedSite = grid_shortSites
-    # Add extra arguments
-    for name, value in get_attributes(self):
-      if 'grid_' in name:
-        name = name.replace('grid_','--')
-        if name == '--outDS':
-          for output in self.grid_outputs.split(','):
-            oList = output.split(':')
-            if len(oList) == 2:
-              did = value + '_' + oList[0].replace('"','')
-              if len(did) > 132:
-                raise LargeDIDError(did)
-            else:
-              if '*' in output and not output.endswith('.tgz'): output += '.tgz'
-              did = value + '_' + output.replace('*','XYZ').replace('"','')
-              if len(did) > 132:
-                raise LargeDIDError(did)
-      elif 'gridExpand_' in name:
-        if value:
-          name = value
-          value = True
-        else:
-          continue
-      else:
-        continue
-      tVal = type(value)
-      if tVal == bool and value:
-        full_cmd_str += (' ' * nSpaces) + name + ' \\\n'
-      elif value:
-        if isinstance(value, list):
-          full_cmd_str += (' ' * nSpaces) + name + '=' + ','.join(value) + ' \\\n'
-        else:
-          full_cmd_str += (' ' * nSpaces) + name + '=' + str(value) + ' \\\n'
-    # Now we show command:
-    self._logger.info("Command:\n%s", full_cmd_str)
-    full_cmd_str = re.sub('\\\\ *\n','', full_cmd_str )
-    full_cmd_str = re.sub(' +',' ', full_cmd_str)
-    self._logger.debug("Command without spaces:\n%s", full_cmd_str)
-    # And run it:
-    if not self.dry_run:
-      self.__run(full_cmd_str)
-      pass
-
-
 
