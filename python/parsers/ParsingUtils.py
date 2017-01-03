@@ -18,6 +18,11 @@ class _JobSubmitActionsContainer( object ):
 
   def add_job_submission_csv_option(self, *l, **kw):
     kw['dest'] = self._getDest( *l, extraSpec = '_CSV')
+    if kw.pop('nargs','+') != '+':
+      raise ValueError('Cannot specify nargs different from \'+\' when using csv option')
+    kw['nargs'] = '+'
+    if not 'default' in kw:
+      kw['default'] = []
     self.add_argument(*l, **kw)
 
   def add_job_submission_option_group(self, *l, **kw):
@@ -115,6 +120,43 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     "Overload this method treat special parameters."
     return ''
 
+  def has_job_submission_option(self, option):
+    try:
+      self._find_job_submission_option(option)
+      return True
+    except KeyError:
+      return False
+
+  def get_job_submission_option(self, option):
+    return getattr(self, self._find_job_submission_option(option))
+
+  def set_job_submission_option(self, option, val):
+    return setattr(self, self._find_job_submission_option(option), val)
+
+  def append_to_job_submission_option(self, option, val):
+    try:
+      from RingerCore.LimitedTypeList import LimitedTypeList
+      if hasattr(val,'__metaclass__') and issubclass(val.__metaclass__, LimitedTypeList):
+        attr = self.get_job_submission_option(option)
+        attr += val
+      elif isinstance(val, (tuple,list)):
+        self.get_job_submission_option(option).extend(val)
+      else:
+        self.get_job_submission_option(option).append(val)
+    except AttributeError, e:
+      raise TypeError('Option \'%s\' is not a collection. Details:\n%s' % (option,e))
+
+  def _find_job_submission_option(self, option):
+    import re
+    search = re.compile('^' + self.prefix + '(_.+)?_{1,2}' + option + '$')
+    matches = [key for key in get_attributes(self, onlyVars = True) if bool(search.match( key ))]
+    lMatches = len(matches)
+    if lMatches > 1:
+      self._logger.warning("Found more than one match for option %s, will return first match. Matches are: %r.", option, matches)
+    elif lMatches == 0:
+      self._logger.fatal("Cannot find job submission option: %s", option, KeyError)
+    return matches[0]
+
   def parseExecStr(self, execStr):
     retStr = ''
     import textwrap
@@ -175,9 +217,9 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
       elif value:
         if isinstance(value, list):
           if csv:
-            cmd_str +=  self._formated_line( name + '=' + ','.join(value) )
+            cmd_str +=  self._formated_line( name + '=' + ','.join( [str(v) for v in value]) )
           else:
-            cmd_str +=  self._formated_line( name + '=' + ' '.join(value) )
+            cmd_str +=  self._formated_line( name + '=' + ' '.join( [str(v) for v in value]) )
         else:
           cmd_str +=  self._formated_line( name + '=' + str(value) )
     return cmd_str

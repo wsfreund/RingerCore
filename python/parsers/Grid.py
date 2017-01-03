@@ -1,10 +1,13 @@
 import os
 import re
-__all__ = ['GridNamespace',  'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser']
+__all__ = ['SecondaryDataset','SecondaryDatasetCollection', 'GridNamespace',  
+           'gridParser', 'inGridParser', 
+           'ioGridParser', 'outGridParser']
 
 from RingerCore.Logger import Logger
 from RingerCore.parsers.Logger import LoggerNamespace
 from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNamespace
+from RingerCore.LimitedTypeList import LimitedTypeList
 
 ################################################################################
 # Grid parser related objects
@@ -12,14 +15,45 @@ from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNa
 class GridJobArgumentParser( JobSubmitArgumentParser ):
   prefix = 'grid'
 
+class SecondaryDataset( object ):
+  """
+  Implements a helper class for panda run SecondaryDataset option:
+
+  https://twiki.cern.ch/twiki/bin/view/PanDA/PandaRun#How_to_use_multiple_input_datase
+  """
+
+  def __init__(self, key, nFilesPerJob,  container, MatchingPattern = None, nSkipFiles = None, reusable = False ):
+    self.key = key
+    self.container = container
+    self.nFilesPerJob = nFilesPerJob
+    self.MatchingPattern = MatchingPattern
+    self.nSkipFiles = nSkipFiles
+    self.reusable = reusable
+
+  def __str__(self):
+    values = []
+    values.append(self.key)
+    values.append(str(self.nFilesPerJob))
+    values.append(self.container)
+    if self.MatchingPattern is not None: values.append(self.MatchingPattern)
+    if self.nSkipFiles is not None: values.append(self.nSkipFiles)
+    return ':'.join(values)
+
+  def __repr__(self):
+    return 'SecondaryDataset(' + str(self) + '|reusable=' + str(self.reusable) + ')'
+
+class SecondaryDatasetCollection( object ):
+  __metaclass__ = LimitedTypeList
+  _acceptedTypes = SecondaryDataset,
+
 # Basic grid parser
 gridParser = GridJobArgumentParser(add_help = False)
 gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
 gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
     help = "The site location where the job should run.",
     required = False,)
-grid__shortSites = 'ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT'
-gridParserGroup.add_job_submission_option('--excludedSite', 
+shortSites = ['ANALY_CERN_SHORT','ANALY_CONNECT_SHORT','ANALY_BNL_SHORT']
+gridParserGroup.add_job_submission_csv_option('--excludedSite', 
     #default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
     #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
     help = "The excluded site location.", 
@@ -45,8 +79,8 @@ gridParserGroup.add_job_submission_option('--mergeOutput', action='store_true',
 #gridParserGroup.add_job_submission_option('--mergeScript', 
 #    required = False, 
 #    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
-gridParserGroup.add_job_submission_option('--extFile', 
-    required = False, default='',
+gridParserGroup.add_job_submission_csv_option('--extFile', 
+    required = False, 
     help = """External file to add.""")
 gridParserGroup.add_job_submission_option('--match', 
     required = False, 
@@ -92,8 +126,8 @@ _inParserGroup = _inParser.add_argument_group('GRID Input Dataset Arguments', ''
 _inParserGroup.add_job_submission_option('--inDS','-i', action='store', 
                        required = True,
                        help = "The input Dataset ID (DID)")
-_inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store', nargs='+',
-                       required = False, 
+_inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store',
+                       required = False, default = SecondaryDatasetCollection(),
                        help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
 _inParserGroup.add_job_submission_option('--forceStaged', action='store_true',
     required = False, default = False,
@@ -103,7 +137,7 @@ _inParserGroup.add_job_submission_option('--forceStagedSecondary', action='store
     required = False,
     help = """Force files from secondary DS to be staged to local
               disk, even if direct-access is possible.""")
-_inParserGroup.add_job_submission_option('--reusableSecondary', 
+_inParserGroup.add_job_submission_csv_option('--reusableSecondary', 
     required = False,
     help = """Allow reuse secondary dataset.""")
 _inParserGroup.add_job_submission_option('--nFiles', type=int,
@@ -199,9 +233,9 @@ class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
 
   def extFile(self):
     """
-      Return a comma separated list of extFiles needed by this GridNamespace.
+      Return list of extFiles needed by this GridNamespace.
     """
-    return ''
+    return []
 
   def run(self, str_):
     """
@@ -229,36 +263,39 @@ class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
 
   def parse_special_args(self):
     if hasattr(self,'mergeExec'):
-      if not(hasattr(self,'grid__mergeOutput')) or not(self.grid__mergeOutput):
-        self.grid__mergeOutput = True
-    if hasattr(self, 'grid__outDS'):
-      value = self.grid__outputs
-      if len(value) > 132:
-        raise LargeDIDError(value)
-      if hasattr(self, 'grid__outputs'):
-        for output in self.grid__outputs.split(','):
-          oList = output.split(':')
-          if len(oList) == 2:
-            did = value + '_' + oList[0].replace('"','')
-            if len(did) > 132:
-              raise LargeDIDError(did)
-          else:
-            if '*' in output and not output.endswith('.tgz'): output += '.tgz'
-            did = value + '_' + output.replace('*','XYZ').replace('"','')
-            if len(did) > 132:
-              raise LargeDIDError(did)
-    if self.extFile() and not self.extFile() in self.grid__extFile:
-      # FIXME This will fail b/c not all permutations will be tested in grid__extFile
-      if len(self.grid__extFile):
-        self.grid__extFile += ','
-      self.grid__extFile += self.extFile()
-    if self.grid__long:
-      if self.grid_excludedSite:
-        for shortSite in grid__shortSites.split(','):
-          if not shortSite in self.grid__excludedSite:
-            self.grid__excludedSite += ',' + shortSite
+      if not(self.has_job_submission_option('mergeOutput')) or not(self.get_job_submission_option('mergeOutput')):
+        self.set_job_submission_option('mergeOutput', True)
+    if self.has_job_submission_option('outDS'):
+      outDS = self.get_job_submission_option('outDS')
+      outputs = self.get_job_submission_option('outputs')
+      for output in outputs:
+        oList = output.split(':')
+        if len(oList) == 2:
+          did = outDS + '_' + oList[0].replace('"','')
+          if len(did) > 132:
+            raise LargeDIDError(did)
+        else:
+          if '*' in output and not output.endswith('.tgz'): output += '.tgz'
+          did = outDS + '_' + output.replace('*','XYZ').replace('"','')
+          if len(did) > 132:
+            raise LargeDIDError(did)
+    for extFile in self.extFile():
+      if not extFile in self.get_job_submission_option('extFile'):
+        self.append_to_job_submission_option('extFile', extFile )
+    # Treat reusable secondary to include those secondaryDSs that are reusable
+    self.append_to_job_submission_option('reusableSecondary', [secondaryDS.key for secondaryDS in self.get_job_submission_option('secondaryDSs')
+                                                                 if secondaryDS.reusable and 
+                                                                   not secondaryDS.key in self.get_job_submission_option('reusableSecondary')
+                                                              ]
+                                        )
+    if self.get_job_submission_option('long'):
+      excludedSite = self.get_job_submission_option('excludedSite')
+      if self.get_job_submission_option('excludedSite'):
+        for shortSite in shortSites:
+          if not shortSite in excludedSite:
+            self.append_to_job_submission_option('excludedSite', shortSite)
       else:
-        self.grid__excludedSite = grid__shortSites
+        self.set_job_submission_option('excludedSite', shortSites)
     return ''
 
 
