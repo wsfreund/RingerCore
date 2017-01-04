@@ -1,9 +1,8 @@
-import os
-import re
-__all__ = ['SecondaryDataset','SecondaryDatasetCollection', 'GridNamespace',  
-           'gridParser', 'inGridParser', 
-           'ioGridParser', 'outGridParser']
+__all__ = ['SecondaryDataset','SecondaryDatasetCollection', 
+           'GridOutput','GridOutputCollection', 'GridNamespace',  
+           'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser']
 
+import os
 from RingerCore.Logger import Logger
 from RingerCore.parsers.Logger import LoggerNamespace
 from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNamespace
@@ -47,8 +46,34 @@ class SecondaryDatasetCollection( object ):
   __metaclass__ = LimitedTypeList
   _acceptedTypes = SecondaryDataset,
 
+class GridOutput( object ):
+  """
+  Implements a helper class for panda run SecondaryDataset option:
+
+  https://twiki.cern.ch/twiki/bin/view/PanDA/PandaRun#How_to_use_multiple_input_datase
+  """
+
+  def __init__(self, key = None, regexp = None ):
+    self.key = key
+    if not regexp:
+      raise ValueError('regexp must be a valid.')
+    self.regexp = regexp
+
+  def __str__(self):
+    values = []
+    if self.key: values.append(self.key)
+    values.append(self.regexp)
+    return ':'.join(values)
+
+  def __repr__(self):
+    return 'GridOutput(' + str(self) + ')'
+
+class GridOutputCollection( object ):
+  __metaclass__ = LimitedTypeList
+  _acceptedTypes = GridOutput,
+
 # Basic grid parser
-gridParser = GridJobArgumentParser(add_help = False)
+gridParser = GridJobArgumentParser( add_help = False )
 gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
 gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
     help = "The site location where the job should run.",
@@ -120,6 +145,7 @@ mutuallyEx1.add_job_submission_option('-itar','--inTarBall',
 mutuallyEx1.add_job_submission_option('-otar','--outTarBall',
     metavar='OutTarBall',  
     help = "The environemnt tarball for posterior usage.")
+mutuallyEx1.title = 'GRID Mutually Exclusive Arguments'
 ################################################################################
 ## Temporary classes only to deal with diamond inherit scheme
 _inParser = GridJobArgumentParser(add_help = False)
@@ -154,6 +180,7 @@ _outParserGroup.add_job_submission_option('--outDS','-o', action='store',
                         required = True,
                         help = "The output Dataset ID (DID)")
 _outParserGroup.add_job_submission_csv_option('--outputs', required = True,
+    default = GridOutputCollection(),
     help = """The output format.""")
 ################################################################################
 ## Input and output grid parser

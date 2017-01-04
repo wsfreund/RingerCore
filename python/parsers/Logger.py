@@ -11,11 +11,11 @@ from RingerCore.parsers.ParsingUtils import ArgumentParser, argparse
 
 from RingerCore.Logger import LoggingLevel, Logger
 loggerParser = ArgumentParser(add_help = False)
-logOutput = loggerParser.add_argument_group('Loggging arguments', '')
+logOutput = loggerParser.add_argument_group('Logging arguments', '')
 logOutput.add_argument('--output-level', #action=_RetrieveOutputLevelAction,
     default = LoggingLevel.tostring( LoggingLevel.INFO ), 
     type=LoggingLevel, required = False, dest='_level',
-    help = "The output level for the main logger." )
+    metavar = 'LEVEL', help = "The output level for the main logger." )
 
 ###############################################################################
 ## LoggerNamespace

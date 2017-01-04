@@ -8,7 +8,7 @@ __all__ = ['GRID_ENV', 'EnumStringification', 'BooleanStr', 'Holder', 'Include',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
     'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput',
-    'is_tool', 'secureExtractNpItem']
+    'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp']
 
 import re, os, __main__
 import sys
@@ -825,3 +825,16 @@ def secureExtractNpItem( npArray ):
     return npArray.item()
   except AttributeError:
     return npArray
+
+
+def emptyArgumentsPrintHelp(parser):
+  """
+  If user do not enter any argument, print help
+  """
+  if len(sys.argv)==1:
+    from RingerCore.Logger import Logger
+    mainLogger = Logger.getModuleLogger( __name__)
+    mainLogger.write = mainLogger.info
+    parser.print_help(file = mainLogger)
+    parser.exit(1)
+
