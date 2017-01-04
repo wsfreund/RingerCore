@@ -1,4 +1,4 @@
-__all__ = ['argparse','JobSubmitArgumentParser', 'JobSubmitNamespace']
+__all__ = ['argparse','ArgumentParser','JobSubmitArgumentParser', 'JobSubmitNamespace']
 
 from RingerCore.util import get_attributes
 import re
@@ -8,9 +8,163 @@ try:
 except ImportError:
   from RingerCore.parsers import __py_argparse as argparse
 
-from RingerCore.Logger import Logger
+from RingerCore.Logger import Logger, LoggingLevel
+from RingerCore.util import BooleanStr, EnumStringification
 
-class _JobSubmitActionsContainer( object ):
+class _EraseGroup( Exception ):
+  """
+  Indicate that a group should be erased.
+  """
+  pass
+
+class _ActionsContainer( object ):
+
+  def add_argument(self, *args, **kwargs):
+    if 'type' in kwargs and issubclass(kwargs['type'], EnumStringification):
+      lType = kwargs['type']
+      # Make sure that there will be registered the type and the action that
+      # will be used for it:
+      if not lType in self._registries['type']:
+        self.register('type', lType, lType.retrieve)
+      # Deal with the help option:
+      help_str = kwargs.pop('help','').rstrip(' ')
+      if not '.' in help_str[-1:]: help_str += '. '
+      if help_str[-1:] != ' ': help_str += ' '
+      help_str += "Possible options are: "
+      from operator import itemgetter
+      val = sorted(get_attributes( kwargs['type'], getProtected = False), key=itemgetter(1))
+      help_str += str([v[0] for v in val])
+      help_str += ', or respectively equivalent to the integers: '
+      help_str += str([v[1] for v in val])
+      kwargs['help'] = help_str
+      # Deal with BooleanStr special case:
+      if issubclass(lType, BooleanStr):
+        if kwargs.pop('nargs','?') != '?':
+          raise ValueError('Cannot specify nargs different from \'?\' when using boolean argument')
+        kwargs['nargs'] = '?'
+        kwargs['const'] = BooleanStr.retrieve( kwargs.pop('const','True') )
+    argparse._ActionsContainer.add_argument(self, *args, **kwargs)
+
+  def add_argument_group(self, *args, **kwargs):
+    group = _ArgumentGroup(self, *args, **kwargs)
+    self._action_groups.append(group)
+    return group
+
+  def add_mutually_exclusive_group(self, **kwargs):
+    group = _MutuallyExclusiveGroup(self, **kwargs)
+    self._mutually_exclusive_groups.append(group)
+    return group
+
+  def delete_arguments(self, *vars_, **kw):
+    "Remove all specified arguments from the parser"
+    # Remove arguments from the groups:
+    popIdxs = []
+    visited_groups = kw.pop('visited_groups',[])
+    for idx, group in enumerate(self._action_groups):
+      try:
+        if group in visited_groups:
+          raise _EraseGroup()
+        visited_groups.append( group )
+        group.delete_arguments( *vars_, visited_groups = visited_groups )
+      except _EraseGroup:
+        popIdxs.append(idx)
+    for idx in popIdxs:
+      self._action_groups.pop( idx )
+    popIdxs = []
+    # Repeat procedure for the mutually exclusive groups:
+    visited_mutually_exclusive_groups = kw.pop('visited_mutually_exclusive_groups',[])
+    for idx, group in enumerate(self._mutually_exclusive_groups):
+      try:
+        if group in visited_mutually_exclusive_groups:
+          raise _EraseGroup()
+        visited_mutually_exclusive_groups.append(group)
+        group.delete_arguments( *vars_, visited_mutually_exclusive_groups = visited_mutually_exclusive_groups )
+      except _EraseGroup:
+        popIdxs.append(idx)
+    for idx in popIdxs:
+      self._mutually_exclusive_groups.pop( idx )
+    # Treat our own actions:
+    for var in vars_:
+      for idx, action in enumerate(self._actions):
+        if action.dest == var:
+          self._actions.pop( idx )
+          popOptKeys = []
+          for optKey, optAction in self._option_string_actions.iteritems():
+            if optAction.dest == var:
+              popOptKeys.append(optKey)
+          for popOpt in popOptKeys:
+            self._option_string_actions.pop(popOpt)
+          break
+    # Raise if we shouldn't exist anymore:
+    if not self._actions and \
+       not self._mutually_exclusive_groups and \
+       not self._action_groups and \
+       not self._defaults and \
+       isinstance(self, (_MutuallyExclusiveGroup, _ArgumentGroup)):
+       raise _EraseGroup()
+
+  def suppress_arguments(self, **vars_):
+    """
+    Suppress all specified arguments from the parser by assigning a default
+    value to them. It must be specified through a key, value pair, the key
+    being the variable destination, and the value the value it should always
+    take.
+    """
+    for idx, group in enumerate(self._action_groups):
+      group.suppress_arguments( **vars_ )
+    for idx, group in enumerate(self._mutually_exclusive_groups):
+      group.suppress_arguments( **vars_ )
+    for var, default in vars_.iteritems():
+      for idx, action in enumerate(self._actions):
+        if action.dest == var:
+          self._actions.pop( idx )
+          popOptKeys = []
+          for optKey, optAction in self._option_string_actions.iteritems():
+            if optAction.dest == var:
+              popOptKeys.append(optKey)
+          for popOpt in popOptKeys:
+            self._option_string_actions.pop(popOpt)
+          break
+    # Set defaults:
+    self.set_defaults(**vars_)
+
+class ArgumentParser( _ActionsContainer, argparse.ArgumentParser ):
+  """
+  This class has the following extra features over the original ArgumentParser:
+
+  -> add_boolean_argument: This option can be used to declare an argument which
+  may be declared as a radio button, that is, simply:
+     --option
+  where it will be set to True, or also specifying its current status through the
+  following possible ways:
+     --option True
+     --option true
+     --option 1
+     --option 0
+     --option False
+     --option false
+
+  -> When type is a EnumStringification, it will automatically transform the input
+  value using retrieve;
+  """
+
+  def __init__(self,*l,**kw):
+    _ActionsContainer.__init__(self)
+    argparse.ArgumentParser.__init__(self,*l,**kw)
+    self.register('type', BooleanStr, BooleanStr.retrieve)
+    if 'parents' in kw:
+      parents = kw['parents']
+      for parent in parents:
+        for key, reg in parent._registries.iteritems():
+          if not key in self._registries:
+            self._registries[key] = reg
+          else:
+            for key_act, act in reg.iteritems():
+              if not key_act in self._registries[key]:
+                self.register(key, key_act, act)
+
+
+class _JobSubmitActionsContainer( _ActionsContainer ):
 
   def add_job_submission_option(self, *l, **kw):
     kw['dest'] = self._getDest(*l)
@@ -66,7 +220,7 @@ class _JobSubmitActionsContainer( object ):
     return 
 
 
-class JobSubmitArgumentParser( _JobSubmitActionsContainer, argparse.ArgumentParser ):
+class JobSubmitArgumentParser( _JobSubmitActionsContainer, ArgumentParser ):
   """
   This class separate the options to be parsed in two levels:
     -> One group of options that will be used to specify the job submition;
@@ -80,7 +234,7 @@ class JobSubmitArgumentParser( _JobSubmitActionsContainer, argparse.ArgumentPars
   """
   def __init__(self,*l,**kw):
     _JobSubmitActionsContainer.__init__(self)
-    argparse.ArgumentParser.__init__(self,*l,**kw)
+    ArgumentParser.__init__(self,*l,**kw)
     try:
       self.add_argument('--dry-run', action='store_true',
           help = """Only print resulting command, but do not execute it.""")
@@ -104,8 +258,15 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     except AttributeError:
       raise AttributeError("Not specified class (%s) ParserClass attribute!" % self.__class__.__name__)
     argparse.Namespace.__init__( self )
+    import os
+    self.fcn = os.system
 
   def __call__(self):
+    "Execute the command"
+    self.run()
+
+  def run(self):
+    "Execute the command"
     full_cmd_str = self.prog + ' \\\n'
     full_cmd_str += self.parse_exec()
     full_cmd_str += self.parse_special_args()
@@ -175,12 +336,6 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
       retStr += self._formated_line( l, moreSpaces = moreSpaces )
     return retStr
 
-  def run(self, str_):
-    """
-      Run the command
-    """
-    os.system(str_)
-
   def _nSpaces(self):
     "Specify the base number of spaces after entering the command."
     return len(self.prog) + 1
@@ -232,18 +387,29 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     self._logger.debug("Command without spaces:\n%s", full_cmd_str)
     # And run it:
     if not self.dry_run:
-      self.run(full_cmd_str)
+      self.fcn(full_cmd_str)
       pass
 
-
-class _JobSubmitArgumentGroup( _JobSubmitActionsContainer, argparse._ArgumentGroup ):
+class _ArgumentGroup( _ActionsContainer, argparse._ArgumentGroup ):
   def __init__(self, *args, **kw):
-    self.prefix = kw.pop('prefix')
-    _JobSubmitActionsContainer.__init__(self)
+    _ActionsContainer.__init__(self)
     argparse._ArgumentGroup.__init__(self,*args,**kw)
+    self.register('type', BooleanStr, BooleanStr.retrieve)
 
-class _JobSubmitMutuallyExclusiveGroup( _JobSubmitActionsContainer, argparse._MutuallyExclusiveGroup ):
+class _MutuallyExclusiveGroup( _ActionsContainer, argparse._MutuallyExclusiveGroup ):
+  def __init__(self, *args, **kw):
+    _ActionsContainer.__init__(self)
+    argparse._MutuallyExclusiveGroup.__init__(self,*args,**kw)
+    self.register('type', BooleanStr, BooleanStr.retrieve)
+
+class _JobSubmitArgumentGroup( _JobSubmitActionsContainer, _ArgumentGroup ):
   def __init__(self, *args, **kw):
     self.prefix = kw.pop('prefix')
     _JobSubmitActionsContainer.__init__(self)
-    argparse._MutuallyExclusiveGroup.__init__(self,*args,**kw)
+    _ArgumentGroup.__init__(self,*args,**kw)
+
+class _JobSubmitMutuallyExclusiveGroup( _JobSubmitActionsContainer, _MutuallyExclusiveGroup ):
+  def __init__(self, *args, **kw):
+    self.prefix = kw.pop('prefix')
+    _JobSubmitActionsContainer.__init__(self)
+    _MutuallyExclusiveGroup.__init__(self,*args,**kw)

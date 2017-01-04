@@ -8,6 +8,7 @@ from RingerCore.Logger import Logger
 from RingerCore.parsers.Logger import LoggerNamespace
 from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNamespace
 from RingerCore.LimitedTypeList import LimitedTypeList
+from RingerCore.util import BooleanStr
 
 ################################################################################
 # Grid parser related objects
@@ -67,13 +68,13 @@ gridParserGroup.add_job_submission_option('--nJobs', type=int,
 gridParserGroup.add_job_submission_option('--excludeFile', 
     required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*"',
     help = """Files to exclude from environment copied to grid.""")
-gridParserGroup.add_job_submission_option('--disableAutoRetry', action='store_true',
+gridParserGroup.add_job_submission_option('--disableAutoRetry', type=BooleanStr,
     required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--followLinks', action='store_true',
+gridParserGroup.add_job_submission_option('--followLinks', type=BooleanStr,
     required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--mergeOutput', action='store_true',
+gridParserGroup.add_job_submission_option('--mergeOutput', type=BooleanStr,
     required = False,
     help = """Flag to enable merging output.""")
 #gridParserGroup.add_job_submission_option('--mergeScript', 
@@ -94,22 +95,22 @@ gridParserGroup.add_job_submission_option('--cloud',
 gridParserGroup.add_job_submission_option('--nGBPerJob', 
     required = False,
     help = """Maximum number of GB per job.""")
-gridParserGroup.add_job_submission_option('--skipScout', action='store_true',
+gridParserGroup.add_job_submission_option('--skipScout', type=BooleanStr,
     required = False,
     help = """Flag to disable auto retrying jobs.""")
 gridParserGroup.add_job_submission_option('--memory', type=int,
     required = False,
     help = """Needed memory to run in MB.""")
-gridParserGroup.add_job_submission_option('--long', action='store_true',
+gridParserGroup.add_job_submission_option('--long', type=BooleanStr,
     required = False,
     help = """Submit for long queue.""")
-gridParserGroup.add_job_submission_option('--useNewCode', action='store_true',
+gridParserGroup.add_job_submission_option('--useNewCode', type=BooleanStr,
     required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--allowTaskDuplication', action='store_true',
+gridParserGroup.add_job_submission_option('--allowTaskDuplication', type=BooleanStr,
     required = False,
     help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--crossSite', 
+gridParserGroup.add_job_submission_option('--crossSite',
     required = False, type=int,
     help = """Split jobs over many sites.""")
 mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
@@ -129,11 +130,11 @@ _inParserGroup.add_job_submission_option('--inDS','-i', action='store',
 _inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store',
                        required = False, default = SecondaryDatasetCollection(),
                        help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
-_inParserGroup.add_job_submission_option('--forceStaged', action='store_true',
+_inParserGroup.add_job_submission_option('--forceStaged', type=BooleanStr,
     required = False, default = False,
     help = """Force files from primary DS to be staged to local
     disk, even if direct-access is possible.""")
-_inParserGroup.add_job_submission_option('--forceStagedSecondary', action='store_true',
+_inParserGroup.add_job_submission_option('--forceStagedSecondary', type=BooleanStr,
     required = False,
     help = """Force files from secondary DS to be staged to local
               disk, even if direct-access is possible.""")
@@ -182,7 +183,7 @@ class LargeDIDError(ValueError):
 ## GridNamespace
 # Make sure to use GridNamespace specialization for the used package when
 # parsing arguments.
-class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
+class GridNamespace( JobSubmitNamespace ):
   """
     Improves argparser workspace object to support creating a string object
     with the input options.
@@ -194,12 +195,7 @@ class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
   ParserClass = GridJobArgumentParser
 
   def __init__(self, prog = None, **kw):
-    LoggerNamespace.__init__( self, **kw )
     JobSubmitNamespace.__init__( self, prog = prog)
-
-  def __call__(self):
-    LoggerNamespace.__call__(self)
-    JobSubmitNamespace.__call__(self)
 
   def setBExec(self, value):
     """
@@ -237,15 +233,17 @@ class GridNamespace( LoggerNamespace, JobSubmitNamespace ):
     """
     return []
 
-  def run(self, str_):
+  def run(self):
     """
       Run the command
     """
-    self.pre_download()
+    if not self.dry_run:
+      self.pre_download()
+    # We need to cd to this dir so that prun accepts the submission
     workDir=os.path.expandvars("$ROOTCOREBIN/..")
-     # We need to cd to this dir so that prun accepts the submission
     os.chdir(workDir)
-    os.system(str_)
+    JobSubmitNamespace.run(self)
+
 
   def parse_exec(self):
     full_cmd_str = ''
