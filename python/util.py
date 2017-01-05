@@ -8,7 +8,7 @@ __all__ = ['GRID_ENV', 'EnumStringification', 'BooleanStr', 'Holder', 'Include',
     'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
     'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
     'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput',
-    'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp']
+    'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists']
 
 import re, os, __main__
 import sys
@@ -831,10 +831,22 @@ def emptyArgumentsPrintHelp(parser):
   """
   If user do not enter any argument, print help
   """
+  import sys
   if len(sys.argv)==1:
-    from RingerCore.Logger import Logger
-    mainLogger = Logger.getModuleLogger( __name__)
-    mainLogger.write = mainLogger.info
-    parser.print_help(file = mainLogger)
+    from RingerCore.Logger import _getFormatter
+    sys.stdout.write(_getFormatter().color_seq % { 'color' : _getFormatter().colors['INFO']})
+    #mainLogger = Logger.getModuleLogger( __name__)
+    #mainLogger.write = mainLogger.info
+    #parser.print_help(file = mainLogger)
+    parser.print_help()
+    sys.stdout.write(_getFormatter().reset_seq)
     parser.exit(1)
 
+def cmd_exists(cmd):
+  """
+  Check whether command exists.
+  Taken from: http://stackoverflow.com/a/28909933/1162884
+  """
+  import subprocess
+  return subprocess.call("type " + cmd, shell=True, 
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0

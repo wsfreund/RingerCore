@@ -5,7 +5,8 @@ __all__ = ['SecondaryDataset','SecondaryDatasetCollection',
 import os
 from RingerCore.Logger import Logger
 from RingerCore.parsers.Logger import LoggerNamespace
-from RingerCore.parsers.ParsingUtils import JobSubmitArgumentParser, JobSubmitNamespace
+from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubmitNamespace
+                                              , clusterManagerParser ) 
 from RingerCore.LimitedTypeList import LimitedTypeList
 from RingerCore.util import BooleanStr
 
@@ -73,7 +74,7 @@ class GridOutputCollection( object ):
   _acceptedTypes = GridOutput,
 
 # Basic grid parser
-gridParser = GridJobArgumentParser( add_help = False )
+gridParser = GridJobArgumentParser( add_help = False, parents = [clusterManagerParser] )
 gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
 gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
     help = "The site location where the job should run.",

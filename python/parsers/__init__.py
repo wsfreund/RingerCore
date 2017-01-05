@@ -3,6 +3,9 @@ __all__ = []
 from . import ParsingUtils
 __all__.extend( ParsingUtils.__all__ )
 from .ParsingUtils import *
+from . import ClusterManager
+__all__.extend( ClusterManager.__all__ )
+from .ClusterManager import *
 from . import Grid
 __all__.extend( Grid.__all__ )
 from .Grid import *

@@ -5,17 +5,28 @@ from RingerCore.parsers.ParsingUtils import ArgumentParser, argparse
 ###############################################################################
 # Logger related objects
 ###############################################################################
-#class _RetrieveOutputLevelAction(argparse.Action):
-#  def __call__(self, parser, namespace, values, option_string=None):
-#    setattr(namespace, self.dest, values)
+class _RetrieveOutputLevelAction(argparse.Action):
+  def __call__(self, parser, namespace, value, option_string=None):
+    self.level = value
+    namespace.level = value
+    setattr(namespace, self.dest, value)
 
 from RingerCore.Logger import LoggingLevel, Logger
 loggerParser = ArgumentParser(add_help = False)
 logOutput = loggerParser.add_argument_group('Logging arguments', '')
-logOutput.add_argument('--output-level', #action=_RetrieveOutputLevelAction,
-    default = LoggingLevel.tostring( LoggingLevel.INFO ), 
+logOutput.add_argument('--output-level', action=_RetrieveOutputLevelAction,
+    default = LoggingLevel.tostring( LoggingLevel.INFO ),  # FIXME If default is not level, this will be ignored by namespace
     type=LoggingLevel, required = False, dest='_level',
     metavar = 'LEVEL', help = "The output level for the main logger." )
+# TODO Add a destination file for logging messages
+#parser.add_argument(
+#        '--log', default=sys.stdout, type=argparse.FileType('w'),
+#            help='the file where the sum should be written')
+#args = parser.parse_args()
+#args.log.write('%s' % sum(args.integers))
+#args.log.close()
+# OR use logging itself
+
 
 ###############################################################################
 ## LoggerNamespace
@@ -32,11 +43,17 @@ if not hasattr(argparse.Namespace, 'output_level'):
     try:
       return self.level
     except AttributeError:
-      raise AttributeError("Namespace does not have any level property. Make sure to add the loggerParser as a parent in the RingerCore.parsers submodule.")
+      try:
+        return self._level
+      except AttributeError:
+        raise AttributeError("Namespace does not have any level property. Make sure to add the loggerParser as a parent in the RingerCore.parsers submodule.")
   def _setOutputLevel(self, value):
     try:
       self.level = value
     except AttributeError:
-      raise AttributeError("Namespace does not have any level property. Make sure to add the loggerParser as a parent in the RingerCore.parsers submodule.")
+      try:
+        self._level = value
+      except AttributeError:
+        raise AttributeError("Namespace does not have any level property. Make sure to add the loggerParser as a parent in the RingerCore.parsers submodule.")
   import types
   argparse.Namespace.output_level = property( _getOutputLevel , _setOutputLevel)

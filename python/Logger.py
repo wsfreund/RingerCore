@@ -128,7 +128,7 @@ class StreamHandler2( logging.StreamHandler ):
       self.handleError(record)
 
 
-def getFormatter():
+def _getFormatter():
   class Formatter(logging.Formatter):
     import numpy as np
     gray, red, green, yellow, blue, magenta, cyan, white = ['0;%d' % int(d) for d in (30 + np.arange(8))]
@@ -171,12 +171,12 @@ def getFormatter():
   return formatter
 
 # create console handler and set level to notset
-def getConsoleHandler():
+def _getConsoleHandler():
   import sys
   ch = logging.StreamHandler( sys.__stdout__ )
   ch.setLevel( logging.NOTSET ) #  Minimal level in which the ch will print
   # add formatter to ch
-  ch.setFormatter(getFormatter())
+  ch.setFormatter(_getFormatter())
   return ch
 
 class Logger( object ):
@@ -187,8 +187,8 @@ class Logger( object ):
     Logger will keep its logging level even after unpickled.
   """
 
-  _formatter = getFormatter()
-  _ch = getConsoleHandler()
+  _formatter = _getFormatter()
+  _ch = _getConsoleHandler()
 
   @classmethod
   def getModuleLogger(cls, logName, logDefaultLevel = logging.INFO):
@@ -260,6 +260,3 @@ class Logger( object ):
     except AttributeError:
       self._logger = Logger.getModuleLogger(self.__module__, self._level)
     self._logger.setLevel( self._level )
-
-
-del getConsoleHandler, getFormatter
