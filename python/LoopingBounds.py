@@ -143,7 +143,7 @@ class LoopingBounds ( Logger ):
       Set values using min:incr:max and matlabFlag as explained in class
       documentation.
     """
-    from RingerCore.util import checkForUnusedVars
+    from RingerCore.Configure import checkForUnusedVars
     Logger.__init__(self, kw)
     self._matlabFlag = kw.pop('matlabFlag', False )
     checkForUnusedVars( kw, self._logger.warning )

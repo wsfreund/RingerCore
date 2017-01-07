@@ -242,7 +242,7 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
       elif lPar != dim:
         raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
-    from RingerCore.util import traverse
+    from RingerCore.LoopingBounds import traverse
     for obj, idx, parent, _, _ in traverse( var
                                           , tree_types = tree_types
                                           , max_depth = nDepth

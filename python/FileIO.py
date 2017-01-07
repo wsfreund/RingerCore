@@ -1,4 +1,4 @@
-__all__ = ['save', 'load', 'expandFolders', 
+__all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py']
@@ -23,6 +23,9 @@ def save(o, filename, **kw):
   if not isinstance(filename, str):
     raise("Filename must be a string!")
   filename = os.path.expandvars(filename)
+  dirplace = os.path.dirname(filename)
+  if not os.path.isdir( dirplace ):
+    mkdir_p( dirplace )
   if type(protocol) is str:
     if protocol == "savez_compressed":
       filename = ensureExtension(filename, 'npz')
@@ -545,4 +548,15 @@ def findFile( filename, pathlist, access ):
 
   # no such accessible file avalailable
   return None  
+
+def mkdir_p(path):
+  import os, errno
+  path = os.path.expandvars( path )
+  try:
+    if not os.path.exists( path ):
+      os.makedirs(path)
+  except OSError as exc: # Python >2.5
+    if exc.errno == errno.EEXIST and os.path.isdir(path):
+      pass
+    else: raise
 

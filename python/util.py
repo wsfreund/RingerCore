@@ -1,7 +1,7 @@
 #coding: utf-8
 __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
-           'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
+           'mean',  'printArgs', 'reshape', 'reshape_to_array',
            'stdvector_to_list', 'trunc_at', 'progressbar',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
@@ -69,17 +69,6 @@ def str_to_class(module_name, class_name):
   return c
 
 
-
-def mkdir_p(path):
-  import os, errno
-  path = os.path.expandvars( path )
-  try:
-    if not os.path.exists( path ):
-      os.makedirs(path)
-  except OSError as exc: # Python >2.5
-    if exc.errno == errno.EEXIST and os.path.isdir(path):
-      pass
-    else: raise
 
 def csvStr2List( csvStr ):
   """
