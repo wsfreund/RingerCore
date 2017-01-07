@@ -1,7 +1,10 @@
 __all__ = ['LoggingLevel', 'Logger']
 
-from RingerCore.util import EnumStringification
+from RingerCore.Configure import EnumStringification
 import logging
+
+# TODO With the Configure method it is possible to create a singleton to
+# retrieve all loggers using the global configured message level
 
 class LoggingLevel ( EnumStringification ):
   """
@@ -226,7 +229,7 @@ class Logger( object ):
       Retrieve from args the logger, or create it using default configuration.
     """
     d.update( kw )
-    from RingerCore.util import retrieve_kw
+    from RingerCore.Configure import retrieve_kw
     self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level', LoggingLevel.INFO ) )
     self._logger = retrieve_kw(d,'logger', None)  or \
         Logger.getModuleLogger(self.__class__.__name__, self._level )

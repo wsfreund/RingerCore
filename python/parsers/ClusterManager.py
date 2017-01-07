@@ -8,7 +8,8 @@ import re
 from RingerCore.Logger import Logger, LoggingLevel
 from RingerCore.parsers.ParsingUtils import ( _ActionsContainer, _MutuallyExclusiveGroup
                                             , _ArgumentGroup, ArgumentParser, argparse)
-from RingerCore.util import EnumStringification, NotSetType, get_attributes, NotSet
+from RingerCore.Configure import EnumStringification, NotSet
+from RingerCore.util import get_attributes
 
 class OptionRetrieve( argparse.Action ):
 

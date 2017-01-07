@@ -8,7 +8,7 @@ try:
 except ImportError:
   from RingerCore.parsers import __py_argparse as argparse
 
-from RingerCore.util import BooleanStr, EnumStringification
+from RingerCore.Configure import BooleanStr, EnumStringification
 
 class _EraseGroup( Exception ):
   """

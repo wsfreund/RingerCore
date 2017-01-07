@@ -1,14 +1,12 @@
 #coding: utf-8
-__all__ = ['GRID_ENV', 'EnumStringification', 'BooleanStr', 'Holder', 'Include', 'include',
-    'NotSet', 'NotSetType', 'StdPair','str_to_class', 'Roc', 'SetDepth', 'calcSP',
-    'checkForUnusedVars', 'conditionalOption', 'findFile',
-    'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
-    'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
-    'retrieve_kw', 'setDefaultKey', 'start_after',
-    'stdvector_to_list', 'traverse','trunc_at', 'progressbar',
-    'select', 'cat_files_py', 'WriteMethod', 'timed', 'getFilters',
-    'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'appendToOutput',
-    'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists']
+__all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
+           'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
+           'mean', 'mkdir_p', 'printArgs', 'reshape', 'reshape_to_array',
+           'stdvector_to_list', 'trunc_at', 'progressbar',
+           'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
+           'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
+           'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists', 
+           'getParentVersion']
 
 import re, os, __main__
 import sys
@@ -19,35 +17,7 @@ import gzip
 import inspect
 import numpy as np
 
-GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
-
-class NotSetType( type ):
-  def __bool__(self):
-    return False
-  __nonzero__ = __bool__
-  def __repr__(self):
-    return "<+NotSet+>"
-  def __str__(self):
-    return "<+NotSet+>"
-
-class NotSet( object ): 
-  __metaclass__ = NotSetType
-
-class Holder( object ):
-  def __init__(self, obj):
-    self.obj = obj
-  def __call__(self):
-    return self.obj
-
-class StdPair( object ): 
-  def __init__(self, a, b):
-    self.first  = a
-    self.second = b
-  def __call__(self):
-    return (self.first,self.second)
-
-
-
+from RingerCore.Configure import NotSet, GRID_ENV
 
 loadedEnvFile = False
 def sourceEnvFile():
@@ -83,57 +53,6 @@ def sourceEnvFile():
   except IOError:
     raise RuntimeError("Cannot find new_env_file.sh, did you forget to set environment or compile the package?")
   
-class EnumStringification( object ):
-  "Adds 'enum' static methods for conversion to/from string"
-
-  _ignoreCase = False
-
-  @classmethod
-  def tostring(cls, val):
-    "Transforms val into string."
-    for k, v in get_attributes(cls, getProtected = False):
-      if v==val:
-        return k
-    return None
-
-  @classmethod
-  def fromstring(cls, str_):
-    "Transforms string into enumeration."
-    if not cls._ignoreCase:
-      return getattr(cls, str_, None)
-    else:
-      allowedValues = [attr for attr in get_attributes(cls) if not attr[0].startswith('_')]
-      try:
-        idx = [attr[0].upper() for attr in allowedValues].index(str_.upper().replace('-','_'))
-      except ValueError:
-        raise ValueError("%s is not in enumeration. Use one of the followings: %r" % (str_, allowedValues) )
-      return allowedValues[idx][1]
-
-  @classmethod
-  def retrieve(cls, val):
-    """
-    Retrieve int value and check if it is a valid enumeration string or int on
-    this enumeration class.
-    """
-    allowedValues = [attr for attr in get_attributes(cls) if not attr[0].startswith('_')]
-    try:
-      # Convert integer string values to integer, if possible:
-      val = int(val)
-    except ValueError:
-      pass
-    if type(val) is str:
-      oldVal = val
-      val = cls.fromstring(val)
-      if val is None:
-          raise ValueError("String (%s) does not match any of the allowed values %r." % \
-              (oldVal, allowedValues))
-    else:
-      if not val in [attr[1] for attr in allowedValues]:
-        raise ValueError(("Attempted to retrieve val benchmark "
-            "with a enumeration value which is not allowed. Use one of the followings: "
-            "%r") % allowedValues)
-    return val
-
 def str_to_class(module_name, class_name):
   try:
     import importlib
@@ -148,22 +67,6 @@ def str_to_class(module_name, class_name):
   # get the class, will raise AttributeError if class cannot be found
   c = getattr(m, class_name)
   return c
-
-class BooleanStr( EnumStringification ):
-  _ignoreCase = True
-
-  False = 0
-  True = 1
-
-  @staticmethod
-  def treatVar(var,d, default = False):
-    if var in d:
-      if d[var] not in (None, NotSet):
-        return BooleanStr.retrieve( d[var] )
-      else:
-        return d[var]
-    else:
-      return default
 
 
 
@@ -214,6 +117,7 @@ def get_attributes(o, **kw):
   """
   onlyVars = kw.pop('onlyVars', False)
   getProtected = kw.pop('getProtected', True)
+  from RingerCore.Configure import checkForUnusedVars
   checkForUnusedVars(kw)
   return [(a[0] if onlyVars else a) for a in inspect.getmembers(o, lambda a:not(inspect.isroutine(a))) \
              if not(a[0].startswith('__') and a[0].endswith('__')) \
@@ -399,10 +303,6 @@ def reshape_to_array( input ):
   return np.reshape(input, (1,np.product(input.shape)))[0]
 
 
-def conditionalOption( argument, value ):
-  return ( argument + " " + str(value) if not( type(value) in (list,tuple) ) and not( value in (None, NotSet) ) else \
-      ( argument + " " + ' '.join([str(val) for val in value]) if value else '' ) )
-
 def trunc_at(s, d, n=1):
   "Returns s truncated at the n'th (1st by default) occurrence of the delimiter, d."
   return d.join(s.split(d)[:n])
@@ -432,33 +332,13 @@ def floatFromStr(str_):
     return float(str_.strip('%'))*100.
   return float(str_)
 
-def findFile( filename, pathlist, access ):
-  """
-     Find <filename> with rights <access> through <pathlist>.
-     Author: Wim Lavrijsen (WLavrijsen@lbl.gov)
-     Copied from 'atlas/Control/AthenaCommon/python/Utils/unixtools.py'
-  """
-
-  # special case for those filenames that already contain a path
-  if os.path.dirname( filename ):
-    if os.access( filename, access ):
-      return filename
-
-  # test the file name in all possible paths until first found
-  for path in pathlist:
-    f = os.path.join( path, filename )
-    if os.access( f, access ):
-      return f
-
-  # no such accessible file avalailable
-  return None  
-
 class Include:
   def __call__(self, filename, globalz=None, localz=None, clean=False):
     "Simple routine to execute python script, possibly keeping global and local variables."
     searchPath = re.split( ',|' + os.pathsep, os.environ['PYTHONPATH'] )
     if '' in searchPath:
       searchPath[ searchPath.index( '' ) ] = str(os.curdir)
+    from RingerCore.FileIO import findFile
     trueName = findFile(filename, searchPath, os.R_OK )
     gworkspace = {}
     lworkspace = {}
@@ -584,142 +464,6 @@ def Roc_to_histogram(g, nsignal, nnoise):
 
   return signalOutput, noiseOutput
 
-
-
-
-class SetDepth(Exception):
-  def __init__(self, value):
-    self.depth = value
-
-def traverse(o, tree_types=(list, tuple),
-    max_depth_dist=0, max_depth=np.iinfo(np.uint64).max, 
-    level=0, idx=0, parent=None,
-    simple_ret=False):
-  """
-  Loop over each holden element. 
-  Can also be used to change the holden values, e.g.:
-
-  a = [[[1,2,3],[2,3],[3,4,5,6]],[[[4,7],[]],[6]],7]
-  for obj, idx, parent in traverse(a): parent[idx] = 3
-  [[[3, 3, 3], [3, 3], [3, 3, 3, 3]], [[[3, 3], []], [3]], 3]
-
-  Examples printing using max_depth_dist:
-
-  In [0]: for obj in traverse(a,(list, tuple),0,simple_ret=False): print obj
-  (1, 0, [1, 2, 3], 0, 3)
-  (2, 1, [1, 2, 3], 0, 3)
-  (3, 2, [1, 2, 3], 0, 3)
-  (2, 0, [2, 3], 0, 3)
-  (3, 1, [2, 3], 0, 3)
-  (3, 0, [3, 4, 5, 6], 0, 3)
-  (4, 1, [3, 4, 5, 6], 0, 3)
-  (5, 2, [3, 4, 5, 6], 0, 3)
-  (6, 3, [3, 4, 5, 6], 0, 3)
-  (4, 0, [4, 7], 0, 4)
-  (7, 1, [4, 7], 0, 4)
-  (6, 0, [6], 0, 3)
-  (7, 2, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 0, 1) 
-
-  In [1]: for obj in traverse(a,(list, tuple),1): print obj
-  ([1, 2, 3], 0, [[1, 2, 3], [2, 3], [3, 4, 5, 6]], 1, 3)
-  ([2, 3], 0, [[1, 2, 3], [2, 3], [3, 4, 5, 6]], 1, 3)
-  ([3, 4, 5, 6], 0, [[1, 2, 3], [2, 3], [3, 4, 5, 6]], 1, 3)
-  ([4, 7], 0, [[4, 7], []], 1, 4)
-  ([6], 0, [[[4, 7], []], [6]], 1, 3)
-  ([[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, None, 1, 1)
-
-  In [2]: for obj in traverse(a,(list, tuple),2,simple_ret=False): print obj
-  ([[1, 2, 3], [2, 3], [3, 4, 5, 6]], 0, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, 2)
-  ([[4, 7], []], 0, [[[4, 7], []], [6]], 2, 3)
-  ([[[4, 7], []], [6]], 1, [[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 2, 2)
-
-  In [3]: for obj in traverse(a,(list, tuple),3): print obj
-  ([[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 0, None, 3, 1)
-
-  In [4]: for obj in traverse(a,(list, tuple),4): print obj
-  ([[[1, 2, 3], [2, 3], [3, 4, 5, 6]], [[[4, 7], []], [6]], 7], 1, None, 4, 1)
-
-  In [5]: for obj in traverse(a,(list, tuple),5): print obj
-  <NO OUTPUT>
-
-  """
-  if isinstance(o, tree_types):
-    level += 1
-    # FIXME Still need to test max_depth
-    if level > max_depth:
-      if simple_ret:
-        yield o
-      else:
-        yield o, idx, parent, 0, level
-      return
-    skipped = False
-    isDict = isinstance(o, dict)
-    if isDict:
-      loopingObj = o.iteritems()
-    else:
-      loopingObj = enumerate(o)
-    for idx, value in loopingObj:
-      try:
-        for subvalue, subidx, subparent, subdepth_dist, sublevel in traverse(value, tree_types, max_depth_dist, max_depth, level, idx, o ):
-          if subdepth_dist == max_depth_dist:
-            if skipped:
-              subdepth_dist += 1
-              break
-            else:
-              if simple_ret:
-                yield subvalue
-              else:
-                yield subvalue, subidx, subparent, subdepth_dist, sublevel 
-          else:
-            subdepth_dist += 1
-            break
-        else: 
-          continue
-      except SetDepth, e:
-        if simple_ret:
-          yield o
-        else:
-          yield o, idx, parent, e.depth, level
-        break
-      if subdepth_dist == max_depth_dist:
-        if skipped:
-          subdepth_dist += 1
-          break
-        else:
-          if simple_ret:
-            yield o
-          else:
-            yield o, idx, parent, subdepth_dist, level
-          break
-      else:
-        if level > (max_depth_dist - subdepth_dist):
-          raise SetDepth(subdepth_dist+1)
-  else:
-    if simple_ret:
-      yield o
-    else:
-      yield o, idx, parent, 0, level
-
-def setDefaultKey( d, key, val):
-  if not key in d: d[key] = val
-
-def retrieve_kw( kw, key, default = NotSet ):
-  if not key in kw or kw[key] is NotSet:
-    kw[key] = default
-  return kw.pop(key)
-
-def checkForUnusedVars(d, fcn = None):
-  """
-    Checks if dict @d has unused properties and print them as warnings
-  """
-  for key in d.keys():
-    if d[key] is NotSet: continue
-    msg = 'Obtained not needed parameter: %s' % key
-    if fcn:
-      fcn(msg)
-    else:
-      print 'WARNING:%s' % msg
-
 def keyboard():
   """ 
     Function that mimics the matlab keyboard command.
@@ -731,15 +475,6 @@ def createRootParameter( type_name, name, value):
   from ROOT import TParameter
   return TParameter(type_name)(name,value)
 
-class WriteMethod( EnumStringification ):
-  """
-    Specificate how to write files on cat_files_py
-  """
-  _ignoreCase = True
-  Readlines = 0
-  Read = 1
-  ShUtil = 2
-
 def timed(f):
   def func(*args):
     import time
@@ -749,34 +484,6 @@ def timed(f):
     print("%s took %f" % (f.__name__,took))
     return ret
   return func
-
-#@timed
-def cat_files_py(flist, ofile, op, logger = None, level = None):
-  """
-    cat files using python.
-
-    taken from: https://gist.github.com/dimo414/2993381
-  """
-  op = WriteMethod.retrieve( op )
-  if not isinstance(flist, (list, tuple)):
-    flist = [flist]
-  from RingerCore.Logger import LoggingLevel
-  if level is None: level = LoggingLevel.INFO
-  with open(ofile, 'wb') as out:
-    for fname in progressbar(flist, len(flist), prefix="Merging: ", 
-                             disp = True if logger is not None else False, step = 10,
-                             logger = logger, level = level ):
-      with open(fname,'rb') as f:
-        if op is WriteMethod.Readlines:
-          out.writelines(f.readlines())
-        elif op is WriteMethod.Read:
-          out.write(f.read())
-        elif op is WriteMethod.ShUtil:
-          import shutil
-          shutil.copyfileobj(f, out)
-      # end of with open(fname)
-    # end of for fname in progressbar
-  # end of with open(ofile)
 
 def getFilters( filtFinder, objs, idxs = None, printf = None):
   """
@@ -850,3 +557,49 @@ def cmd_exists(cmd):
   import subprocess
   return subprocess.call("type " + cmd, shell=True, 
       stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+
+def git_description( init_fname ):
+  if not cmd_exists('git'):
+    raise RuntimeError("Couldn't find git commnad.")
+  git_dir = os.path.dirname(os.path.realpath( init_fname ))
+  if os.path.basename( git_dir ) == "python":
+    # Protect against RootCore architeture
+    git_dir = os.path.dirname( git_dir )
+  git_dir = os.path.join( git_dir, '.git' )
+  if os.path.isfile( git_dir ):
+    old_dir = git_dir
+    with open( git_dir ) as f:
+      relative_path = f.readline().split(' ')[-1].strip('\n')
+    git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
+  if not os.path.isdir( git_dir ):
+    raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
+  import subprocess
+  git_version_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "describe"
+                                    ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  (output, stderr) = git_version_cmd.communicate()
+  output = output.rstrip('\n')
+  if git_version_cmd.returncode:
+    raise RuntimeError("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr)
+  return output
+
+def getParentVersion( init_fname ):
+  if not cmd_exists('git'):
+    raise RuntimeError("Couldn't find git commnad.")
+  git_dir = os.path.dirname(os.path.realpath( init_fname ))
+  if os.path.basename( git_dir ) == "python":
+    # Protect against RootCore architeture
+    git_dir = os.path.dirname( git_dir )
+  git_dir = os.path.join( git_dir, '.git' )
+  if not os.path.exists( git_dir ):
+    raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
+  parent_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
+  if os.path.isdir( parent_dir ):
+    try:
+      return parent_dir, git_description( parent_dir )
+    except RuntimeError, e:
+      return None, e
+  return None, None
+
+
+
+

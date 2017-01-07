@@ -1,7 +1,7 @@
 __all__ = ['save', 'load', 'expandFolders', 
            'getExtension', 'checkExtension', 'changeExtension',
-           'ensureExtension', 'appendToFileName',
-           'getMD5','checkFile']
+           'ensureExtension', 'appendToFileName', 'findFile',
+           'getMD5','checkFile', 'WriteMethod', 'cat_files_py']
 
 import numpy as np
 import cPickle
@@ -485,4 +485,64 @@ def checkFile(filepath, md5sum = None):
            md5sum is None or
            getMD5(filepath) == md5sum
          )
+
+from RingerCore.Configure import EnumStringification
+class WriteMethod( EnumStringification ):
+  """
+    Specificate how to write files on cat_files_py
+  """
+  _ignoreCase = True
+  Readlines = 0
+  Read = 1
+  ShUtil = 2
+
+
+#@timed
+def cat_files_py(flist, ofile, op, logger = None, level = None):
+  """
+    cat files using python.
+
+    taken from: https://gist.github.com/dimo414/2993381
+  """
+  op = WriteMethod.retrieve( op )
+  if not isinstance(flist, (list, tuple)):
+    flist = [flist]
+  from RingerCore.Logger import LoggingLevel
+  if level is None: level = LoggingLevel.INFO
+  with open(ofile, 'wb') as out:
+    for fname in progressbar(flist, len(flist), prefix="Merging: ", 
+                             disp = True if logger is not None else False, step = 10,
+                             logger = logger, level = level ):
+      with open(fname,'rb') as f:
+        if op is WriteMethod.Readlines:
+          out.writelines(f.readlines())
+        elif op is WriteMethod.Read:
+          out.write(f.read())
+        elif op is WriteMethod.ShUtil:
+          import shutil
+          shutil.copyfileobj(f, out)
+      # end of with open(fname)
+    # end of for fname in progressbar
+  # end of with open(ofile)
+
+def findFile( filename, pathlist, access ):
+  """
+     Find <filename> with rights <access> through <pathlist>.
+     Author: Wim Lavrijsen (WLavrijsen@lbl.gov)
+     Copied from 'atlas/Control/AthenaCommon/python/Utils/unixtools.py'
+  """
+
+  # special case for those filenames that already contain a path
+  if os.path.dirname( filename ):
+    if os.access( filename, access ):
+      return filename
+
+  # test the file name in all possible paths until first found
+  for path in pathlist:
+    f = os.path.join( path, filename )
+    if os.access( f, access ):
+      return f
+
+  # no such accessible file avalailable
+  return None  
 

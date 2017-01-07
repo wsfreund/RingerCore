@@ -31,7 +31,7 @@ class RawDictStreamer( Logger ):
     Logger.__init__(self, kw)
     self.transientAttrs = set(transientAttrs) | {'_readVersion',}
     self.toPublicAttrs = set(toPublicAttrs)
-    from RingerCore.util import checkForUnusedVars
+    from RingerCore.Configure import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
   def preCall(self, obj):
@@ -117,7 +117,7 @@ class RawDictCnv( Logger ):
     self.ignoreAttrs = [re.compile(ignoreAttr) for ignoreAttr in ignoreAttrs]
     self.toProtectedAttrs = set(toProtectedAttrs)
     self.ignoreRawChildren = ignoreRawChildren
-    from RingerCore.util import checkForUnusedVars
+    from RingerCore.Configure import checkForUnusedVars
     checkForUnusedVars( kw, self._logger.warning )
 
   def _searchAttr(self, val):

@@ -8,7 +8,7 @@ from RingerCore.parsers.Logger import LoggerNamespace
 from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubmitNamespace
                                               , clusterManagerParser ) 
 from RingerCore.LimitedTypeList import LimitedTypeList
-from RingerCore.util import BooleanStr
+from RingerCore.Configure import BooleanStr
 
 ################################################################################
 # Grid parser related objects

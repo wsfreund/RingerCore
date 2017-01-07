@@ -6,7 +6,7 @@ from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubm
                                               , clusterManagerParser, ClusterManager, AvailableManager
                                               , OptionRetrieve, BooleanOptionRetrieve, SubOptionRetrieve
                                               )
-from RingerCore.util import get_attributes, EnumStringification, BooleanStr
+from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr
 from RingerCore.parsers.Logger import LoggerNamespace
 
 class LSFArgumentParser( JobSubmitArgumentParser ):

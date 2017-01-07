@@ -1,6 +1,6 @@
 __all__ = ['npConstants']
 
-from RingerCore.util   import checkForUnusedVars, setDefaultKey
+from RingerCore.Configure   import checkForUnusedVars, setDefaultKey
 from RingerCore.Logger import Logger
 import numpy as np
 
