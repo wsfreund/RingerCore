@@ -1,14 +1,16 @@
 __all__ = ['JobSubmitArgumentParser', 'JobSubmitNamespace'
           , 'ClusterManager', 'has_Panda', 'has_PBS', 'has_Torque', 'has_LSF'
           , 'cluster_default', 'clusterManagerParser'
-          , 'OptionRetrieve', 'BooleanOptionRetrieve', 'SubOptionRetrieve']
+          , 'OptionRetrieve', 'BooleanOptionRetrieve', 'SubOptionRetrieve'
+          , 'ClusterManagerConfigure', 'clusterManagerConf']
 
 import re 
 
 from RingerCore.Logger import Logger, LoggingLevel
 from RingerCore.parsers.ParsingUtils import ( _ActionsContainer, _MutuallyExclusiveGroup
                                             , _ArgumentGroup, ArgumentParser, argparse)
-from RingerCore.Configure import EnumStringification, NotSet
+from RingerCore.Configure import ( EnumStringification, NotSet
+                                 , EnumStringificationOptionConfigure, Holder )
 from RingerCore.util import get_attributes
 
 class OptionRetrieve( argparse.Action ):
@@ -409,9 +411,65 @@ elif has_LSF:
 else:
   cluster_default = None
 
+class RetrieveClusterManager( argparse.Action ):
+
+  def __init__( self
+              , dest = None
+              , option_strings = []
+              , nargs=None
+              , const=None
+              , default=None
+              , type=None
+              , choices=None
+              , required=False
+              , help=None
+              , metavar=None ):
+    super(RetrieveClusterManager, self).__init__( option_strings = option_strings
+                                                , dest           = dest
+                                                , nargs          = nargs
+                                                , const          = const
+                                                , default        = default
+                                                , type           = type
+                                                , choices        = choices
+                                                , required       = required
+                                                , help           = help
+                                                , metavar        = metavar
+                                                )
+
+  def __call__(self, parser, namespace, value, option_string=None):
+    clusterManagerConf.set( value )
+    setattr( namespace, self.dest, clusterManagerConf() )
+
+
 clusterManagerParser = ArgumentParser()
 clusterManagerParser.add_argument( '--cluster-manager', default = cluster_default,
-    type = AvailableManager, 
+    type = AvailableManager, action = RetrieveClusterManager,
     help = """ Specify which cluster manager should be used in the job.""" \
       + (" Current default is: " + ClusterManager.tostring(cluster_default)) if cluster_default is not None \
       else "")
+
+class _ConfigureClusterManager( EnumStringificationOptionConfigure ):
+  """
+  Singleton class for configurating the cluster-manager used for sending jobs to the cluster
+  """
+
+  _enumType = AvailableManager
+
+  manager = property( EnumStringificationOptionConfigure.get, EnumStringificationOptionConfigure.set )
+
+  def auto( self ):
+    self._logger.debug("Using automatic configuration for cluster-manager specification.")
+    # First we discover which cluster type we will be using:
+    import sys
+    args, argv = clusterManagerParser.parse_known_args()
+    if clusterManagerParser.cluster_manager not in (None, NotSet):
+      self.manager = clusterManagerParser.cluster_manager
+      # Consume option
+      sys.argv = sys.argv[:1] + argv
+    else:
+      self.manager = cluster_default
+
+ClusterManagerConfigure = Holder( _ConfigureClusterManager() )
+
+clusterManagerConf = ClusterManagerConfigure()
+

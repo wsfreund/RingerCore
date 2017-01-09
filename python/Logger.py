@@ -18,6 +18,7 @@ class LoggingLevel ( EnumStringification ):
   ERROR    = logging.ERROR
   CRITICAL = logging.CRITICAL
   FATAL    = logging.CRITICAL
+  MUTE     = logging.CRITICAL # MUTE Still displays fatal messages.
 
   @classmethod
   def toC(cls, val):
@@ -182,6 +183,10 @@ def _getConsoleHandler():
   ch.setFormatter(_getFormatter())
   return ch
 
+def _setOutputLevel(self, value):
+  logging.Logger.setLevel(self, value)
+  self._ringercore_logger_parent._level = value
+
 class Logger( object ):
   """
     Simple class for giving inherited classes logging capability as well as the
@@ -194,7 +199,7 @@ class Logger( object ):
   _ch = _getConsoleHandler()
 
   @classmethod
-  def getModuleLogger(cls, logName, logDefaultLevel = logging.INFO):
+  def getModuleLogger(cls, logName, logDefaultLevel = None):
     """
       Retrieve logging stream handler using logName and add a handler
       to stdout if it does not have any handlers yet.
@@ -221,7 +226,13 @@ class Logger( object ):
     if not cls._ch in handlers:
       # add ch to logger
       logger.addHandler(cls._ch)
-    logger.setLevel( logDefaultLevel )
+    try:
+      from RingerCore.Configure import masterLevel
+      masterLevel.handle( logger )
+    except ImportError:
+      pass
+    if logDefaultLevel is not None: # Override this log level until next change of masterLevel value
+      logger.setLevel( logDefaultLevel )
     return logger
 
   def __init__(self, d = {}, **kw ):
@@ -229,18 +240,36 @@ class Logger( object ):
       Retrieve from args the logger, or create it using default configuration.
     """
     d.update( kw )
-    from RingerCore.Configure import retrieve_kw
-    self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level', LoggingLevel.INFO ) )
+    from RingerCore.Configure import retrieve_kw, NotSet
+    if 'level' in d:
+      if d['level'] not in (None, NotSet):
+        self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level', LoggingLevel.INFO ) )
+      else:
+        d.pop('level')
     self._logger = retrieve_kw(d,'logger', None)  or \
-        Logger.getModuleLogger(self.__class__.__name__, self._level )
+        Logger.getModuleLogger(self.__class__.__name__, LoggingLevel.retrieve( self.level ) )
     self._logger.verbose('Initialiazing %s', self.__class__.__name__)
+    self._logger._ringercore_logger_parent = self
+    if self._logger.level != LoggingLevel.MUTE:
+      import types
+      self._logger.setLevel = types.MethodType( _setOutputLevel, self._logger )
+    else:
+      self.level = LoggingLevel.MUTE
 
   def getLevel(self):
-    return LoggingLevel.tostring( self._level )
+    if hasattr( self, '_level' ):
+      return LoggingLevel.tostring( self._level )
+    else:
+      from RingerCore.Configure import masterLevel
+      return masterLevel()
 
   def setLevel(self, value):
-    self._level = LoggingLevel.retrieve( value )
-    self._logger.setLevel(self._level)
+    from RingerCore.Configure import NotSet, masterLevel
+    if value not in (None, NotSet):
+      self._level = LoggingLevel.retrieve( value )
+      if self._logger.level != self._level:
+        self._logger.setLevel(self._level)
+      #masterLevel.unhandle( self._logger )
 
   level = property( getLevel, setLevel )
 
@@ -259,7 +288,8 @@ class Logger( object ):
     self.__dict__.update(d)   # update attributes
     try: 
       if self._logger is None: # Also add a logger if it is set to None
-        self._logger = Logger.getModuleLogger(self.__class__.__name__, self._level )
+        self._logger = Logger.getModuleLogger(self.__class__.__name__, self.level )
     except AttributeError:
-      self._logger = Logger.getModuleLogger(self.__module__, self._level)
-    self._logger.setLevel( self._level )
+      self._logger = Logger.getModuleLogger(self.__module__, self.level )
+    self._logger.setLevel( self.level )
+

@@ -376,7 +376,7 @@ class Roc(object):
   #from RingerCore.RawDictStreamable import RawDictStreamable
   #__metaclass__ = RawDictStreamable
 
-  def __init__( self, label, input_, target = NotSet, numPts = 1000, npConst = NotSet ):
+  def __init__( self, label, input_, target = NotSet, numPts = 1000, npConst = NotSet, reference = None ):
     """
 			def ROC( output, target, label, numPts = 1000, npConst = npConstants() ):
 
@@ -548,9 +548,13 @@ def cmd_exists(cmd):
       stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 def git_description( init_fname ):
+  # FIXME: probably its needed to kill the git_version_cmd to avoid 
+  # having the git.lock file kept until the end of job execution
   if not cmd_exists('git'):
     raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.dirname(os.path.realpath( init_fname ))
+  git_dir = os.path.realpath( init_fname )
+  if os.path.isfile( git_dir ):
+    git_dir = os.path.dirname( git_dir )
   if os.path.basename( git_dir ) == "python":
     # Protect against RootCore architeture
     git_dir = os.path.dirname( git_dir )
@@ -574,7 +578,9 @@ def git_description( init_fname ):
 def getParentVersion( init_fname ):
   if not cmd_exists('git'):
     raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.dirname(os.path.realpath( init_fname ))
+  git_dir = os.path.realpath( init_fname )
+  if os.path.isfile( git_dir ):
+    git_dir = os.path.dirname( git_dir )
   if os.path.basename( git_dir ) == "python":
     # Protect against RootCore architeture
     git_dir = os.path.dirname( git_dir )
@@ -582,9 +588,15 @@ def getParentVersion( init_fname ):
   if not os.path.exists( git_dir ):
     raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
   parent_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
+  import subprocess
+  git_parent_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]
+                                    , stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                                    , cwd=parent_dir)
+  (output, stderr) = git_parent_cmd.communicate()
+  parent_dir = output.rstrip('\n')
   if os.path.isdir( parent_dir ):
     try:
-      return parent_dir, git_description( parent_dir )
+      return os.path.basename( parent_dir ), git_description( parent_dir )
     except RuntimeError, e:
       return None, e
   return None, None

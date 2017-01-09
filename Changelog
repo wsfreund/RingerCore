@@ -1,4 +1,13 @@
-2017-01-06 Werner S Freund <wsfreund@gmail.com>
+2017-01-08 Werner S Freund
+	* Final arrangaments before going to release.
+
+2017-01-07 Werner S Freund
+	* python/FileIO.py, python/LimitedTypeList.py, python/LoopingBounds.py,
+	python/util.py: Small import fixes
+	* Added master logging level control with mutting capabilities.
+	* Added global cluster-manager control.
+
+2017-01-06 Werner S Freund
 	* util.py: Moved traverse and related objects to LoopingBounds.py,
 	also moved EnumStringification to Configure.py as it is commonly used
 	for configuration.
@@ -9,7 +18,7 @@
 	* util.py: Added method which dynamically returns the git description
 	of the module state.
 
-2017-01-04 Werner S Freund <wsfreund@gmail.com>
+2017-01-04 Werner S Freund
 	* Improved argparse interaction with the utilities that RingerCore provides 
 	through the module ParsingUtils.py. The special cases are the
 	EnumStringification and the Logger classes, which now can automatically

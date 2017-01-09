@@ -57,7 +57,7 @@ class StoreGate( Logger) :
     fullpath = (feature).replace('//','/')
     if fullpath in self._dirs:
       obj = self._objects[fullpath]
-      self._logger.debug('Retrieving object type %s into %s',type(obj), fullpath)
+      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
       return obj
     else:
       #None object if doesnt exist into the store

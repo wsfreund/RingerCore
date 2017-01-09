@@ -2,7 +2,9 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'EnumStringification', 'BooleanStr'
           , 'conditionalOption', 'GRID_ENV', 'retrieve_kw'
           , 'checkForUnusedVars', 'setDefaultKey' 
-          , 'Configure', 'EnumStringificationOptionConfigure']
+          , 'Configure', 'EnumStringificationOptionConfigure'
+          , 'MasterLevel', 'masterLevel'
+          ]
 
 import os
 GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
@@ -153,14 +155,21 @@ class StdPair( object ):
   def __call__(self):
     return (self.first, self.second)
 
-from RingerCore.RawDictStreamable import Logger
+from RingerCore.Logger import Logger
+
 class Configure( Logger ):
   """
   Improves job property configuration by making its choice in sync for all modules.
   """
 
+  # This property set whether this class can only be configured once or not
+  allowReconfigure = False
+
   def __init__(self, **kw):
     self._choice = NotSet
+    if not hasattr(self,'name'):
+      self.name = self.__class__.__name__.lstrip('_')
+      self.name = self.name.replace('Configure','')
     Logger.__init__( self, kw )
 
   def get( self ):
@@ -171,13 +180,18 @@ class Configure( Logger ):
       return self._choice
 
   def set( self, val ):
-    if self.configured():
-      self._logger.fatal("Attempted to configure %s twice.", self.__class__.__name__)
-    if val is not NotSet:
+    if val not in (NotSet, None):
+      value = self.retrieve( val )
+      if not self.allowReconfigure and self.configured() and self._choice != value:
+        self._logger.fatal("Attempted to reconfigure %s twice.",  self.name)
       self._choice = self.retrieve(val)
-    result = self.test() 
-    if result is not None and not self.test():
-      self._logger.fatal("%s test failed.", self.__class__.__name__)
+      result = self.test() 
+      if result is not None and not self.test():
+        self._logger.fatal("%s test failed.", self.name )
+      if hasattr(self, '_logger'):
+        self._logger.info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
+    else:
+      self._logger.debug('Called %s set method with empty value.', self.name )
 
   def retrieve(self, val):
     """
@@ -190,7 +204,7 @@ class Configure( Logger ):
     return True
 
   def configured( self ):
-    if self._choice is NotSet:
+    if self._choice in (NotSet, None):
       return False
     return True
 
@@ -200,7 +214,7 @@ class Configure( Logger ):
       if hasattr(self,'auto'): 
         self.auto()
         return
-    self._logger.fatal("%s was not configured.", self.__class__.__name__)
+    self._logger.fatal("%s was not configured.", self.name )
 
   def __call__( self ):
     return self.get()
@@ -232,7 +246,7 @@ class Configure( Logger ):
       self.auto()
     else:
       self._logger.fatal( 'Class %s cannot auto-configure itself.'
-                        , self.__class__.__name__ )
+                        , self.name )
     # Make sure that the autoconfiguration set choice to a valid option
     self._choice = self.retrieve( self._choice )
 
@@ -240,7 +254,7 @@ class Configure( Logger ):
     return str(self._choice)
 
   def __repr__( self ):
-    return self.__class__.__name__.lstrip('_') + "(" + str( self ) + ")"
+    return self.name + "(" + str( self ) + ")"
 
 
 class EnumStringificationOptionConfigure( Configure ):
@@ -258,7 +272,7 @@ class EnumStringificationOptionConfigure( Configure ):
   def _enumTypeAvailable(self):
     if not hasattr(self, '_enumType'):
       self._logger.fatal( "Class %s does not have _enumType value. Please, make sure to add it."
-                        , self.__class__.__name__
+                        , self.name
                         , TypeError )
 
   def __str__( self ):
@@ -270,4 +284,80 @@ class EnumStringificationOptionConfigure( Configure ):
 
   def __repr__( self ):
     self._enumTypeAvailable()
-    return self.__class__.__name__.lstrip('_') + "(" + self._enumType.tostring( self.get() ) + ")"
+    return self.name + "(" + self._enumType.tostring( self.get() ) + ")"
+
+from RingerCore.Logger import LoggingLevel
+
+import logging
+def _mutedLogger(self, value = None ):
+  value = LoggingLevel.MUTE
+  logging.Logger.setLevel(self, value )
+  try:
+    self._ringercore_logger_parent._level = value
+  except AttributeError:
+    pass
+
+
+class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
+  """
+  Singleton class for configurating the core framework used tuning data
+
+  It also specifies how the numpy data should be represented for that specified
+  core.
+  """
+
+  _enumType = LoggingLevel
+  # It is possible to reconfigure the master level
+  allowReconfigure = True
+
+  level = property( EnumStringificationOptionConfigure.get, EnumStringificationOptionConfigure.set )
+
+  def __init__(self, **kw):
+    self.handledLoggers = []
+    self.mutedLoggers = []
+    EnumStringificationOptionConfigure.__init__(self, **kw)
+    # Add us to be handled by ourself
+    self.handledLoggers.append( self._logger )
+
+  def auto(self):
+    self.set( LoggingLevel.INFO )
+
+  def retrieve(self, val):
+    val = EnumStringificationOptionConfigure.retrieve( self, val )
+    if val != self._choice:
+      for logger in self.handledLoggers:
+        if logger.name not in self.mutedLoggers:
+          logger.setLevel( val )
+    return val
+
+  def handle(self, logger):
+    if logger.name in self.mutedLoggers:
+      self._mute( logger )
+    else:
+      logger.setLevel( self.level )
+    self.handledLoggers.append( logger )
+
+  def unhandle(self, logger):
+    try:
+      while True:
+        self.handledLoggers.pop( self.handledLoggers.index( logger ) )
+    except (KeyError, ValueError):
+      pass
+
+  def mute(self, logName):
+    self.mutedLoggers.append(logName)
+    values = [logger.name for logger in self.handledLoggers]
+    try:
+      idx = values.index(logName)
+      self._mute( self.handledLoggers[idx] )
+    except ValueError:
+      pass
+
+  def _mute(self, logger):
+    import types
+    logger.setLevel( LoggingLevel.MUTE )
+    logger.setLevel = types.MethodType( _mutedLogger, logger )
+
+MasterLevel = Holder( _ConfigureMasterLevel() )
+
+masterLevel = MasterLevel()

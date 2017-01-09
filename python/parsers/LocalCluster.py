@@ -5,6 +5,7 @@ from RingerCore.Logger import Logger
 from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubmitNamespace
                                               , clusterManagerParser, ClusterManager, AvailableManager
                                               , OptionRetrieve, BooleanOptionRetrieve, SubOptionRetrieve
+                                              , clusterManagerConf
                                               )
 from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr
 from RingerCore.parsers.Logger import LoggerNamespace
@@ -61,7 +62,9 @@ class LocalClusterNamespace( JobSubmitNamespace ):
     with the input options.
   """
 
-  def __init__(self, localCluster, **kw):
+  def __init__(self, localCluster = None, **kw):
+    if localCluster is None:
+      localCluster = clusterManagerConf()
     self.localCluster = AvailableManager.retrieve( localCluster )
     if self.localCluster is ClusterManager.LSF:
       self.prefix = LSFArgumentParser.prefix

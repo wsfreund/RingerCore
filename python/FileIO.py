@@ -24,7 +24,7 @@ def save(o, filename, **kw):
     raise("Filename must be a string!")
   filename = os.path.expandvars(filename)
   dirplace = os.path.dirname(filename)
-  if not os.path.isdir( dirplace ):
+  if not os.path.isdir( dirplace ) and dirplace:
     mkdir_p( dirplace )
   if type(protocol) is str:
     if protocol == "savez_compressed":
