@@ -133,9 +133,9 @@ class NotAllowedType(ValueError):
     ValueError.__init__(self, ("Attempted to add to %s an object (type=%s) which is not an "
       "instance from the allowedTypes: %s!") % (obj.__class__.__name__, type(input_),allowedTypes,) )
 
-from RingerCore.RawDictStreamable import RawDictStreamable, RawDictStreamer, \
-                                         RawDictCnv, LoggerRawDictStreamer, \
-                                         checkAttrOrSetDefault
+from RingerCore.RawDictStreamable import ( RawDictStreamable, RawDictStreamer
+                                         , RawDictCnv, LoggerRawDictStreamer
+                                         , checkAttrOrSetDefault )
 
 class LimitedTypeListRDS( RawDictStreamer ):
   """
@@ -149,9 +149,9 @@ class LimitedTypeListRDS( RawDictStreamer ):
   def __call__(self, obj):
     "Return a raw dict object from itself"
     setattr(obj,'items', list(obj))
-    self._logger.debug("Added property items to %s with the following list: %r", 
-        obj.__class__.__name__,
-        obj.__dict__['items'])
+    self._logger.verbose("Added property items to %s with the following list: %r"
+                        , obj.__class__.__name__
+                        , obj.__dict__['items'])
     raw = RawDictStreamer.__call__( self, obj )
     obj.__dict__.pop('items')
     return raw

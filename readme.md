@@ -205,9 +205,9 @@ class MyClass( Logger ):
     def __init__(self, **kw):
         Logger.__init__(self, kw)
     def fcn(self, input_):
-        self._logger.verbose("Started executing MyClass.fcn(%d)", input_)
-        self._logger.info("Input value was: %d", input_)
-        self._logger.verbose("Successfully finished executing MyClass.fcn(%d)", input_)
+        self._verbose("Started executing MyClass.fcn(%d)", input_)
+        self._info("Input value was: %d", input_)
+        self._verbose("Successfully finished executing MyClass.fcn(%d)", input_)
         
 myInst = MyClass()
 myInst.fcn(2)

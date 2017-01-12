@@ -146,7 +146,7 @@ class LoopingBounds ( Logger ):
     from RingerCore.Configure import checkForUnusedVars
     Logger.__init__(self, kw)
     self._matlabFlag = kw.pop('matlabFlag', False )
-    checkForUnusedVars( kw, self._logger.warning )
+    checkForUnusedVars( kw, self._warning )
     del kw
 
     if len(args) > 3: 

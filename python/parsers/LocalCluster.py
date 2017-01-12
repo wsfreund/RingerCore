@@ -1,14 +1,27 @@
 __all__ = [ 'lsfParser','pbsParser', 'LSFArgumentParser', 'PBSJobArgumentParser'
-          , 'LocalClusterNamespace']
+          , 'LocalClusterNamespace', 'PBSOutputMerging']
 
+import os
 from RingerCore.Logger import Logger
 from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubmitNamespace
                                               , clusterManagerParser, ClusterManager, AvailableManager
                                               , OptionRetrieve, BooleanOptionRetrieve, SubOptionRetrieve
-                                              , clusterManagerConf
+                                              , clusterManagerConf, EnumStringOptionRetrieve
                                               )
 from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr
 from RingerCore.parsers.Logger import LoggerNamespace
+
+class PBSOutputMerging( EnumStringification ):
+  """
+  Specified how to merge the output of a PBS/TorqueJob. When set to: 
+    n -> no merge is performed to the output;
+    oe -> stderr is merged to stdout;
+    eo -> stdout is merged to stderr.
+  """
+
+  n  = 0
+  oe = 1
+  eo = 2
 
 class LSFArgumentParser( JobSubmitArgumentParser ):
   prefix = 'lsf'
@@ -21,9 +34,11 @@ pbsParser = PBSJobArgumentParser(description = 'Run job on local cluster using P
 pbsGroup = pbsParser.add_argument_group('PBS/Torque Arguments', '')
 pbsGroup.add_job_submission_option('-Q','--queue',action='store', required = False,
                                     help = "Specify the job queue.")
-import os
 OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',1))
 pbsGroup.add_job_submission_option( '--nodes', option='-l',suboption='nodes', action=SubOptionRetrieve, required = False
+                                  , type=int
+                                  , help = "Specify the job number of nodes.")
+pbsGroup.add_job_submission_option( '--ncpus', option='-l',suboption='ncpus', action=SubOptionRetrieve, required = False
                                   , default = OMP_NUM_THREADS, type=int
                                   , help = "Specify the job number of nodes.")
 pbsGroup.add_job_submission_option( '--walltime', option='-l', suboption='walltime', required = False
@@ -32,6 +47,9 @@ pbsGroup.add_job_submission_option( '--walltime', option='-l', suboption='wallti
 pbsGroup.add_job_submission_option( '--mem', option='-l', suboption='mem',action=SubOptionRetrieve
                                   , required = False
                                   , help = "Specify the job memory size.")
+pbsGroup.add_job_submission_option( '-oe', '--combine-stdout-sterr', option='-j', action=EnumStringOptionRetrieve
+                                  , required = False, type=PBSOutputMerging, default=PBSOutputMerging.oe
+                                  , help = PBSOutputMerging.__doc__)
 pbsGroup.add_job_submission_option( '-stdout', action='store', required = False
                                   , help = "Name of standard output file.")
 pbsGroup.add_job_submission_option( '-stderr', action='store', required = False
@@ -39,17 +57,22 @@ pbsGroup.add_job_submission_option( '-stderr', action='store', required = False
 pbsGroup.add_job_submission_option( '-V','--copy-environment', option = '-V', action=BooleanOptionRetrieve
                                   , required = False, type = BooleanStr
                                   , help = "Copy current environment to the job.")
+pbsGroup.add_job_submission_option( '-N','--job-name', option = '-N', action=OptionRetrieve
+                                  , help = "Specifies name for job submitted.", addEqual=False)
 pbsGroup.add_job_submission_option( '-M','--mail-address',action='store', required = False
                                   , help = "Specify mail address.")
 pbsGroup.add_job_submission_option( '-D','--job-dependency',action='store', required = False
                                   , type = int
                                   , help = "Specifies that current job depends on other job.")
+pbsGroup.add_job_submission_option( '-j','--job-dependency',action='store', required = False
+                                  , type = int
+                                  , help = "Specifies that current job depends on other job.")
 # Arguments which are not propagated to the job, but handle how to set it up
-pbsGroup.add_argument('--debug', required = False, type = BooleanStr,
+pbsGroup.add_argument('--debug', required = False, type = BooleanStr, default=False,
                       help = "Specify that this should be run on debug mode.")
 pbsGroup.add_argument( '--nFiles', required = False
                      , default = None, type=int
-                     , help = "Specify the job number of nodes.")
+                     , help = """Specify the number of files in the input directory to be used.""")
 
 ## TODO
 lsfParser = None
@@ -73,7 +96,7 @@ class LocalClusterNamespace( JobSubmitNamespace ):
       self.prefix = PBSJobArgumentParser.prefix
       prog = 'qsub'
     else:
-      self._logger.fatal("Not implmeneted LocalClusterNamespace for cluster manager %s", AvailableManager.retrieve(self.localCluster), NotImplementedError)
+      self._fatal("Not implmeneted LocalClusterNamespace for cluster manager %s", AvailableManager.retrieve(self.localCluster), NotImplementedError)
     JobSubmitNamespace.__init__( self, prog = prog)
 
   def setExec(self, value):

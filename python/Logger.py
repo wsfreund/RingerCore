@@ -255,6 +255,21 @@ class Logger( object ):
       self._logger.setLevel = types.MethodType( _setOutputLevel, self._logger )
     else:
       self.level = LoggingLevel.MUTE
+    def check_add( f ):
+      fname = f.__name__
+      self.__dict__['_' + fname] =  f
+    #l = self._logger
+    #for f in ( l.verbose, l.debug, l.info
+    #         , l.warning, l.error, l.critical
+    #         , l.fatal ): 
+    #  check_add(f)
+
+  def __getattr__(self, attr):
+    if attr.lstrip('_') in ( 'verbose', 'debug', 'info'
+                           , 'warning', 'error', 'critical'
+                           , 'fatal'): 
+      return getattr( self._logger, attr.lstrip('_') )
+    raise AttributeError( attr )
 
   def getLevel(self):
     if hasattr( self, '_level' ):

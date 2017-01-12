@@ -1,12 +1,14 @@
-__all__ = [ 'argparse','ArgumentParser']
+__all__ = [ 'argparse','ArgumentParser', 'ArgumentError']
 
 from RingerCore.util import get_attributes
-import re
+import re, textwrap
 
 try:
   import argparse
 except ImportError:
   from RingerCore.parsers import __py_argparse as argparse
+
+from argparse import ArgumentError
 
 from RingerCore.Configure import BooleanStr, EnumStringification
 
@@ -27,8 +29,8 @@ class _ActionsContainer( object ):
         if not lType in self._registries['type']:
           self.register('type', lType, lType.retrieve)
         # Deal with the help option:
-        help_str = kwargs.pop('help','').rstrip(' ')
-        if not '.' in help_str[-1:]: help_str += '. '
+        help_str = ' '.join(textwrap.wrap(kwargs.pop('help','')))
+        if not '.' in help_str[-2:]: help_str += '. '
         if help_str[-1:] != ' ': help_str += ' '
         help_str += "Possible options are: "
         from operator import itemgetter
@@ -42,7 +44,7 @@ class _ActionsContainer( object ):
           if kwargs.pop('nargs','?') != '?':
             raise ValueError('Cannot specify nargs different from \'?\' when using boolean argument')
           kwargs['nargs'] = '?'
-          kwargs['const'] = BooleanStr.retrieve( kwargs.pop('const','True') )
+          kwargs['const'] = BooleanStr.retrieve( kwargs.pop('const','False') ) # If not specified, it will be set to false by default
     argparse._ActionsContainer.add_argument(self, *args, **kwargs)
 
   def add_argument_group(self, *args, **kwargs):
@@ -104,9 +106,9 @@ class _ActionsContainer( object ):
       #print "(delete) popping action,", idx, self._actions[idx].dest
       self._actions.pop(idx)
     # Raise if we shouldn't exist anymore:
-    if isinstance(self, (_MutuallyExclusiveGroup, _ArgumentGroup)) and \
-       not self._group_actions and \
-       not self._defaults:
+    if ( isinstance(self, (_MutuallyExclusiveGroup, _ArgumentGroup)) and
+         not self._group_actions and
+         not self._defaults ):
        raise _EraseGroup()
 
   def suppress_arguments(self, **vars_):
@@ -231,6 +233,13 @@ class ArgumentParser( _ActionsContainer, argparse.ArgumentParser ):
             for key_act, act in reg.iteritems():
               if not key_act in self._registries[key]:
                 self.register(key, key_act, act)
+
+  def error(self, message):
+    """
+    Raise ArgumentError instead of exiting
+    """
+    raise ArgumentError( None, message )
+
 
 
 class _ArgumentGroup( _ActionsContainer, argparse._ArgumentGroup ):

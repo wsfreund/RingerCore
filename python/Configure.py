@@ -183,15 +183,15 @@ class Configure( Logger ):
     if val not in (NotSet, None):
       value = self.retrieve( val )
       if not self.allowReconfigure and self.configured() and self._choice != value:
-        self._logger.fatal("Attempted to reconfigure %s twice.",  self.name)
+        self._fatal("Attempted to reconfigure %s twice.",  self.name)
       self._choice = self.retrieve(val)
       result = self.test() 
       if result is not None and not self.test():
-        self._logger.fatal("%s test failed.", self.name )
+        self._fatal("%s test failed.", self.name )
       if hasattr(self, '_logger'):
-        self._logger.info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
+        self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
     else:
-      self._logger.debug('Called %s set method with empty value.', self.name )
+      self._debug('Called %s set method with empty value.', self.name )
 
   def retrieve(self, val):
     """
@@ -214,7 +214,7 @@ class Configure( Logger ):
       if hasattr(self,'auto'): 
         self.auto()
         return
-    self._logger.fatal("%s was not configured.", self.name )
+    self._fatal("%s was not configured.", self.name )
 
   def __call__( self ):
     return self.get()
@@ -244,6 +244,8 @@ class Configure( Logger ):
   def _autoconfiguration(self):
     if hasattr(self,'auto'):
       self.auto()
+      if not self.configured():
+        self._logger.fatal( "Autoconfiguration failed to configure %s", self.name )
     else:
       self._logger.fatal( 'Class %s cannot auto-configure itself.'
                         , self.name )
@@ -271,7 +273,7 @@ class EnumStringificationOptionConfigure( Configure ):
 
   def _enumTypeAvailable(self):
     if not hasattr(self, '_enumType'):
-      self._logger.fatal( "Class %s does not have _enumType value. Please, make sure to add it."
+      self._fatal( "Class %s does not have _enumType value. Please, make sure to add it."
                         , self.name
                         , TypeError )
 

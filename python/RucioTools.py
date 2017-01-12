@@ -11,13 +11,13 @@ class RucioTools( Logger ):
       import os
       os.system('rucio --version')
     except RuntimeError:
-      self._logger.fatal('Rucio was not set! please setup this!')
+      self._fatal('Rucio was not set! please setup this!')
       raise RuntimeError('Rucio command not found!')
 
   # Get all files name for the dataset (ds) passed
   def get_list_files( self, ds ):
     import os
-    self._logger.info(('Getting list of files in %s')%(ds))
+    self._info(('Getting list of files in %s')%(ds))
     command = ('rucio list-files %s | cut -f2 -d  "|" >& rucio_list_files.txt') % (ds) 
     os.system(command)
     files = list()
@@ -31,7 +31,7 @@ class RucioTools( Logger ):
           if ' ' in line:  line = line.replace(' ','')
         # remove corrupt files
         if line.endswith('.2'):  
-          self._logger.warning(('Remove corrupt file: %s')%(line))
+          self._warning(('Remove corrupt file: %s')%(line))
           continue
         files.append( line )
       # remove junk lines
@@ -45,10 +45,10 @@ class RucioTools( Logger ):
   # Download file using rucio
   def download( self, f):
     import os
-    self._logger.info(('Download file %s')%(f))
+    self._info(('Download file %s')%(f))
     command = ('rucio download %s --no-subdir') % (f) 
     os.system( command )
-    self._logger.info('Download completed.')
+    self._info('Download completed.')
 
   # remove "user.youloggin:" from the name
   def noUsername(self, f):

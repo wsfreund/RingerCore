@@ -331,14 +331,14 @@ class GridNamespace( JobSubmitNamespace ):
     dirname = os.path.dirname( filename )
     from RingerCore.FileIO import checkFile
     if not checkFile(filename, md5sum):
-      self._logger.info('Downloading %s to avoid doing it on server side.', basefile)
+      self._info('Downloading %s to avoid doing it on server side.', basefile)
       import urllib
       if not os.path.isdir( dirname ):
         from RingerCore import mkdir_p
         mkdir_p( dirname )
       urllib.urlretrieve(dlurl, filename=filename)
     else:
-      self._logger.info('%s already downloaded.',filename)
+      self._info('%s already downloaded.', filename)
 
   def pre_download(self):
     """

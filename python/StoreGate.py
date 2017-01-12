@@ -31,7 +31,7 @@ class StoreGate( Logger) :
       self._file.mkdir(fullpath)
       self._file.cd(fullpath)
       self._currentDir = fullpath
-      self._logger.verbose('Created directory with name %s', theDir)
+      self._verbose('Created directory with name %s', theDir)
 
   #Go to the pointed directory
   def cd(self, theDir):
@@ -49,7 +49,7 @@ class StoreGate( Logger) :
       self._dirs.append(fullpath)
       self._objects[fullpath] = obj
       #obj.Write()
-      self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
+      self._debug('Saving object type %s into %s',type(obj), fullpath)
   
   def histogram(self, feature):
     #self._currentDir = ''
@@ -57,11 +57,11 @@ class StoreGate( Logger) :
     fullpath = (feature).replace('//','/')
     if fullpath in self._dirs:
       obj = self._objects[fullpath]
-      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
+      self._verbose('Retrieving object type %s into %s',type(obj), fullpath)
       return obj
     else:
       #None object if doesnt exist into the store
-      self._logger.warning('Object with path %s doesnt exist', fullpath)
+      self._warning('Object with path %s doesnt exist', fullpath)
       return None
 
   # Use this to set labels into the histogram
@@ -75,9 +75,9 @@ class StoreGate( Logger) :
 	        for i in range( histo.GetNbinsX(), min( len(labels), histo.GetNbinsX()+histo.GetNbinsY() ) ):
 	          bin = i+1-histo.GetNbinsX();  histo.GetYaxis().SetBinLabel(bin, labels[i])
       except:
-        self._logger.fatal("Can not set the labels! abort.")
+        self._fatal("Can not set the labels! abort.")
     else:
-      self._logger.warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
+      self._warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
 
 
   def histogram_FillN1(self,feature, value1):
@@ -89,7 +89,7 @@ class StoreGate( Logger) :
       weights = np.ones(np_array_value1.shape)
       self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
     except:
-      self._logger.warning("Can not attach the vector into the feature: %s", feature)
+      self._warning("Can not attach the vector into the feature: %s", feature)
 
 
   def histogram_FillN2(self,feature, value1, value2):
@@ -101,13 +101,13 @@ class StoreGate( Logger) :
       if np_array_value2.shape[1] > np_array_value2.shape[0]:
         np_arrar_value2=np_array_value2.T
       if np_array_value1.shape[0] != np_array_value2.shape[0]:
-        self._logger.warning('Value1 and Value2 must be the same length.')
+        self._warning('Value1 and Value2 must be the same length.')
       else:
         # do fast
         weights = np.ones(np_array_value1.shape).astype('float')
         self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,np_array_value2,weights)
     except:
-      self._logger.warning("Can not attach the vector into the feature: %s", feature)
+      self._warning("Can not attach the vector into the feature: %s", feature)
 
   def collect(self):
     self._objects.clear()

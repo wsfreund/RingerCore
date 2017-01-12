@@ -2,13 +2,14 @@ __all__ = ['JobSubmitArgumentParser', 'JobSubmitNamespace'
           , 'ClusterManager', 'has_Panda', 'has_PBS', 'has_Torque', 'has_LSF'
           , 'cluster_default', 'clusterManagerParser'
           , 'OptionRetrieve', 'BooleanOptionRetrieve', 'SubOptionRetrieve'
-          , 'ClusterManagerConfigure', 'clusterManagerConf']
+          , 'ClusterManagerConfigure', 'clusterManagerConf', 'EnumStringOptionRetrieve']
 
-import re 
+import re, pipes
 
 from RingerCore.Logger import Logger, LoggingLevel
 from RingerCore.parsers.ParsingUtils import ( _ActionsContainer, _MutuallyExclusiveGroup
-                                            , _ArgumentGroup, ArgumentParser, argparse)
+                                            , _ArgumentGroup, ArgumentParser, argparse
+                                            , ArgumentError )
 from RingerCore.Configure import ( EnumStringification, NotSet
                                  , EnumStringificationOptionConfigure, Holder )
 from RingerCore.util import get_attributes
@@ -20,6 +21,7 @@ class OptionRetrieve( argparse.Action ):
               , dest = None
               , option_strings = []
               , value=None
+              , addEqual = True
               , nargs=None
               , const=None
               , default=None
@@ -41,6 +43,7 @@ class OptionRetrieve( argparse.Action ):
                                         )
     self.option = option
     self.value = value
+    self.addEqual = addEqual
 
   def __bool__(self):
     return self.value is None
@@ -51,7 +54,9 @@ class OptionRetrieve( argparse.Action ):
 
   def __str__(self):
     if self.value is not None:
-      return self.option + '=' + str(self.value)
+      return ( self.option + ('=' if self.addEqual else ' ') 
+             + ( pipes.quote( self.value ) if isinstance(self.value, basestring) else str(self.value) )
+             )
     else: return ''
 
   def __repr__(self):
@@ -61,6 +66,12 @@ class BooleanOptionRetrieve( OptionRetrieve ):
   def __str__(self):
     if self.value:
       return self.option
+    else: return ''
+
+class EnumStringOptionRetrieve( OptionRetrieve ):
+  def __str__(self):
+    if self.value is not None:
+      return self.option + ' ' + self.type.tostring(self.value)
     else: return ''
 
 
@@ -267,9 +278,9 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     matches = [key for key in get_attributes(self, onlyVars = True) if bool(search.match( key ))]
     lMatches = len(matches)
     if lMatches > 1:
-      self._logger.warning("Found more than one match for option %s, will return first match. Matches are: %r.", option, matches)
+      self._warning("Found more than one match for option %s, will return first match. Matches are: %r.", option, matches)
     elif lMatches == 0:
-      self._logger.fatal("Cannot find job submission option: %s", option, KeyError)
+      self._fatal("Cannot find job submission option: %s", option, KeyError)
     return matches[0]
 
   def parseExecStr(self, execStr, addQuote = True):
@@ -344,10 +355,10 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
 
   def _run_command(self, full_cmd_str):
     # We show command:
-    self._logger.info("Command:\n%s", full_cmd_str)
+    self._info("Command:\n%s", full_cmd_str)
     full_cmd_str = re.sub('\\\\ *\n','', full_cmd_str )
     full_cmd_str = re.sub(' +',' ', full_cmd_str)
-    self._logger.debug("Command without spaces:\n%s", full_cmd_str)
+    self._debug("Command without spaces:\n%s", full_cmd_str)
     # And run it:
     if not self.dry_run:
       self.fcn(full_cmd_str)
@@ -458,18 +469,21 @@ class _ConfigureClusterManager( EnumStringificationOptionConfigure ):
   manager = property( EnumStringificationOptionConfigure.get, EnumStringificationOptionConfigure.set )
 
   def auto( self ):
-    self._logger.debug("Using automatic configuration for cluster-manager specification.")
+    self._debug("Using automatic configuration for cluster-manager specification.")
     # First we discover which cluster type we will be using:
     import sys
-    args, argv = clusterManagerParser.parse_known_args()
-    if clusterManagerParser.cluster_manager not in (None, NotSet):
-      self.manager = clusterManagerParser.cluster_manager
-      # Consume option
-      sys.argv = sys.argv[:1] + argv
-    else:
+    try:
+      args, argv = clusterManagerParser.parse_known_args()
+      if args.cluster_manager not in (None, NotSet):
+        self.manager = args.cluster_manager
+        # Consume option
+        sys.argv = sys.argv[:1] + argv
+      else:
+        self.manager = cluster_default
+    except ArgumentError as e:
+      self.debug("Ignored argument parsing error:\n %s", e )
       self.manager = cluster_default
 
 ClusterManagerConfigure = Holder( _ConfigureClusterManager() )
 
 clusterManagerConf = ClusterManagerConfigure()
-

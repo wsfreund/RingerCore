@@ -46,12 +46,12 @@ class RawDictStreamer( Logger ):
       publicKey = searchKey.lstrip('_')
       searchKey = mangle_attr(obj, searchKey)
       if searchKey in raw:
-        self._logger.verbose( "Transforming '%s' attribute to public attribute '%s'.",
+        self._verbose( "Transforming '%s' attribute to public attribute '%s'.",
                               searchKey,
                               publicKey )
         raw[publicKey] = raw.pop(searchKey)
       else:
-        self._logger.fatal("Cannot transform to public key attribute '%s'", searchKey, KeyError)
+        self._fatal("Cannot transform to public key attribute '%s'", searchKey, KeyError)
     for key, val in raw.iteritems():
       try:
         streamable = issubclass( val.__metaclass__, RawDictStreamable)
@@ -62,9 +62,9 @@ class RawDictStreamer( Logger ):
       else:
         cl = val
       if streamable or isinstance( cl, RawDictStreamable):
-        self._logger.debug( "Found a streamable instance of type '%s' on attribute named '%s'.",
-                            cl.__name__,
-                            key )
+        self._verbose( "Found a streamable instance of type '%s' on attribute named '%s'."
+                     , cl.__name__
+                     , key )
         raw[key] = val.toRawObj()
     from copy import copy
     raw = copy( raw )
@@ -90,7 +90,7 @@ class RawDictStreamer( Logger ):
       from copy import deepcopy
       raw[key] = deepcopy(raw[key])
     else:
-      self._logger.warning("Cannot deepcopy key(%s) as it does not exists on rawDict.", key)
+      self._warning("Cannot deepcopy key(%s) as it does not exists on rawDict.", key)
 
 class RawDictCnv( Logger ):
   """
@@ -176,7 +176,7 @@ def retrieveRawDict( val, logger = mLogger ):
   if isRawDictFormat( val ):
     try:
       from RingerCore.util import str_to_class
-      logger.debug( "Converting rawDict to an instance of type '%s'." % val['class'] )
+      logger.verbose( "Converting rawDict to an instance of type '%s'." % val['class'] )
       cls = str_to_class( val['__module'], val['class'] )
       val = cls.fromRawObj( val )
     except KeyError, e:
