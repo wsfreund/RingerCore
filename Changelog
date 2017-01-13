@@ -1,4 +1,8 @@
 2017-01-12 Werner S Freund
+	* Protect against wrong type setup on cluster manager setup
+	* Tagging RingerCore-01-00-02.
+
+2017-01-12 Werner S Freund
 	* Improved Configured class to detect auto-configuration issues;
 	* Handle argparse inexact argument matching for cluster-manager option;
 	* Added ncpus configuration to local cluster jobs;

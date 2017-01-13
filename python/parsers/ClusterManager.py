@@ -480,7 +480,7 @@ class _ConfigureClusterManager( EnumStringificationOptionConfigure ):
         sys.argv = sys.argv[:1] + argv
       else:
         self.manager = cluster_default
-    except ArgumentError as e:
+    except (ArgumentError, ValueError) as e:
       self.debug("Ignored argument parsing error:\n %s", e )
       self.manager = cluster_default
 
