@@ -17,7 +17,7 @@ class _RetrieveOutputLevelAction(argparse.Action):
 loggerParser = ArgumentParser(add_help = False)
 logOutput = loggerParser.add_argument_group('Logging arguments', '')
 logOutput.add_argument('--output-level', action=_RetrieveOutputLevelAction,
-    type=LoggingLevel, required = False, dest='_level',
+    type=LoggingLevel, required = False, dest='_level', default = LoggingLevel.INFO,
     metavar = 'LEVEL', help = "The output level for the main logger." )
 # TODO Add a destination file for logging messages
 #parser.add_argument(

@@ -1,4 +1,9 @@
 2017-01-12 Werner S Freund
+	* Fixed Logger overriding class attributes for its message methods without
+	when starting without '_'
+	* Tagging RingerCore-01-00-03.
+
+2017-01-12 Werner S Freund
 	* Protect against wrong type setup on cluster manager setup
 	* Tagging RingerCore-01-00-02.
 

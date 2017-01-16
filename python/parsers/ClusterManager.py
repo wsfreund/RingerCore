@@ -82,6 +82,7 @@ class SubOptionRetrieve( OptionRetrieve ):
               , suboption
               , dest = None
               , option_strings = []
+              , addEqual = True
               , value=None
               , nargs=None
               , const=None
@@ -93,6 +94,7 @@ class SubOptionRetrieve( OptionRetrieve ):
               , metavar=None ):
     super(SubOptionRetrieve, self).__init__( option         = option
                                            , value          = value
+                                           , addEqual       = addEqual
                                            , option_strings = option_strings
                                            , dest           = dest
                                            , nargs          = nargs
@@ -108,7 +110,7 @@ class SubOptionRetrieve( OptionRetrieve ):
 
   def __str__(self):
     if self.value is not None:
-      return self.option + ' ' + self.suboption + '=' + str(self.value)
+      return self.option + ' ' + self.suboption + ('=' if self.addEqual else ' ') + pipes.quote( str(self.value) )
     else: return ''
 
 class _JobSubmitActionsContainer( _ActionsContainer ):

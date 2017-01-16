@@ -1,4 +1,4 @@
-__all__ = [ 'argparse','ArgumentParser', 'ArgumentError']
+__all__ = [ 'argparse','ArgumentParser', 'ArgumentError', 'BooleanRetrieve']
 
 from RingerCore.util import get_attributes
 import re, textwrap
@@ -12,6 +12,38 @@ from argparse import ArgumentError
 
 from RingerCore.Configure import BooleanStr, EnumStringification
 
+class BooleanRetrieve( argparse.Action ):
+
+  def __init__( self
+              , dest = None
+              , option_strings = []
+              , nargs=None
+              , const=None
+              , default=None
+              , type=None
+              , choices=None
+              , required=False
+              , help=None
+              , metavar=None ):
+    super(BooleanRetrieve, self).__init__( option_strings = option_strings
+                                         , dest           = dest
+                                         , nargs          = nargs
+                                         , const          = const
+                                         , default        = default
+                                         , type           = type
+                                         , choices        = choices
+                                         , required       = required
+                                         , help           = help
+                                         , metavar        = metavar
+                                         )
+
+  def __call__(self, parser, namespace, value, option_string=None):
+    if value is None:
+      value = self.const if self.const is not None else True
+    else:
+      value = BooleanStr.retrieve( value )
+    setattr(namespace, self.dest, value)
+
 class _EraseGroup( Exception ):
   """
   Indicate that a group should be erased.
@@ -24,10 +56,6 @@ class _ActionsContainer( object ):
     if 'type' in kwargs:
       lType = kwargs['type']
       if issubclass(lType, EnumStringification):
-        # Make sure that there will be registered the type and the action that
-        # will be used for it:
-        if not lType in self._registries['type']:
-          self.register('type', lType, lType.retrieve)
         # Deal with the help option:
         help_str = ' '.join(textwrap.wrap(kwargs.pop('help','')))
         if not '.' in help_str[-2:]: help_str += '. '
@@ -44,7 +72,19 @@ class _ActionsContainer( object ):
           if kwargs.pop('nargs','?') != '?':
             raise ValueError('Cannot specify nargs different from \'?\' when using boolean argument')
           kwargs['nargs'] = '?'
-          kwargs['const'] = BooleanStr.retrieve( kwargs.pop('const','False') ) # If not specified, it will be set to false by default
+          if not 'default' in kwargs:
+            kwargs['default'] = False
+          if not 'action' in kwargs:
+            del kwargs['type']
+            kwargs['action'] = BooleanRetrieve
+          else:
+            if not lType in self._registries['type']:
+              self.register('type', lType, lType.retrieve)
+        else:
+          # Make sure that there will be registered the type and the action that
+          # will be used for it:
+          if not lType in self._registries['type']:
+            self.register('type', lType, lType.retrieve)
     argparse._ActionsContainer.add_argument(self, *args, **kwargs)
 
   def add_argument_group(self, *args, **kwargs):

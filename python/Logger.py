@@ -265,9 +265,9 @@ class Logger( object ):
     #  check_add(f)
 
   def __getattr__(self, attr):
-    if attr.lstrip('_') in ( 'verbose', 'debug', 'info'
-                           , 'warning', 'error', 'critical'
-                           , 'fatal'): 
+    if attr.startswith('_') and  attr.lstrip('_') in ( 'verbose', 'debug', 'info'
+                                                     , 'warning', 'error', 'critical'
+                                                     , 'fatal'): 
       return getattr( self._logger, attr.lstrip('_') )
     raise AttributeError( attr )
 
