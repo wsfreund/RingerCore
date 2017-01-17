@@ -295,7 +295,7 @@ class GridNamespace( JobSubmitNamespace ):
       outDS = self.get_job_submission_option('outDS')
       outputs = self.get_job_submission_option('outputs')
       for output in outputs:
-        oList = output.split(':')
+        oList = str(output).split(':')
         if len(oList) == 2:
           did = outDS + '_' + oList[0].replace('"','')
           if len(did) > 132:

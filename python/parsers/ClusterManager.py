@@ -319,6 +319,7 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     nSpaces = self._nSpaces()
     # Add extra arguments
     for name, value in get_attributes(self):
+      
       csv = False
       suboption = False
       if name.startswith(self.prefix):
@@ -341,12 +342,13 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
       else:
         continue
       tVal = type(value)
-      if tVal is bool and value:
-        cmd_str +=  self._formated_line( name )
+      if tVal is bool:
+        if value:
+          cmd_str +=  self._formated_line( name )
       elif isinstance(value, OptionRetrieve) and value:
         cmd_str +=  self._formated_line( str(value) )
       elif value not in (None, NotSet):
-        if isinstance(value, list):
+        if isinstance(value, list) and value:
           if csv:
             cmd_str +=  self._formated_line( name + '=' + ','.join( [str(v) for v in value]) )
           else:
@@ -383,7 +385,7 @@ has_Panda = has_PBS = has_Torque = has_LSF = False
 # Discover which cluster default option we should be using
 from RingerCore.util import cmd_exists
 import os
-if int(os.environ.get('ATLAS_LOCAL_PANDACLI_VERSION',0)) and cmd_exists('prun'):
+if os.environ.get('ATLAS_LOCAL_PANDACLI_VERSION',"") and cmd_exists('prun'):
   has_Panda = True
 if cmd_exists('qsub'):
   has_PBS = has_Torque = True
