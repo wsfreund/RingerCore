@@ -277,8 +277,8 @@ class GridNamespace( JobSubmitNamespace ):
     full_cmd_str = ''
     # Add execute grid command if available
     if hasattr(self,'bexec'):
-      full_cmd_str += self._formated_line( '--bexec' )
-      full_cmd_str += self.parseExecStr(self.bexec)
+      full_cmd_str += self._formated_line( '--bexec')
+      full_cmd_str += self.parseExecStr(self.bexec, addSemiColomn=False)
     if hasattr(self,'exec_'):
       full_cmd_str += self._formated_line( '--exec' )
       full_cmd_str += self.parseExecStr(self.exec_)

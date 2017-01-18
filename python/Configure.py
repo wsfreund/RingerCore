@@ -6,8 +6,11 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'MasterLevel', 'masterLevel'
           ]
 
+#from RingerCore.util import os_environ_get
 import os
 GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
+#GRID_ENV = os_environ_get('RCM_GRID_ENV',0)
+
 
 class NotSetType( type ):
   def __bool__(self):

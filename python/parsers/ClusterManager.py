@@ -285,17 +285,25 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
       self._fatal("Cannot find job submission option: %s", option, KeyError)
     return matches[0]
 
-  def parseExecStr(self, execStr, addQuote = True):
+  def parseExecStr(self, execStr, addQuote = True, addSemiColomn=True):
     retStr = ''
     import textwrap
     execStr = [textwrap.dedent(l) for l in execStr.split('\n')]
     execStr = [l for l in execStr if l not in (';','"','')]
+    
     if addQuote:
-      if execStr[-1][-2:] != ';"': 
-        if execStr[-1][-1] == '"':
-          execStr[-1] = execStr[-1][:-1] + ';"'
-        else:
-          execStr[-1] += ';"' 
+
+      if addSemiColomn:
+        if execStr[-1][-2:] != ';"': 
+          if execStr[-1][-1] == '"':
+            execStr[-1] = execStr[-1][:-1] + ';"'
+          else:
+            execStr[-1] += ';"' 
+      else:
+        if not execStr[-1][-1] == '"':
+          execStr[-1] += '"'
+
+
     for i, l in enumerate(execStr):
       if i == 0:
         moreSpaces = 2

@@ -6,7 +6,7 @@ __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
            'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists', 
-           'getParentVersion']
+           'getParentVersion', 'os_environ_get']
 
 import re, os, __main__
 import sys
@@ -601,6 +601,13 @@ def getParentVersion( init_fname ):
       return None, e
   return None, None
 
+
+def os_environ_get( env, default_env ):
+  import os
+  ENV=os.environ.get(env,default_env)
+  if ENV=='':
+    return default_env
+  return ENV
 
 
 

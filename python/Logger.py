@@ -2,7 +2,7 @@ __all__ = ['LoggingLevel', 'Logger']
 
 from RingerCore.Configure import EnumStringification
 import logging
-
+#from RingerCore import os_environ_get
 # TODO With the Configure method it is possible to create a singleton to
 # retrieve all loggers using the global configured message level
 
