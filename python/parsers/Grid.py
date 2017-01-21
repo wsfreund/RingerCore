@@ -338,7 +338,7 @@ class GridNamespace( JobSubmitNamespace ):
         mkdir_p( dirname )
       urllib.urlretrieve(dlurl, filename=filename)
     else:
-      self._info('%s already downloaded.', filename)
+      self._debug('%s already downloaded.', filename)
 
   def pre_download(self):
     """

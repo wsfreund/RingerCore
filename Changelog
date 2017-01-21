@@ -1,3 +1,7 @@
+2017-01-21 Werner S Freund
+	* Fixed small bug on job submission where csv option would show as []
+	when empty, instead not showing at all.
+
 2017-01-20 Werner S Freund
 	* Added tex/beamer api.
 	* Silenced boost dirname complaint when no boost is available in the

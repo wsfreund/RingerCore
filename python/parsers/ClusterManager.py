@@ -327,7 +327,6 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     nSpaces = self._nSpaces()
     # Add extra arguments
     for name, value in get_attributes(self):
-      
       csv = False
       suboption = False
       if name.startswith(self.prefix):
@@ -355,14 +354,16 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
           cmd_str +=  self._formated_line( name )
       elif isinstance(value, OptionRetrieve) and value:
         cmd_str +=  self._formated_line( str(value) )
-      elif value not in (None, NotSet):
-        if isinstance(value, list) and value:
+      elif value in (None, NotSet):
+        continue
+      elif isinstance(value, list):
+        if value:
           if csv:
             cmd_str +=  self._formated_line( name + '=' + ','.join( [str(v) for v in value]) )
           else:
             cmd_str +=  self._formated_line( name + '=' + ' '.join( [str(v) for v in value]) )
-        else:
-          cmd_str +=  self._formated_line( name + '=' + str(value) )
+      else:
+        cmd_str +=  self._formated_line( name + '=' + str(value) )
     return cmd_str
 
   def _run_command(self, full_cmd_str):

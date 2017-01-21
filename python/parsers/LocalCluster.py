@@ -86,7 +86,7 @@ class LocalClusterNamespace( JobSubmitNamespace ):
   """
 
   def __init__(self, localCluster = None, **kw):
-    if localCluster is None:
+    if localCluster in (None, NotSet):
       localCluster = clusterManagerConf()
     self.localCluster = AvailableManager.retrieve( localCluster )
     if self.localCluster is ClusterManager.LSF:
@@ -96,7 +96,7 @@ class LocalClusterNamespace( JobSubmitNamespace ):
       self.prefix = PBSJobArgumentParser.prefix
       prog = 'qsub'
     else:
-      self._fatal("Not implmeneted LocalClusterNamespace for cluster manager %s", AvailableManager.retrieve(self.localCluster), NotImplementedError)
+      self._fatal("Not implemented LocalClusterNamespace for cluster manager %s", AvailableManager.retrieve(self.localCluster), NotImplementedError)
     JobSubmitNamespace.__init__( self, prog = prog)
 
   def setExec(self, value):
