@@ -622,7 +622,7 @@ def git_description( init_fname ):
                                     ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   (output, stderr) = git_version_cmd.communicate()
   output = output.rstrip('\n')
-  if git_version_cmd.returncode:
+  if git_version_cmd.returncode and not RCM_GRID_ENV:
     raise RuntimeError("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr)
   return output
 
