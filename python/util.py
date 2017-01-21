@@ -640,7 +640,10 @@ def getParentVersion( init_fname ):
     git_dir = os.path.dirname( git_dir )
   git_dir = os.path.join( git_dir, '.git' )
   if not os.path.exists( git_dir ):
-    raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
+    if RCM_GRID_ENV:
+      return "GRID", "<GRID>"
+    else:
+      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
   parent_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
   import subprocess
   git_parent_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]

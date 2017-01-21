@@ -38,7 +38,7 @@ def conditionalOption( argument, value ):
   """
   Returns argument + value option only when value is set.
   """
-  return ( argument + " " + str(value) if not( type(value) in (list,tuple) ) and not( value in (None, NotSet) ) else \
+  return ( argument + " " + str(value) if not( type(value) in (list,tuple) ) and not( value in (None, NotSet,'') ) else \
       ( argument + " " + ' '.join([str(val) for val in value]) if value else '' ) )
 
 class EnumStringification( object ):
