@@ -1,15 +1,14 @@
 __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'EnumStringification', 'BooleanStr'
-          , 'conditionalOption', 'GRID_ENV', 'retrieve_kw'
+          , 'conditionalOption', 'RCM_GRID_ENV', 'retrieve_kw'
           , 'checkForUnusedVars', 'setDefaultKey' 
           , 'Configure', 'EnumStringificationOptionConfigure'
-          , 'MasterLevel', 'masterLevel'
+          , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR'
           ]
 
-#from RingerCore.util import os_environ_get
 import os
-GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
-#GRID_ENV = os_environ_get('RCM_GRID_ENV',0)
+RCM_GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
+RCM_NO_COLOR = int(os.environ.get('RCM_NO_COLOR',1))
 
 
 class NotSetType( type ):

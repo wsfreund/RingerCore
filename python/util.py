@@ -17,7 +17,7 @@ import gzip
 import inspect
 import numpy as np
 
-from RingerCore.Configure import NotSet, GRID_ENV
+from RingerCore.Configure import NotSet, RCM_NO_COLOR
 
 loadedEnvFile = False
 def sourceEnvFile():
@@ -131,7 +131,7 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(GRID_ENV or not(sys.stdout.isatty())), 
+                no_bl = not(RCM_NO_COLOR or not(sys.stdout.isatty())), 
                 measureTime = True):
   """
     Display progressbar.

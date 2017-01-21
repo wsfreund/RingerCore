@@ -8,7 +8,7 @@ from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubm
                                               , OptionRetrieve, BooleanOptionRetrieve, SubOptionRetrieve
                                               , clusterManagerConf, EnumStringOptionRetrieve
                                               )
-from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr
+from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr, NotSet
 from RingerCore.parsers.Logger import LoggerNamespace
 
 class PBSOutputMerging( EnumStringification ):
@@ -73,7 +73,8 @@ pbsGroup.add_argument('--debug', required = False, type = BooleanStr, default=Fa
 pbsGroup.add_argument( '--nFiles', required = False
                      , default = None, type=int
                      , help = """Specify the number of files in the input directory to be used.""")
-
+pbsGroup.add_argument('--max-job-slots', type = int, default = 3,
+                     help = "Specify the maximum job slots that can be submitted with this name" )
 ## TODO
 lsfParser = None
 

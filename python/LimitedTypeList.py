@@ -17,7 +17,11 @@ class LimitedTypeList (type):
     _acceptedTypes will be used.
 
     If none of the inherited classes define the __init__ method, the list 
-    init method will be used.
+    init method will be used. In case you have a inherited class with __init__
+    method (case where the base class has __metaclass__ set to LimitedTypeList)
+    and want to enforce that this class will use their own __init__ method, then
+    set _useLimitedTypeList__init__ to True. If you do so, then the __init__ you declare
+    will be overridden by the LimitedTypeList.
   """
 
   # TODO Add boolean to flag if the class can hold itself
@@ -27,13 +31,14 @@ class LimitedTypeList (type):
       bases = (list,) + bases 
     import inspect
     import sys
-    hasBaseInit = any([hasattr(base,'__init__') for base in bases])
+    hasBaseInit = any([hasattr(base,'__init__') for base in bases if base.__name__ not in 
+                                                                    ("list", "object", "Logger", "LoggerStreamable",)])
     for localFcnName, fcn in inspect.getmembers( sys.modules[__name__], inspect.isfunction):
       m = _lMethodSearch.match(localFcnName)
       if m:
         fcnName = m.group(1)
         if not fcnName in dct:
-          if hasBaseInit and fcnName == '__init__':
+          if hasBaseInit and fcnName == '__init__' and not dct.get('_useLimitedTypeList__init__', False):
             continue
           dct[fcnName] = fcn
     return type.__new__(cls, name, bases, dct)
@@ -266,7 +271,7 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
     if dim:
       lPar = len(var)
       if lPar == 1:
-        if wantedType:
+        if wantedType is not None:
           var = wantedType( var * dim )
         else:
           var = [ var ] * dim

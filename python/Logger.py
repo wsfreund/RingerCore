@@ -169,8 +169,8 @@ def _getFormatter():
       return logging.Formatter.format(self, record)
   import os, sys
   formatter = Formatter(
-                        "Py.%(name)-33.33s %(levelname)7.7s %(message)s", 
-                        not(int(os.environ.get('RCM_GRID_ENV',0)) or not(sys.stdout.isatty()))
+                       "Py.%(name)-33.33s %(levelname)7.7s %(message)s", 
+                       not(int(os.environ.get('RCM_NO_COLOR',1)) or not(sys.stdout.isatty()))
                        )
   return formatter
 

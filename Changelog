@@ -1,6 +1,8 @@
 2017-01-21 Werner S Freund
-	* Fixed small bug on job submission where csv option would show as []
-	when empty, instead not showing at all.
+	* Separated grid from no_color, allowing to run on grid mode with color
+	* Bug fix on LimitedTypeList, which was not adding __init__ method
+	due to object/list __init__ methods.
+	* Tagging RingerCore-01-00-05.
 
 2017-01-20 Werner S Freund
 	* Added tex/beamer api.
