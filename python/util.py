@@ -6,7 +6,7 @@ __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
            'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists', 
-           'getParentVersion', 'os_environ_get']
+           'getParentVersion', 'os_environ_get', 'measureCallTime']
 
 import re, os, __main__
 import sys
@@ -243,6 +243,57 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
     # re-raise:
     raise e
   # end of (final treatments)
+
+def measureCallTime(f, *args, **kw):
+  from logging import StreamHandler
+  msg = kw.pop('__msg', '' )
+  logger = kw.pop('__logger', None )
+  no_bl = kw.pop('__no_bl', True )
+  if logger:
+    if no_bl:
+      from RingerCore.Logger import StreamHandler2
+      prev_emit = []
+      # TODO On python3, all we need to do is to change the Handler.terminator
+      for handler in logger.handlers:
+        if type(handler) is StreamHandler:
+          stream = StreamHandler2( handler )
+          prev_emit.append( handler.emit )
+          setattr(handler, StreamHandler.emit.__name__, stream.emit_no_nl)
+  level = kw.pop('__level', None )
+  from time import time
+  if level is None:
+    from RingerCore.Logger import LoggingLevel
+    level = LoggingLevel.DEBUG
+  if not msg:
+    msg = 'Executing ' + f.__name__ + '(' + ','.join(args) + ','.join([(str(key) + '=' + str(val)) for key, val in kw.iteritems()]) + ')'
+  if not msg.endswith('...') and not msg.endswith('... '): msg += '...'
+  if not msg.endswith(' '): msg += ' '
+  if logger:
+    fn, lno, func = logger.findCaller() 
+    record = logger.makeRecord(logger.name, level, fn, lno, 
+                               "%s\r",
+                               (msg), 
+                               None, 
+                               func=func)
+    record.nl = False
+    # emit message
+    logger.handle(record)
+  start = time()
+  ret = f(*args, **kw)
+  end = time()
+  if logger:
+    if no_bl:
+      # override back
+      for handler in logger.handlers:
+        if type(handler) is StreamHandler:
+          try:
+            setattr( handler, StreamHandler.emit.__name__, prev_emit.pop() )
+          except IndexError:
+            pass
+    record.msg = record.msg[:-1] + 'done!'
+    logger.handle(record)
+    logger.log( level, '%s execution took %.2fs.', f.__name__, end - start)
+  return ret
 
 def measureLoopTime(it, prefix = 'Iteration', prefix_end = '', 
                     logger = None, level = None, showLoopBenchmarks = True):

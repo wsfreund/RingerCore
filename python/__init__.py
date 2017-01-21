@@ -34,4 +34,8 @@ from . import RawDictStreamable
 __all__.extend( RawDictStreamable.__all__ )
 from .RawDictStreamable import *
 
+from . import tex
+__all__.extend( tex.__all__ )
+from .tex import *
+
 __version__ = git_description( __file__ )

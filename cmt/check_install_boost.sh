@@ -177,8 +177,8 @@ DO_NOT_CHECK=0 # Whether to check local installation
 LOCAL_BOOST_INSTALLED=0 # Whether boost was locally installed
 INSTALL_LOCAL_BOOST=0 # Whether to install boost locally
 
-boost_dir_libpath=$(dirname $(find $(echo -n $LD_LIBRARY_PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -name "libboost*" -print 2> /dev/null| head -n 1))
-boost_dir_incpath=$(dirname $(find $(echo -n $PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -type d -name "boost" -print  2> /dev/null | head -n 1))
+boost_dir_libpath=$(dirname "$(find $(echo -n $LD_LIBRARY_PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -name "libboost*" -print 2> /dev/null| head -n 1)" 2>/dev/null)
+boost_dir_incpath=$(dirname "$(find $(echo -n $PATH | tr ":" " ") -maxdepth 1 -mindepth 1 -type d -name "boost" -print  2> /dev/null | head -n 1)" 2>/dev/null)
 
 test ! -f "$CHECK_HEADER" && echo "Header \"$CHECK_HEADER\" for checking boost compilation does not exist." && exit 1;
 

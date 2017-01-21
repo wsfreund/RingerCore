@@ -143,10 +143,18 @@ class Holder( object ):
   """
   A simple object holder
   """
-  def __init__(self, obj):
-    self.obj = obj
+  def __init__(self, obj = None, replaceable = True):
+    self._obj = obj
+    self._replaceable = replaceable
   def __call__(self):
-    return self.obj
+    return self._obj
+  def isValid(self):
+    return self._obj not in (None, NotSet)
+  def set(self, value):
+    if self._replaceable or not self.isValid():
+      self._obj = value
+    else:
+      raise RuntimeError("Cannot replace held object.")
 
 class StdPair( object ): 
   """

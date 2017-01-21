@@ -11,32 +11,46 @@ class LimitedTypeList (type):
 
     One LimitedTypeList class must specify _acceptedTypes property as a tuple,
     which will be the only types accepted by the list.
+
+    In case a class inherits from another classes that declare _acceptedTypes 
+    and it does not declare this class attribute, then the first base class
+    _acceptedTypes will be used.
+
+    If none of the inherited classes define the __init__ method, the list 
+    init method will be used.
   """
 
   # TODO Add boolean to flag if the class can hold itself
 
   def __new__(cls, name, bases, dct):
-    if not list in bases:
+    if not any( [ issubclass(base, list) for base in bases ] ):
       bases = (list,) + bases 
     import inspect
     import sys
-    for localFcnName, fcn in inspect.getmembers( sys.modules[__name__], \
-        inspect.isfunction):
+    hasBaseInit = any([hasattr(base,'__init__') for base in bases])
+    for localFcnName, fcn in inspect.getmembers( sys.modules[__name__], inspect.isfunction):
       m = _lMethodSearch.match(localFcnName)
       if m:
         fcnName = m.group(1)
         if not fcnName in dct:
+          if hasBaseInit and fcnName == '__init__':
+            continue
           dct[fcnName] = fcn
     return type.__new__(cls, name, bases, dct)
 
   def __init__(cls, name, bases, dct):
     ## Take care to _acceptedTypes be in the right specification
     if not '_acceptedTypes' in dct:
-      raise TypeError("Cannot create a LimitedTypeList without a list of "
-          "accepted types defined by _acceptedTypes.")
-    if not type(dct['_acceptedTypes']) is tuple:
+      for base in bases:
+        if hasattr(base, '_acceptedTypes'):
+          acceptedTypes = base._acceptedTypes
+          break
+      dct['_acceptedTypes'] = acceptedTypes
+    else:
+      acceptedTypes = dct['_acceptedTypes']
+    if not type(acceptedTypes) is tuple:
       raise ValueError("_acceptedTypes must be declared as a tuple.")
-    if not dct['_acceptedTypes']:
+    if not acceptedTypes:
       raise ValueError("_acceptedTypes cannot be empty.")
     return type.__init__(cls, name, bases, dct)
 
@@ -62,6 +76,16 @@ def _LimitedTypeList__append(self, var):
     raise NotAllowedType( self, var, self._acceptedTypes)
   list.append(self,var)
 
+#def _LimitedTypeList__pop(self, index = -1):
+#  """
+#    Default append method
+#  """
+#  if self.__class__.__name__ == "_TexObjectContextManager":
+#    print ":: poping ", repr(self[index]), " from TexObjectContextManager ::"
+#    import traceback
+#    print "STACK:", ''.join(traceback.format_stack())
+#  list.pop(self, index)
+#
 def _LimitedTypeList__extend(self, var):
   """
     Default append method
@@ -91,6 +115,10 @@ def _LimitedTypeList____iadd__( self, var, *args ):
   """
     Default __iadd__ method
   """
+#  if self.__class__.__name__ == "_TexObjectContextManager":
+#    print ":: adding ", repr(var), " to TexObjectContextManager ::"
+#    import traceback
+#    print "STACK:", ''.join(traceback.format_stack())
   for arg in args:
     if not isinstance( arg, self._acceptedTypes ):
       raise NotAllowedType( self, arg, self._acceptedTypes )
@@ -238,7 +266,10 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
     if dim:
       lPar = len(var)
       if lPar == 1:
-        var = wantedType( var * dim )
+        if wantedType:
+          var = wantedType( var * dim )
+        else:
+          var = [ var ] * dim
       elif lPar != dim:
         raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
@@ -255,7 +286,10 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
       if dim:
         lPar = len(parent[idx])
         if lPar == 1:
-          parent[idx] = wantedType( parent[idx] * dim )
+          if wantedType is not None:
+            parent[idx] = wantedType( parent[idx] * dim )
+          else:
+            parent[idx] = [ parent[idx] ] * dim
         elif lPar != dim:
           raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   if deepcopy:

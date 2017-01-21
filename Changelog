@@ -1,3 +1,16 @@
+2017-01-20 Werner S Freund
+	* Added tex/beamer api.
+	* Silenced boost dirname complaint when no boost is available in the
+	LD_LIBRARY_PATH.
+	* Improved LimitedTypeList to check if base classes are list subclasses
+	as well as if they declare _acceptedTypes (where the first base
+	_acceptedTypes will be used by default).
+	* Only add __init__ method for LimitedTypeList when it does not
+	inherit from a LimitedTypeList.
+	* Added simple method to calculate function execution time.
+	* Bug fix on inspect_list_attrs when depth was zero and wantedTypes was None
+	* Tagging RingerCore-01-00-04.
+
 2017-01-12 Werner S Freund
 	* Fixed Logger overriding class attributes for its message methods without
 	when starting without '_'

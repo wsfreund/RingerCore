@@ -1,7 +1,8 @@
 __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
-           'getMD5','checkFile', 'WriteMethod', 'cat_files_py']
+           'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
+           'getFiles']
 
 import numpy as np
 import cPickle
@@ -348,7 +349,14 @@ def __extRE(ext, ignoreNumbersAfterExtension = True):
 
 def ensureExtension( filename, extL, ignoreNumbersAfterExtension = True ):
   """
-  Ensure that filename extension is ext, else adds its extension.
+  Ensure that filename extension is extL, else adds its extension.
+
+  Extension extL may start with '.' or not. In case it does not, a dot will be
+  added.
+
+  A '|' may be specified to treat multiple extensions. In case either one of
+  the extensions specified is found, nothing will be changed in the output,
+  else the first extension will be added to the file.
   """
   if isinstance(extL, basestring) and '|' in extL: 
     extL = extL.split('|')
@@ -550,7 +558,7 @@ def findFile( filename, pathlist, access ):
   return None  
 
 def mkdir_p(path):
-  import os, errno
+  import errno
   path = os.path.expandvars( path )
   try:
     if not os.path.exists( path ):
@@ -560,3 +568,8 @@ def mkdir_p(path):
       pass
     else: raise
 
+def getFiles(folder, ftype = os.path.isfile):
+  """
+  As in expand folders, but without recursion
+  """
+  return [ os.path.join(folder,f) for f in sorted(os.listdir(folder)) if ftype( os.path.join(folder,f) ) ]
