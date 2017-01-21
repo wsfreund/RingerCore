@@ -17,7 +17,7 @@ import gzip
 import inspect
 import numpy as np
 
-from RingerCore.Configure import NotSet, RCM_NO_COLOR
+from RingerCore.Configure import NotSet, RCM_NO_COLOR, RCM_GRID_ENV
 
 loadedEnvFile = False
 def sourceEnvFile():
@@ -616,7 +616,10 @@ def git_description( init_fname ):
       relative_path = f.readline().split(' ')[-1].strip('\n')
     git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
   if not os.path.isdir( git_dir ):
-    raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
+    if RCM_GRID_ENV:
+      return "<GRID>"
+    else:
+      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
   import subprocess
   git_version_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "describe"
                                     ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
