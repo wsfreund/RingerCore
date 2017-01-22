@@ -278,13 +278,13 @@ class GridNamespace( JobSubmitNamespace ):
     # Add execute grid command if available
     if hasattr(self,'bexec'):
       full_cmd_str += self._formated_line( '--bexec')
-      full_cmd_str += self.parseExecStr(self.bexec, addSemiColomn=False)
+      full_cmd_str += self.parseExecStr(self.bexec, addSemiColomn = False)
     if hasattr(self,'exec_'):
       full_cmd_str += self._formated_line( '--exec' )
       full_cmd_str += self.parseExecStr(self.exec_)
     if hasattr(self,'mergeExec'):
       full_cmd_str += self._formated_line( '--mergeScript' )
-      full_cmd_str += self.parseExecStr(self.mergeExec)
+      full_cmd_str += self.parseExecStr(self.mergeExec, addSemiColomn = False)
     return full_cmd_str
 
   def parse_special_args(self):
