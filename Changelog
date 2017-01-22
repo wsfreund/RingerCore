@@ -1,3 +1,8 @@
+2017-01-22 Werner S Freund
+	* Plenty of bug fixes, now tuning operational at loboc and will be tested
+	on the grid.
+	* Tagging RingerCore-01-00-06.
+
 2017-01-21 Werner S Freund
 	* Separated grid from no_color, allowing to run on grid mode with color
 	* Bug fix on LimitedTypeList, which was not adding __init__ method

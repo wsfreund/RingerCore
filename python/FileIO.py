@@ -521,6 +521,7 @@ def cat_files_py(flist, ofile, op, logger = None, level = None):
   from RingerCore.Logger import LoggingLevel
   if level is None: level = LoggingLevel.INFO
   with open(ofile, 'wb') as out:
+    from RingerCore.util import progressbar
     for fname in progressbar(flist, len(flist), prefix="Merging: ", 
                              disp = True if logger is not None else False, step = 10,
                              logger = logger, level = level ):

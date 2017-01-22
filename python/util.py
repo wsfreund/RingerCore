@@ -327,6 +327,7 @@ def select( fl, filters ):
   if it matches two different filters.
   """
   ret = []
+  from RingerCore import traverse
   for filt in filters:
     taken = filter(lambda obj: type(obj) in (str,unicode) and filt in obj, traverse(fl, simple_ret = True))
     ret.append(taken)
