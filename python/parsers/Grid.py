@@ -92,7 +92,7 @@ gridParserGroup.add_job_submission_option_group('--debug', default = '--skipScou
 gridParserGroup.add_job_submission_option('--nJobs', type=int,
     required = False, help = """Number of jobs to submit.""")
 gridParserGroup.add_job_submission_option('--excludeFile', 
-    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*"',
+    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*,RootCoreBin/*,RootCore/*,*new_env_file.sh,"',
     help = """Files to exclude from environment copied to grid.""")
 gridParserGroup.add_job_submission_option('--disableAutoRetry', type=BooleanStr,
     required = False,
