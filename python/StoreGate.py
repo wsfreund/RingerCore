@@ -40,7 +40,11 @@ class StoreGate( Logger) :
     fullpath = (theDir).replace('//','/')
     if fullpath in self._dirs:
       self._currentDir = fullpath
-      self._file.cd(fullpath)
+      if self._file.cd(fullpath):
+        return True
+    self._error("Couldn't cd to folder %s", fullpath)
+    return False
+
 
   def addHistogram( self, obj ):
     feature = obj.GetName()
