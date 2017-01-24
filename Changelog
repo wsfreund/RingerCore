@@ -1,3 +1,7 @@
+2017-01-24 Werner S Freund
+	* Workaround panda submission issue that adds extra excludeFiles without
+	checking if appending a comma is needed.
+
 2017-01-22 Werner S Freund
 	* Plenty of bug fixes, now tuning operational at loboc and will be tested
 	on the grid.
