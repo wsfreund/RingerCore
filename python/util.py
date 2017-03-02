@@ -319,7 +319,7 @@ def measureLoopTime(it, prefix = 'Iteration', prefix_end = '',
     sys.stdout.flush()
 
 
-def select( fl, filters ):
+def select( fl, filters, popListInCaseOneItem = True ):
   """
   Return a selection from fl maching f
 
@@ -331,7 +331,7 @@ def select( fl, filters ):
   for filt in filters:
     taken = filter(lambda obj: type(obj) in (str,unicode) and filt in obj, traverse(fl, simple_ret = True))
     ret.append(taken)
-  if len(ret) == 1: ret = ret[0]
+  if popListInCaseOneItem and len(ret) == 1: ret = ret[0]
   return ret
 
 def reshape( input ):
