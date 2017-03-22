@@ -15,6 +15,12 @@ class StoreGate( Logger) :
     self._currentDir = ""
     self._objects    = dict()
     self._dirs       = list()
+    import os
+    self._outputFile = os.path.abspath(outputFile)
+
+
+  def local(self):
+    return self._outputFile
 
   #Save objects and delete storegate
   def __del__(self):
@@ -85,15 +91,14 @@ class StoreGate( Logger) :
 
 
   def histogram_FillN1(self,feature, value1):
-    try:
-      if value1.shape[1] > value1.shape[0]:
-        np_array_value1 = np.array(value1.T)
-      else:
-        np_array_value1 = np.array(value1)
-      weights = np.ones(np_array_value1.shape)
-      self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
-    except:
-      self._warning("Can not attach the vector into the feature: %s", feature)
+    #try:
+    np_array_value1 = np.array(value1).astype('float')
+    #if value1.shape[1] > value1.shape[0]:
+    #  np_array_value1 = np_array_value1.T
+    weights = np.ones(np_array_value1.shape).astype('float')
+    self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
+    #except:
+    #  self._warning("Can not attach the vector into the feature: %s", feature)
 
 
   def histogram_FillN2(self,feature, value1, value2):
