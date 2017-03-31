@@ -1,23 +1,35 @@
-__all__ = ['StoreGate']
+__all__ = ['StoreGate','restoreStoreGate']
 import sys
-from RingerCore.Logger  import Logger, LoggingLevel
+from RingerCore  import Logger, LoggingLevel, retrieve_kw
 import numpy as np
+
 
 class StoreGate( Logger) :
 
   def __init__( self, outputFile, **kw ):
-    Logger.__init__(self, kw)
+    Logger.__init__(self,kw)
     if not outputFile.endswith('.root'):
       outputFile += '.root'
+    # Use this property to rebuild the storegate from a root file
+    restoreStoreGate=retrieve_kw(kw,'restoreStoreGate',False)
     #Create TFile object to hold everything
     from ROOT import TFile
-    self._file = TFile( outputFile, "recreate")
+    if restoreStoreGate:
+      self._file = TFile( outputFile, "read")
+    else:
+      self._file = TFile( outputFile, "recreate")
+    
     self._currentDir = ""
     self._objects    = dict()
     self._dirs       = list()
     import os
     self._outputFile = os.path.abspath(outputFile)
 
+    if restoreStoreGate:
+      retrievedObjs = self.__restore(self._file)
+      for name, obj in retrievedObjs:
+        self._dirs.append(name)
+        self._objects[name]=obj
 
   def local(self):
     return self._outputFile
@@ -55,6 +67,8 @@ class StoreGate( Logger) :
   def addHistogram( self, obj ):
     feature = obj.GetName()
     fullpath = (self._currentDir + '/' + feature).replace('//','/')
+    if not fullpath.startswith('/'):
+      fullpath='/'+fullpath
     if not fullpath in self._dirs:
       self._dirs.append(fullpath)
       self._objects[fullpath] = obj
@@ -65,6 +79,8 @@ class StoreGate( Logger) :
     #self._currentDir = ''
     self._file.cd()
     fullpath = (feature).replace('//','/')
+    if not fullpath.startswith('/'):
+      fullpath='/'+fullpath
     if fullpath in self._dirs:
       obj = self._objects[fullpath]
       self._verbose('Retrieving object type %s into %s',type(obj), fullpath)
@@ -89,35 +105,6 @@ class StoreGate( Logger) :
     else:
       self._warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
 
-
-  def histogram_FillN1(self,feature, value1):
-    #try:
-    np_array_value1 = np.array(value1).astype('float')
-    #if value1.shape[1] > value1.shape[0]:
-    #  np_array_value1 = np_array_value1.T
-    weights = np.ones(np_array_value1.shape).astype('float')
-    self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,weights)
-    #except:
-    #  self._warning("Can not attach the vector into the feature: %s", feature)
-
-
-  def histogram_FillN2(self,feature, value1, value2):
-    try:
-      np_array_value1 = np.array(value1).astype('float')
-      np_array_value2 = np.array(value2).astype('float')
-      if np_array_value1.shape[1] > np_array_value1.shape[0]:
-        np_arrar_value1=np_array_value1.T
-      if np_array_value2.shape[1] > np_array_value2.shape[0]:
-        np_arrar_value2=np_array_value2.T
-      if np_array_value1.shape[0] != np_array_value2.shape[0]:
-        self._warning('Value1 and Value2 must be the same length.')
-      else:
-        # do fast
-        weights = np.ones(np_array_value1.shape).astype('float')
-        self.histogram(feature).FillN(np_array_value1.shape[0],np_array_value1,np_array_value2,weights)
-    except:
-      self._warning("Can not attach the vector into the feature: %s", feature)
-
   def collect(self):
     self._objects.clear()
     self._dirs = list()
@@ -128,8 +115,28 @@ class StoreGate( Logger) :
   def getDirs(self):
     return self._dirs
 
+# Use this method to retrieve the dirname and root object
+  def __restore(self,d, basepath="/"):
+    """
+    Generator function to recurse into a ROOT file/dir and yield (path, obj) pairs
+    Taken from: https://root.cern.ch/phpBB3/viewtopic.php?t=11049
+    """
+    try:
+      for key in d.GetListOfKeys():
+        kname = key.GetName()
+        if key.IsFolder():
+          for i in self.__restore(d.Get(kname), basepath+kname+"/"):
+            yield i
+        else:
+          yield basepath+kname, d.Get(kname)
+    except AttributeError, e:
+      self._logger.debug("Ignore reading object of type %s.",type(d))
 
 
 
+# helper function to retrieve the storegate using
+# a root file as base.
+def restoreStoreGate( ifile ):
+  return StoreGate( ifile, restoreStoreGate=True )
 
 
