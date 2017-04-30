@@ -1,5 +1,6 @@
 2017-04-30 Werner S Freund
 	* Added beamer ignore missing flag.
+	* Changed beamer outline format.
 
 2017-04-27 Werner S Freund
 	* Fix to handle new numpy version which changed the way the
