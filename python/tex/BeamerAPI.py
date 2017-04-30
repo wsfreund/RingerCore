@@ -66,9 +66,10 @@ class BeamerOutlineSlide( BeamerSlide ):
   _header = _( r"""
               [allowframebreaks]
               \frametitle{Outline}
-              """ )
+                """ )
   #_header = None
-  _body = r'\begin{multicols}{2}\tableofcontents\end{multicols}'
+  #_body = r'\begin{multicols}{2}\tableofcontents\end{multicols}'
+  _body = r'\tableofcontents'
 
 
   def __init__( self,  *args, **kw ):
@@ -460,7 +461,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                   \setbeamertemplate{subsection in toc}[subsections numbered]
                   \setbeamertemplate{subsubsection in toc}[subsubsections numbered]
                   \AtBeginSection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,
@@ -471,7 +472,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                    }
                   }
                   \AtBeginSubsection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,
@@ -482,7 +483,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                    }
                   }
                   \AtBeginSubsubsection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,
