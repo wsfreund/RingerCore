@@ -144,7 +144,7 @@ class BeamerMultiFigureSlide( BeamerSlide ):
               , fortran = False, usedHeight = .80, usedWidth = 1.
               , fontsize = None, startAt = 0, delocateAll = 0
               , verticalDelocateAll = 0, verticalStartAt = 0
-              , config = None, **kw):
+              , config = None, ignoreMissing = False, **kw):
     BeamerSlide.__init__(self, **kw) 
     # Deal with text and paths arguments:
     if nDivWidth * nDivHeight < len(paths):
@@ -202,10 +202,16 @@ class BeamerMultiFigureSlide( BeamerSlide ):
             path = text = None
             self._warning("Not filling figure at index %d due to: %s", e )
           if path:
-            if text:
-              OverPic( path, texts = text, height = fHeight, **kw )
-            else:
-              IncludeGraphics( path, height = fHeight, **kw )
+            try:
+              if text and text != ((),):
+                OverPic( path, texts = text, height = fHeight, **kw )
+              else:
+                IncludeGraphics( path, height = fHeight, **kw )
+            except TexException, e:
+              if not ignoreMissing:
+                raise e
+              else:
+                GenericTexCode( code = r'\vspace{%f\textheight}' % fHeight )
             GenericTexCode( code = r'\\' )
           else:
             GenericTexCode( code = r'\vspace{%f\textheight}' % fHeight )
