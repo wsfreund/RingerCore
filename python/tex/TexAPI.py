@@ -589,7 +589,7 @@ class Figure( TexObject ):
   """
   Create figure tex code
   """
-  _header = r'%(config)'
+  _header = r'%(config)s'
   _enclosure = 'figure'
   _body = r''
   _footer = r'\caption{%(caption)s}'
