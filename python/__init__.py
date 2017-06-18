@@ -18,9 +18,6 @@ from .npConstants import *
 from . import util
 __all__.extend( util.__all__ )
 from .util import *
-from . import StoreGate
-__all__.extend( StoreGate.__all__ )
-from .StoreGate import *
 from . import RucioTools
 __all__.extend( RucioTools.__all__ )
 from .RucioTools import *
@@ -33,6 +30,9 @@ from .LoopingBounds import *
 from . import RawDictStreamable
 __all__.extend( RawDictStreamable.__all__ )
 from .RawDictStreamable import *
+from . import StoreGate
+__all__.extend( StoreGate.__all__ )
+from .StoreGate import *
 
 from . import tex
 __all__.extend( tex.__all__ )
