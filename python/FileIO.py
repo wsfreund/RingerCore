@@ -2,7 +2,7 @@ __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
-           'getFiles']
+           'getFiles', 'expandPath']
 
 import numpy as np
 import cPickle
@@ -15,6 +15,10 @@ import shutil
 import StringIO
 from time import sleep, time
 
+def expandPath(path):
+  " Returns absolute path expanding variables and user symbols "
+  return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
+
 def save(o, filename, **kw):
   """
     Save an object to disk.
@@ -23,7 +27,7 @@ def save(o, filename, **kw):
   protocol = kw.pop( 'protocol', -1   )
   if not isinstance(filename, str):
     raise("Filename must be a string!")
-  filename = os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
+  filename = expandPath( path )
   dirplace = os.path.dirname(filename)
   if not os.path.isdir( dirplace ) and dirplace:
     mkdir_p( dirplace )
@@ -87,7 +91,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     -> returnFileName: whether to return file name
     -> returnFileMember: whether to return file member object at the tar file
   """
-  filename = os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
+  filename = expandPath( path )
   transformDataRawData = __TransformDataRawData( useHighLevelObj, returnFileName, returnFileMember )
   if not os.path.isfile( filename ):
     raise ValueError("Cannot reach file %s" % filename )
@@ -288,7 +292,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
   for path in progressbar( pathList, len(pathList), 'Expanding folders: ', 60, 50,
                            True if logger is not None else False, logger = logger,
                            level = level):
-    path = os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
+    path = expandPath( path )
     if not os.path.exists( path ):
       raise ValueError("Cannot reach path '%s'" % path )
     if os.path.isdir(path):

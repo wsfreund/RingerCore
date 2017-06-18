@@ -1,6 +1,5 @@
-__all__ = ['StoreGate','restoreStoreGate']
-import sys
-from RingerCore  import Logger, LoggingLevel, retrieve_kw
+__all__ = ['StoreGate','StoreGateCollection','restoreStoreGate']
+from RingerCore  import Logger, LoggingLevel, retrieve_kw, LimitedTypeList, expandPath
 import numpy as np
 
 
@@ -14,7 +13,11 @@ class StoreGate( Logger) :
     restoreStoreGate=retrieve_kw(kw,'restoreStoreGate',False)
     #Create TFile object to hold everything
     from ROOT import TFile
+    outputFile = expandPath( outputFile )
     if restoreStoreGate:
+      import os.path
+      if not os.path.exists( outputFile ):
+        raise ValueError("File '%s' does not exist" % outputFile)
       self._file = TFile( outputFile, "read")
     else:
       self._file = TFile( outputFile, "recreate")
@@ -76,8 +79,6 @@ class StoreGate( Logger) :
       self._debug('Saving object type %s into %s',type(obj), fullpath)
   
   def histogram(self, feature):
-    #self._currentDir = ''
-    self._file.cd()
     fullpath = (feature).replace('//','/')
     if not fullpath.startswith('/'):
       fullpath='/'+fullpath
@@ -115,7 +116,21 @@ class StoreGate( Logger) :
   def getDirs(self):
     return self._dirs
 
-# Use this method to retrieve the dirname and root object
+  def merge(self, sg):
+    if isinstance(sg, StoreGate):
+      sg = [sg]
+    if isinstance(sg, (list,tuple)):
+      sg = StoreGateCollection(sg)
+    if not isinstance(sg, StoreGateCollection):
+      raise TypeError(type(sg))
+    for s in sg:
+      for path, obj in s.getObjects():
+        if isinstance(obj, ROOT.TH1):
+          if path in self._objects:
+            mobj = self.histogram(path)  
+            if mobj: mobj.Add( obj )
+
+  # Use this method to retrieve the dirname and root object
   def __restore(self,d, basepath="/"):
     """
     Generator function to recurse into a ROOT file/dir and yield (path, obj) pairs
@@ -132,6 +147,10 @@ class StoreGate( Logger) :
     except AttributeError, e:
       self._logger.debug("Ignore reading object of type %s.",type(d))
 
+
+class StoreGateCollection(object):
+  __metaclass__ = LimitedTypeList
+  _acceptedTypes = StoreGate,
 
 
 # helper function to retrieve the storegate using
