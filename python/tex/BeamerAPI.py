@@ -173,17 +173,23 @@ class BeamerMultiFigureSlide( BeamerSlide ):
       config = r'T,totalwidth=%f\textwidth' % usedWidth
     # Now we are sure that texts is a 3D object, add empty objets to the 1st dimension:
     texts += [None] * ( ( nDivWidth * nDivHeight) - len(texts) )
+    paths = map(lambda path: path if (os.path.exists( os.path.expandvars( os.path.expanduser( path ) ) ) if isinstance(path, basestring) else False) else None, paths)
     # Now start slide figure objects creation:
     fWidth = usedWidth / nDivWidth 
     fHeight = usedHeight / nDivHeight
     if fontsize:
       self += GenericTexCode( code = r'\fontsize{%f}{0}\selectfont' % fontsize, _contextManaged = False )
+    def calcIdx( hIdx, wIdx ):
+      return wIdx * nDivHeight + hIdx if fortran else hIdx * nDivWidth + wIdx
     with Columns( config = config, _contextManaged = False ) as columns:
       Column( 0 ) # We need to create a virtual column to fix OverPic not showing text in the first column
       for wIdx in range(nDivWidth):
         Column( fWidth )
+        if not any([paths[i] for i in map(lambda hIdx: calcIdx( hIdx, wIdx ), range(nDivHeight))]):
+          GenericTexCode( code = r'\vspace{\textheight}' )
+          continue
         for hIdx in range(nDivHeight):
-          cIdx =  wIdx * nDivHeight + hIdx if fortran else hIdx * nDivWidth + wIdx
+          cIdx =  calcIdx(hIdx, wIdx)
           if not wIdx and startAt:
             # Add user requested start point
             GenericTexCode( code = r'\hspace*{%f\textwidth}' % startAt  )
