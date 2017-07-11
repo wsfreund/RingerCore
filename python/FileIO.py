@@ -27,7 +27,7 @@ def save(o, filename, **kw):
   protocol = kw.pop( 'protocol', -1   )
   if not isinstance(filename, str):
     raise("Filename must be a string!")
-  filename = expandPath( path )
+  filename = expandPath( filename )
   dirplace = os.path.dirname(filename)
   if not os.path.isdir( dirplace ) and dirplace:
     mkdir_p( dirplace )
@@ -91,7 +91,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     -> returnFileName: whether to return file name
     -> returnFileMember: whether to return file member object at the tar file
   """
-  filename = expandPath( path )
+  filename = expandPath( filename )
   transformDataRawData = __TransformDataRawData( useHighLevelObj, returnFileName, returnFileMember )
   if not os.path.isfile( filename ):
     raise ValueError("Cannot reach file %s" % filename )
