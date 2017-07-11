@@ -3,7 +3,7 @@ __all__ = [ 'BeamerSlide', 'BeamerTexReport'
           , 'BeamerSection', 'BeamerSubSection', 'BeamerSubSubSection'
           , 'TexBeamerTemplate', 'TexBeamerTemplateCollection'
           , 'BeamerOutlineSlide', 'outlineSession', 'BeamerTexReportTemplate1'
-          , 'gcb']
+          , 'BeamerTexReportTemplate2','gcb']
 
 import os
 from RingerCore.Configure import checkForUnusedVars, Holder, retrieve_kw, NotSet
@@ -506,6 +506,53 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                    }
                   }
                   %(user_code)s
+                  """
+               )
+
+class BeamerTexReportTemplate2( BeamerTexReport ):
+  _preamble = _( r"""
+                  %(passOptionsToPackages)s
+                  \documentclass[table,svgnames,smaller,11pt]{beamer}
+                  %(slidenumber)s
+                  %% For more themes, color themes and font themes, see:
+                  \mode<presentation>
+                  {
+                    \usetheme{%(theme)s}             %% or try default, Darmstadt, Warsaw, Boadilla ...
+                    \usecolortheme{%(colortheme)s}   %% or try albatross, beaver, crane, ...
+                    \usefonttheme{%(font)s}          %% or try default, structurebold, ...
+                    %%\usefonttheme{professionalfonts} %% or try default, structurebold, ...
+                    %%\usefonttheme{serif}             %% or try default, structurebold, ...
+                    %%\setmainfont{Helvetica}
+                    %(beamertemplates)s
+                  }
+                  %(packages)s
+                  \title{%(title)s}
+                  \author{%(author)s}
+                  \institute{%(institute)s}
+                  \date{\today}
+                  \setbeamerfont{frametitle}{size=\small}
+                  \useinnertheme{rounded}
+                  \useoutertheme{smoothtree}
+                  \setbeamertemplate{headline}
+                  {%%
+                    \pgfuseshading{beamer@treeshade}%%
+                    \vskip-10.25ex%%
+                    \begin{beamercolorbox}[wd=\paperwidth,ht=2.125ex,dp=1.125ex,ignorebg,%%
+                      leftskip=.3cm,rightskip=.3cm plus1fil]{section in head/foot}
+                      \usebeamerfont{section in head/foot}%%
+                      \insertsectionhead
+                    \end{beamercolorbox}
+                    \begin{beamercolorbox}[wd=\paperwidth,ht=2.125ex,dp=1.125ex,ignorebg,%%
+                        leftskip=.3cm,rightskip=.3cm plus1fil]{subsection in head/foot}
+                      \usebeamerfont{subsection in head/foot}%%
+                      \hskip6pt\insertsubsectionhead
+                    \end{beamercolorbox}
+                    \begin{beamercolorbox}[wd=\paperwidth,ht=2.125ex,dp=1.125ex,ignorebg,%%
+                        leftskip=.3cm,rightskip=.3cm plus1fil]{subsubsection in head/foot}
+                      \usebeamerfont{subsection in head/foot}%%
+                      \hskip12pt\insertsubsubsectionhead
+                    \end{beamercolorbox}
+                  }
                   """
                )
 
