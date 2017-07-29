@@ -2,7 +2,7 @@ __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
-           'getFiles', 'expandPath']
+           'getFiles', 'expandPath', 'BadFilePath']
 
 import numpy as np
 import cPickle
@@ -15,8 +15,12 @@ import shutil
 import StringIO
 from time import sleep, time
 
+class BadFilePath(ValueError): pass
+
 def expandPath(path):
-  " Returns absolute path expanding variables and user symbols "
+  " Returns absolutePath path expanding variables and user symbols "
+  if not isinstance( path, basestring):
+    raise BadFilePath(path)
   return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
 
 def save(o, filename, **kw):

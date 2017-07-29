@@ -61,11 +61,9 @@ class _ActionsContainer( object ):
         if not '.' in help_str[-2:]: help_str += '. '
         if help_str[-1:] != ' ': help_str += ' '
         help_str += "Possible options are: "
-        from operator import itemgetter
-        val = sorted(get_attributes( kwargs['type'], getProtected = False), key=itemgetter(1))
-        help_str += str([v[0] for v in val])
+        help_str += str(kwargs['type'].stringList())
         help_str += ', or respectively equivalent to the integers: '
-        help_str += str([v[1] for v in val])
+        help_str += str(kwargs['type'].intList())
         kwargs['help'] = help_str
         # Deal with BooleanStr special case:
         if issubclass(lType, BooleanStr):

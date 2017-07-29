@@ -3,13 +3,13 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'conditionalOption', 'RCM_GRID_ENV', 'retrieve_kw'
           , 'checkForUnusedVars', 'setDefaultKey' 
           , 'Configure', 'EnumStringificationOptionConfigure'
-          , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR'
+          , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
           ]
 
-import os
+import os, multiprocessing
 RCM_GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
 RCM_NO_COLOR = int(os.environ.get('RCM_NO_COLOR',1))
-
+OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',multiprocessing.cpu_count()))
 
 class NotSetType( type ):
   def __bool__(self):
@@ -92,6 +92,16 @@ class EnumStringification( object ):
             "with a enumeration value which is not allowed. Use one of the followings: "
             "%r") % allowedValues)
     return val
+
+  @classmethod
+  def stringList(cls):
+    from operator import itemgetter
+    return [v[0] for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
+
+  @classmethod
+  def intList(cls):
+    from operator import itemgetter
+    return [v[1] for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
 
 def checkForUnusedVars(d, fcn = None):
   """
