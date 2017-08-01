@@ -130,10 +130,11 @@ class BeamerFigureSlide( BeamerSlide ):
   """
   Beamer figure slide
   """
-  def __init__(self, path, **kw):
-    BeamerSlide.__init__(self, **kw) 
+  def __init__(self, path,config = None ,**kw):
+    BeamerSlide.__init__(self ,**kw) 
     if not 'width' in kw and not 'height' in kw: kw['width'] = 0.7
-    self += Center( Figure( path, _contextManaged = False, **kw ), _contextManaged = False )
+    self += Center( Figure( path, _contextManaged = False, **kw ), 
+                    _contextManaged = False )
 
 class BeamerMultiFigureSlide( BeamerSlide ):
   """
@@ -213,23 +214,60 @@ class BeamerMultiFigureSlide( BeamerSlide ):
     if fontsize:
       self += GenericTexCode( code = r'\fontsize{11}{0}\selectfont', _contextManaged = False )
 
-class BeamerTableSlide( BeamerSlide ):
-  """
-  Beamer table slide
-  """
+class BeamerTableSlide( BeamerSlide):
+  def __init__(self,linhas,caption = '',
+             sideline = '' , config = None, **kw):
+    self._table = Table(  _contextManaged = False )
+    BeamerSlide.__init__( self , **kw )
+    if sideline == '':
+      columns = '{'
+      for c in xrange( max([len(l) for l in linhas])):
+        columns += 'c'
+      columns += '}'
+    else:
+      columns = sideline
 
-  def __init__(self, d = {}, *args, **kw):
-    d.update( kw )
-    self._tabular = Tabular( _contextManaged = False, **d )
-    self._table = Table( self._tabular, _contextManaged = False, **d )
-    BeamerSlide.__init__( self._table, *args, **d )
+    tabular_header =''
+    for c in xrange(len(linhas)):
+      body = linhas[c]
+      linha = ''
+      for i in xrange(len(body)):
+        linha += body[i]
+        if not i == (len(body) -1):
+          linha += r' & '
+        else:
+          linha += r'\\'  + '\n'
+          if c == 0:
+            linha += r'\hline' + '\n'
 
-  def addRow( self, row ):
-    """
-    Adds a row to beamer table slide
-    """
-    # FIXME Change this to be added to the holden objects by default
-    self._tabular.append( row )
+          tabular_header += linha
+
+    self._tabular = Tabular(  columns=columns,tabular_header=tabular_header,capt=caption , _contextManaged = False )
+    self._table += GenericTexCode(code = r"\resizebox{\textwidth}{!}{%", _contextManaged = False)
+    self._table += self._tabular
+    self._table +=  GenericTexCode(code = '\n'+r"}", _contextManaged = False)
+    
+    self += self._table  
+     
+
+
+# class BeamerTableSlide( BeamerSlide ):
+#  """
+#  Beamer table slide
+#  """
+
+ # def __init__(self, d = {}, *args, **kw):
+  #  d.update( kw )
+   # self._tabular = Tabular( _contextManaged = False, **d )
+    #self._table = Table( self._tabular, _contextManaged = False, **d )
+    #BeamerSlide.__init__( self._table, *args, **d )
+
+#  def addRow( self, row ):
+ #   """
+  #  Adds a row to beamer table slide
+   # """
+    ## FIXME Change this to be added to the holden objects by default
+   # self._tabular.append( row )
 
 class TexBeamerTemplate( TexObject ):
   """

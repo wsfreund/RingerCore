@@ -461,7 +461,6 @@ gcc = Holder( None , replaceable = True )
 
 class Center( TexObjectCollection ):
   _enclosure = 'center'
-
   def __init__( self, *args, **kw ):
     TexObjectCollection.__init__( self, *args, **kw )
 
@@ -581,15 +580,12 @@ class IncludeGraphics( TexObject ):
     self.graphics_option = graphics_option
     TexObject.__init__( self, *args, **kw )
 
-class Table( TexObjectCollection ):
-  _enclosure = 'table'
-  _header = r'%(header)s' # FIXME scriptsize?
 
 class Figure( TexObject ):
   """
   Create figure tex code
   """
-  _header = r'%(config)'
+  _header = r'%(config)s'
   _enclosure = 'figure'
   _body = r''
   _footer = r'\caption{%(caption)s}'
@@ -599,6 +595,7 @@ class Figure( TexObject ):
               , width = None, height = None, keepaspectratio = None,
               **kw ):
     self.caption = caption
+    self.config = ''
     if config:
       self.config += '['
       self.config += config
@@ -611,26 +608,35 @@ class Figure( TexObject ):
                       , path = path
                       , **kw )
 
+class Table( TexObjectCollection ):
+  _enclosure = 'table'
+  _header = r'\scriptsize' # FIXME scriptsize?
+  def __init__(self, **kw):
+    TexObjectCollection.__init__( self,  **kw )
+
 class Tabular( TexObjectCollection ):
   """
   Create tabular tex code
   """
   _enclosure = "tabular"
-  _header = _( r"""{%(columns)s}
-                 \toprule
+  _header = _( r"""%(columns)s
+                 \hline
               """
            )
 
   _body = _( r"""%(tabular_header)s
-                  \midrule
               """
+                 # \midrule
            )
 
-  _footer = r"\bottomrule"
+  _footer = r"\hline"
 
-  _appendix = r'\caption{%(caption)s}'
+#  _appendix = r'\caption{%(capt)s}'
 
-  _assertVars = ('columns', 'title', 'body', )
+ # _assertVars = ('columns', 'title', 'body','tabular_header' )
+
+  def __init__(self , **kw):
+    TexObjectCollection.__init__( self,  **kw )
 
 class TexPackage( TexObject ):
   """
