@@ -264,23 +264,6 @@ class BeamerTableSlide( BeamerSlide):
      
 
 
-# class BeamerTableSlide( BeamerSlide ):
-#  """
-#  Beamer table slide
-#  """
-
- # def __init__(self, d = {}, *args, **kw):
-  #  d.update( kw )
-   # self._tabular = Tabular( _contextManaged = False, **d )
-    #self._table = Table( self._tabular, _contextManaged = False, **d )
-    #BeamerSlide.__init__( self._table, *args, **d )
-
-#  def addRow( self, row ):
- #   """
-  #  Adds a row to beamer table slide
-   # """
-    ## FIXME Change this to be added to the holden objects by default
-   # self._tabular.append( row )
 
 class TexBeamerTemplate( TexObject ):
   """
