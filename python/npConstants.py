@@ -287,7 +287,7 @@ class npConstants( Logger ):
     Check if array order is the same as the required by this object.
     """
     if array.ndim > 1:
-      return array.flags['F_CONTIGUOUS'] == self.useFortran
+      return (array.flags['C_CONTIGUOUS'] != self.useFortran) or (array.flags['F_CONTIGUOUS'] == self.useFortran)
     return True
 
   @classmethod

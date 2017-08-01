@@ -1,0 +1,202 @@
+CS_LAST_WORKSPACE: Base
+CS_WORKSPACE_BEGIN: Base
+let SessionLoad = 1
+if &cp | set nocp | endif
+let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
+let v:this_session=expand("<sfile>:p")
+silent only
+exe "cd " . escape(expand("<sfile>:p:h"), ' ')
+if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
+  let s:wipebuf = bufnr('%')
+endif
+set shortmess=aoO
+badd +1 python/__init__.py
+badd +1 python/Configure.py
+badd +1 python/FileIO.py
+badd +1 python/LimitedTypeList.py
+badd +1 python/Logger.py
+badd +1 python/LoopingBounds.py
+badd +2 python/npConstants.py
+badd +1 python/OldLogger.py
+badd +1 python/RawDictStreamable.py
+badd +1 python/RucioTools.py
+badd +1 python/StoreGate.py
+badd +1 python/util.py
+badd +1 python/tex/__init__.py
+badd +1 python/tex/BeamerAPI.py
+badd +592 python/tex/TexAPI.py
+badd +1 python/parsers/__init__.py
+badd +1 python/parsers/__py_argparse.py
+badd +1 python/parsers/ClusterManager.py
+badd +1 python/parsers/Grid.py
+badd +2 python/parsers/LocalCluster.py
+badd +1 python/parsers/Logger.py
+badd +1 python/parsers/ParsingUtils.py
+badd +1 RingerCore/defines.h
+badd +1 RingerCore/MsgStream.h
+badd +1 RingerCore/StoreGate.h
+badd +1 Root/MsgStream.cxx
+badd +1 Root/StoreGate.cxx
+badd +1 Changelog
+badd +1 readme.md
+badd +1 cmt/check_install_boost.sh
+badd +1 cmt/check_install_cython.sh
+badd +1 cmt/check_install_numpy.sh
+badd +1 cmt/check_install_scipy.sh
+badd +1 cmt/check_install_setup_tools.sh
+badd +1 cmt/gcc_python_compiler_path.sh
+badd +1 cmt/Makefile.RootCore
+badd +1 cmt/new_env_file.sh
+badd +0 cmt/precompile.RootCore
+argglobal
+silent! argdel *
+edit python/util.py
+edit python/LoopingBounds.py
+edit python/__init__.py
+edit python/Configure.py
+edit python/FileIO.py
+edit python/RawDictStreamable.py
+edit python/Logger.py
+edit python/StoreGate.py
+edit python/npConstants.py
+edit python/LimitedTypeList.py
+edit python/RucioTools.py
+edit python/OldLogger.py
+edit python/Configure.py
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabedit python/tex/TexAPI.py
+edit python/tex/__init__.py
+edit python/tex/BeamerAPI.py
+edit python/tex/TexAPI.py
+edit python/tex/TexAPI.py
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 592 - ((18 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+592
+normal! 024|
+tabedit python/parsers/ParsingUtils.py
+edit python/parsers/__py_argparse.py
+edit python/parsers/ClusterManager.py
+edit python/parsers/Grid.py
+edit python/parsers/LocalCluster.py
+edit python/parsers/__init__.py
+edit python/parsers/ParsingUtils.py
+edit python/parsers/Logger.py
+edit python/parsers/ParsingUtils.py
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabedit RingerCore/StoreGate.h
+edit RingerCore/defines.h
+edit RingerCore/MsgStream.h
+edit RingerCore/StoreGate.h
+edit RingerCore/StoreGate.h
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabedit Root/StoreGate.cxx
+edit Root/MsgStream.cxx
+edit Root/StoreGate.cxx
+edit Root/StoreGate.cxx
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabedit readme.md
+edit readme.md
+edit Changelog
+edit readme.md
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabedit cmt/precompile.RootCore
+edit cmt/check_install_boost.sh
+edit cmt/check_install_cython.sh
+edit cmt/check_install_numpy.sh
+edit cmt/check_install_scipy.sh
+edit cmt/check_install_setup_tools.sh
+edit cmt/gcc_python_compiler_path.sh
+edit cmt/Makefile.RootCore
+edit cmt/new_env_file.sh
+edit cmt/precompile.RootCore
+edit cmt/precompile.RootCore
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winheight=1 winwidth=1
+argglobal
+let s:l = 1 - ((0 * winheight(0) + 25) / 50)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+1
+normal! 0
+tabnext 3
+if exists('s:wipebuf')
+  silent exe 'bwipe ' . s:wipebuf
+endif
+unlet! s:wipebuf
+set winheight=1 winwidth=20 shortmess=filnxtToO
+let s:sx = expand("<sfile>:p:r")."x.vim"
+if file_readable(s:sx)
+  exe "source " . fnameescape(s:sx)
+endif
+let &so = s:so_save | let &siso = s:siso_save
+doautoall SessionLoadPost
+unlet SessionLoad
+" vim: set ft=vim :
+CS_WORKSPACE_END: Base

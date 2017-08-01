@@ -66,9 +66,10 @@ class BeamerOutlineSlide( BeamerSlide ):
   _header = _( r"""
               [allowframebreaks]
               \frametitle{Outline}
-              """ )
+                """ )
   #_header = None
-  _body = r'\begin{multicols}{2}\tableofcontents\end{multicols}'
+  #_body = r'\begin{multicols}{2}\tableofcontents\end{multicols}'
+  _body = r'\tableofcontents'
 
 
   def __init__( self,  *args, **kw ):
@@ -145,7 +146,7 @@ class BeamerMultiFigureSlide( BeamerSlide ):
               , fortran = False, usedHeight = .80, usedWidth = 1.
               , fontsize = None, startAt = 0, delocateAll = 0
               , verticalDelocateAll = 0, verticalStartAt = 0
-              , config = None, **kw):
+              , config = None, ignoreMissing = False, **kw):
     BeamerSlide.__init__(self, **kw) 
     # Deal with text and paths arguments:
     if nDivWidth * nDivHeight < len(paths):
@@ -173,17 +174,23 @@ class BeamerMultiFigureSlide( BeamerSlide ):
       config = r'T,totalwidth=%f\textwidth' % usedWidth
     # Now we are sure that texts is a 3D object, add empty objets to the 1st dimension:
     texts += [None] * ( ( nDivWidth * nDivHeight) - len(texts) )
+    paths = map(lambda path: path if (os.path.exists( os.path.expandvars( os.path.expanduser( path ) ) ) if isinstance(path, basestring) else False) else None, paths)
     # Now start slide figure objects creation:
     fWidth = usedWidth / nDivWidth 
     fHeight = usedHeight / nDivHeight
     if fontsize:
       self += GenericTexCode( code = r'\fontsize{%f}{0}\selectfont' % fontsize, _contextManaged = False )
+    def calcIdx( hIdx, wIdx ):
+      return wIdx * nDivHeight + hIdx if fortran else hIdx * nDivWidth + wIdx
     with Columns( config = config, _contextManaged = False ) as columns:
       Column( 0 ) # We need to create a virtual column to fix OverPic not showing text in the first column
       for wIdx in range(nDivWidth):
         Column( fWidth )
+        if not any([paths[i] for i in map(lambda hIdx: calcIdx( hIdx, wIdx ), range(nDivHeight))]):
+          GenericTexCode( code = r'\vspace{\textheight}' )
+          continue
         for hIdx in range(nDivHeight):
-          cIdx =  wIdx * nDivHeight + hIdx if fortran else hIdx * nDivWidth + wIdx
+          cIdx =  calcIdx(hIdx, wIdx)
           if not wIdx and startAt:
             # Add user requested start point
             GenericTexCode( code = r'\hspace*{%f\textwidth}' % startAt  )
@@ -203,10 +210,16 @@ class BeamerMultiFigureSlide( BeamerSlide ):
             path = text = None
             self._warning("Not filling figure at index %d due to: %s", e )
           if path:
-            if text:
-              OverPic( path, texts = text, height = fHeight, **kw )
-            else:
-              IncludeGraphics( path, height = fHeight, **kw )
+            try:
+              if text and text != ((),):
+                OverPic( path, texts = text, height = fHeight, **kw )
+              else:
+                IncludeGraphics( path, height = fHeight, **kw )
+            except TexException, e:
+              if not ignoreMissing:
+                raise e
+              else:
+                GenericTexCode( code = r'\vspace{%f\textheight}' % fHeight )
             GenericTexCode( code = r'\\' )
           else:
             GenericTexCode( code = r'\vspace{%f\textheight}' % fHeight )
@@ -498,7 +511,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                   \setbeamertemplate{subsection in toc}[subsections numbered]
                   \setbeamertemplate{subsubsection in toc}[subsubsections numbered]
                   \AtBeginSection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,
@@ -509,7 +522,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                    }
                   }
                   \AtBeginSubsection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,
@@ -520,7 +533,7 @@ class BeamerTexReportTemplate1( BeamerTexReport ):
                    }
                   }
                   \AtBeginSubsubsection[]{
-                    \frame<beamer>{\begin{multicols}{2}
+                    \frame<beamer>{\begin{multicols}{4}
                     \frametitle{Outline}
                     \tableofcontents[
                       sectionstyle=show/shaded,

@@ -1,3 +1,20 @@
+2017-07-31 Werner S Freund
+	* expandFolders now deal with path globing 
+
+2017-07-28 Werner S Freund
+	* Added EnumStringification methods to retrieve enumeration string/ints
+	* Added protection when loading wrong file types
+	* Tagging RingerCore-01-00-09
+
+2017-04-30 Werner S Freund
+	* Added beamer ignore missing flag.
+	* Changed beamer outline format.
+
+2017-04-27 Werner S Freund
+	* Fix to handle new numpy version which changed the way the
+	fortran_contiguous and c_contiguous flags are set on 2D arrays.
+	* Tagging RingerCore-01-00-08.
+
 2017-01-24 Werner S Freund
 	* Workaround panda submission issue that adds extra excludeFiles without
 	checking if appending a comma is needed.
