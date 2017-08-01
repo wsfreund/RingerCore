@@ -1,3 +1,6 @@
+2017-08-01 Werner S Freund
+	* LoopingBounds can be used directly in loops via iter method.
+
 2017-07-31 Werner S Freund
 	* expandFolders now deal with path globing 
 

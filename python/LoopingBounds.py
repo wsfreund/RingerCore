@@ -385,6 +385,11 @@ class LoopingBounds ( Logger ):
     # FIXME This could be improved for performance, if needed
     return len(self.list())
 
+  def __iter__(self):
+    """
+      Return the iterator to loop within this instance bounds
+    """
+    return self()
 
 from RingerCore.LimitedTypeList import LimitedTypeList
 LoopingBoundsCollection = LimitedTypeList("LoopingBoundsCollection", (), \
