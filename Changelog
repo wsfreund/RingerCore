@@ -1,3 +1,6 @@
+2017-08-02 Werner S Freund
+	* Fixed globing to use it only if * is found at file name
+
 2017-08-01 Werner S Freund
 	* LoopingBounds can be used directly in loops via iter method.
 

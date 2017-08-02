@@ -296,7 +296,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
     filters = [ filters ]
   retList = [[] for idx in range(len(filters))]
   from RingerCore import progressbar, traverse
-  pathList = list(traverse([glob(path) for path in traverse(pathList,simple_ret=True)],simple_ret=True))
+  pathList = list(traverse([glob(path) if '*' in path else path for path in traverse(pathList,simple_ret=True)],simple_ret=True))
   for path in progressbar( pathList, len(pathList), 'Expanding folders: ', 60, 50,
                            True if logger is not None else False, logger = logger,
                            level = level):
