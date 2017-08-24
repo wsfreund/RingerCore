@@ -131,7 +131,7 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(RCM_NO_COLOR or not(sys.stdout.isatty())), 
+                no_bl = RCM_GRID_ENV or sys.stdout.isatty(), 
                 measureTime = True):
   """
     Display progressbar.
@@ -326,6 +326,10 @@ def select( fl, filters, popListInCaseOneItem = True ):
   WARNING: This selection method retrieves the same string contained in fl
   if it matches two different filters.
   """
+  try: 
+    iter(filters); 
+    if isinstance(filters,basestring): raise Exception
+  except: filters = [filters]
   ret = []
   from RingerCore import traverse
   for filt in filters:

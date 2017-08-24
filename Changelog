@@ -1,3 +1,6 @@
+2017-08-24 Werner S Freund
+	* Added straverse and improved select method
+
 2017-08-02 Werner S Freund
 	* Fixed globing to use it only if * is found at file name
 
