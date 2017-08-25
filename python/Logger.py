@@ -1,4 +1,4 @@
-__all__ = ['LoggingLevel', 'Logger']
+__all__ = ['LoggingLevel', 'Logger', 'nlStatus', 'resetNlStatus']
 
 from RingerCore.Configure import EnumStringification
 import logging
@@ -67,6 +67,14 @@ logging.Logger.critical = fatal
 
 # This won't handle print and sys.stdout, but most of the cases are handled.
 _nl = True
+
+def nlStatus():
+  global _nl
+  return _nl
+
+def resetNlStatus():
+  global _nl
+  _nl = True
 
 class StreamHandler2( logging.StreamHandler ):
   """

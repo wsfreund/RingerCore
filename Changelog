@@ -1,3 +1,6 @@
+2017-08-25 Werner S Freund
+	* Fixed looping newline when nesting many measureLoopTime and progressbars
+
 2017-08-24 Werner S Freund
 	* Added straverse and improved select method
 

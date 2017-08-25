@@ -150,6 +150,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   """
   from RingerCore.Logger import LoggingLevel
   from logging import StreamHandler
+  from RingerCore.Logger import nlStatus, resetNlStatus
+  import sys
   if level is None: level = LoggingLevel.INFO
   def _show(_i):
     x = int(size*_i/count) if count else 0
@@ -177,6 +179,9 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
         start = time()
       # override emit to emit_no_nl
       if logger:
+        if not nlStatus(): 
+          sys.stdout.write("\n")
+          sys.stdout.flush()
         if no_bl:
           from RingerCore.Logger import StreamHandler2
           prev_emit = []
@@ -210,6 +215,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
           _show(i+1)
         if measureTime:
           logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
+        if no_bl:
+          resetNlStatus()
       else:
         if measureTime:
           sys.stdout.write("\n%s... finished task in %3fs.\n" % ( prefix, end - start) )
@@ -246,10 +253,15 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
 
 def measureCallTime(f, *args, **kw):
   from logging import StreamHandler
+  from RingerCore.Logger import nlStatus, resetNlStatus
+  import sys
   msg = kw.pop('__msg', '' )
   logger = kw.pop('__logger', None )
   no_bl = kw.pop('__no_bl', True )
   if logger:
+    if not nlStatus(): 
+      sys.stdout.write("\n")
+      sys.stdout.flush()
     if no_bl:
       from RingerCore.Logger import StreamHandler2
       prev_emit = []
@@ -293,6 +305,8 @@ def measureCallTime(f, *args, **kw):
     record.msg = record.msg[:-1] + 'done!'
     logger.handle(record)
     logger.log( level, '%s execution took %.2fs.', f.__name__, end - start)
+    if no_bl:
+      resetNlStatus()
   return ret
 
 def measureLoopTime(it, prefix = 'Iteration', prefix_end = '', 
