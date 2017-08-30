@@ -58,11 +58,11 @@ def save(o, filename, **kw):
     else:
       raise ValueError("Unknown protocol '%s'" % protocol)
   elif type(protocol) is int:
-    filename = ensureExtension(filename, 'pic')
     if compress:
-      filename = ensureExtension(filename, 'gz')
+      filename = ensureExtension(filename, 'pic.gz')
       f = gzip.GzipFile(filename, 'wb')
     else:
+      filename = ensureExtension(filename, 'pic')
       f = open(filename, 'w')
     cPickle.dump(o, f, protocol)
     f.close()

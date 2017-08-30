@@ -599,6 +599,7 @@ class Figure( TexObject ):
               , width = None, height = None, keepaspectratio = None,
               **kw ):
     self.caption = caption
+    self.config=''
     if config:
       self.config += '['
       self.config += config
