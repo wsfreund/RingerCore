@@ -42,4 +42,4 @@ __all__.extend( tex.__all__ )
 from .tex import *
 
 __version__ = RingerCoreGit.tag
-#__project_version__ = ProjectGit.tag
+__project_version__ = ProjectGit.tag

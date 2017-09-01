@@ -338,6 +338,10 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
   core.
   """
 
+  # NOTE: To end circular import, master level configures it self to INFO
+  # message level in start-up, only afterwards it will configure itself to
+  # masterlevel
+
   _enumType = LoggingLevel
   # It is possible to reconfigure the master level
   allowReconfigure = True
@@ -347,12 +351,27 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
   def __init__(self, **kw):
     self.handledLoggers = []
     self.mutedLoggers = []
+    # Force ourself to start configuration with INFO level to avoid using
+    # ourself to configure our own level, which will lead into circular import
+    # This will be configured after auto, so all MasterLevel debug/verbose
+    # messages will only show after auto is called
+    kw['level'] = LoggingLevel.INFO
     EnumStringificationOptionConfigure.__init__(self, **kw)
     # Add us to be handled by ourself
     self.handledLoggers.append( self._logger )
 
   def auto(self):
-    self.set( LoggingLevel.INFO )
+    import argparse
+    simpleParser = argparse.ArgumentParser(add_help = False)
+    simpleParser.add_argument('--output-level', required = False, dest='level', default = None)
+    args, argv = simpleParser.parse_known_args()
+    if args.level not in (None, NotSet):
+      import sys
+      # Consume option
+      sys.argv = sys.argv[:1] + argv
+    else:
+      args.output_level = LoggingLevel.INFO
+    self.set( args.output_level )
 
   def retrieve(self, val):
     val = EnumStringificationOptionConfigure.retrieve( self, val )

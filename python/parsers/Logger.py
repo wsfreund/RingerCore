@@ -1,15 +1,16 @@
 __all__ = ['LoggerNamespace', 'loggerParser']
 
 from RingerCore.parsers.ParsingUtils import ArgumentParser, argparse
-from RingerCore.Logger import ( LoggingLevel, Logger, )
-from RingerCore.Configure import masterLevel
+from RingerCore.Logger import LoggingLevel
 
 ###############################################################################
 # Logger related objects
 ###############################################################################
 class _RetrieveOutputLevelAction(argparse.Action):
   def __call__(self, parser, namespace, value, option_string=None):
-    masterLevel.set( value )
+    from RingerCore.Configure import masterLevel
+    if masterLevel.configured():
+      masterLevel.set( value )
     self.level = value
     namespace.level = value
     setattr(namespace, self.dest, value)

@@ -232,6 +232,24 @@ class Logger( object ):
   _formatter = _getFormatter()
   _ch = _getConsoleHandler()
 
+  def getLevel(self):
+    if hasattr( self, '_level' ):
+      return LoggingLevel.tostring( self._level )
+    else:
+      from RingerCore.Configure import masterLevel
+      return masterLevel()
+
+  def setLevel(self, value):
+    from RingerCore.Configure import NotSet, masterLevel
+    if value not in (None, NotSet):
+      self._level = LoggingLevel.retrieve( value )
+      if self._logger.level != self._level:
+        self._logger.setLevel(self._level)
+      #masterLevel.unhandle( self._logger )
+
+
+  level = property( getLevel, setLevel )
+
   @classmethod
   def getModuleLogger(cls, logName, logDefaultLevel = None):
     """
@@ -277,11 +295,11 @@ class Logger( object ):
     from RingerCore.Configure import retrieve_kw, NotSet
     if 'level' in d:
       if d['level'] not in (None, NotSet):
-        self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level', LoggingLevel.INFO ) )
+        self._level = LoggingLevel.retrieve( retrieve_kw(d, 'level') )
       else:
         d.pop('level')
     self._logger = retrieve_kw(d,'logger', None)  or \
-        Logger.getModuleLogger( d.pop('logName', self.__class__.__name__), LoggingLevel.retrieve( self.level ) )
+        Logger.getModuleLogger( d.pop('logName', self.__class__.__name__), LoggingLevel.retrieve( self.getLevel() ) )
     self._logger.verbose('Initialiazing %s', self.__class__.__name__)
     self._logger._ringercore_logger_parent = self
     if self._logger.level != LoggingLevel.MUTE:
@@ -304,23 +322,6 @@ class Logger( object ):
                                                      , 'fatal'): 
       return getattr( self._logger, attr.lstrip('_') )
     raise AttributeError( 'AttributeError was raised inside an instance of Logger class while attempting to get: %s' % attr )
-
-  def getLevel(self):
-    if hasattr( self, '_level' ):
-      return LoggingLevel.tostring( self._level )
-    else:
-      from RingerCore.Configure import masterLevel
-      return masterLevel()
-
-  def setLevel(self, value):
-    from RingerCore.Configure import NotSet, masterLevel
-    if value not in (None, NotSet):
-      self._level = LoggingLevel.retrieve( value )
-      if self._logger.level != self._level:
-        self._logger.setLevel(self._level)
-      #masterLevel.unhandle( self._logger )
-
-  level = property( getLevel, setLevel )
 
   def __getstate__(self):
     """

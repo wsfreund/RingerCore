@@ -35,8 +35,8 @@ class _ConfigureGitAction( argparse.Action ):
   def __call__(self, parser, namespace, value, option_string=None):
     # Make sure to configure moduleName first as configuring tag will log the
     # configuration object
-    self.configure.moduleName = value[1]
-    self.configure.tag = value[0]
+    self.configure.moduleName = value[0]
+    self.configure.tag = value[1]
     setattr(namespace, self.dest, value)
 
 def createGitParser( configureObj, tagArgStr ):

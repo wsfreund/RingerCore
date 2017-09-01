@@ -14,6 +14,7 @@ class GitConfiguration( Configure ):
   tag = property( Configure.get, Configure.set )
 
   def __init__( self
+              , name
               , fname
               , tagArgStr = None
               , tagStr = '.*-?\d+-\d+-\d+$'
@@ -25,6 +26,7 @@ class GitConfiguration( Configure ):
     the argument to be parsed;
     -> tagStr: the format of the tag object to be used as a re object.
     """
+    self.name = name
     self._fname = fname
     self._parser = None
     self._tagStr = tagStr
@@ -129,7 +131,7 @@ class GitConfiguration( Configure ):
       self._logger.fatal("Attempted to get parser option, but no parser is "
                          "available. Make sure to add the tagArgStr to the "
                          "GitConfiguration object")
-    return self._tagArgStr + " '" + self.tag + "' '" + self.moduleName + "'"
+    return self._tagArgStr + " '" + self.moduleName + "' '" + self.tag + "'"
 
   #def __lt__(self, val):
   #  return self.get() < val
@@ -156,6 +158,12 @@ class __ConfigureProjectGit( GitConfiguration ):
 
   def auto( self ):
     self._logger.debug("Using automatic configuration to retrieve git project version tag.")
+    if self._parser:
+      args, argv = self._parser.parse_known_args()
+      if args.tag not in (None, NotSet):
+        import sys
+        # Consume option
+        sys.argv = sys.argv[:1] + argv
     try:
       self._moduleName, self._choice, self._path = self._git_description( getModuleProject = True )
     except Exception, e:
@@ -169,9 +177,9 @@ class __ConfigureProjectGit( GitConfiguration ):
   #def moduleTag( self, moduleName ):
 
 # This instance parse the git project version tag
-ProjectGit = __ConfigureProjectGit( __file__, tagArgStr='--project-version')
+ProjectGit = __ConfigureProjectGit( 'ProjectGit', __file__, tagArgStr='--project-info')
 del __ConfigureProjectGit
 
 # This instance parse the git version tag of the RingerCore module
-RingerCoreGit = GitConfiguration( __file__, tagArgStr='--ringer-core-version')
+RingerCoreGit = GitConfiguration( 'RingerCoreGit', __file__, tagArgStr='--ringer-core-info')
 
