@@ -11,7 +11,8 @@ from RingerCore.parsers.ParsingUtils import ( _ActionsContainer, _MutuallyExclus
                                             , _ArgumentGroup, ArgumentParser, argparse
                                             , ArgumentError )
 from RingerCore.Configure import ( EnumStringification, NotSet
-                                 , EnumStringificationOptionConfigure, Holder )
+                                 , EnumStringificationOptionConfigure, Holder
+                                 , cmd_exists )
 from RingerCore.util import get_attributes
 
 class OptionRetrieve( argparse.Action ):
@@ -392,7 +393,6 @@ class _JobSubmitMutuallyExclusiveGroup( _JobSubmitActionsContainer, _MutuallyExc
 has_Panda = has_PBS = has_Torque = has_LSF = False
 
 # Discover which cluster default option we should be using
-from RingerCore.util import cmd_exists
 import os
 if os.environ.get('ATLAS_LOCAL_PANDACLI_VERSION',"") and cmd_exists('prun'):
   has_Panda = True
@@ -494,7 +494,7 @@ class _ConfigureClusterManager( EnumStringificationOptionConfigure ):
       else:
         self.manager = cluster_default
     except (ArgumentError, ValueError) as e:
-      self.debug("Ignored argument parsing error:\n %s", e )
+      self._debug("Ignored argument parsing error:\n %s", e )
       self.manager = cluster_default
 
 ClusterManagerConfigure = Holder( _ConfigureClusterManager() )

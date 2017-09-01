@@ -33,9 +33,13 @@ from .RawDictStreamable import *
 from . import StoreGate
 __all__.extend( StoreGate.__all__ )
 from .StoreGate import *
+from . import Git
+__all__.extend( Git.__all__ )
+from .Git import *
 
 from . import tex
 __all__.extend( tex.__all__ )
 from .tex import *
 
-__version__ = git_description( __file__ )
+__version__ = RingerCoreGit.tag
+#__project_version__ = ProjectGit.tag

@@ -1,3 +1,10 @@
+2017-09-01 Werner S Freund
+	* Improved git version handling (will optimize for speed later) as a
+	Configure instance which can also be parsed and send to remotely to jobs
+	which can't access the git version locally.
+	* Rearranged cmd_exists to be in Configure
+	* Tagging RingerCore-01-00-10
+
 2017-08-25 Werner S Freund
 	* Fixed looping newline when nesting many measureLoopTime and progressbars
 

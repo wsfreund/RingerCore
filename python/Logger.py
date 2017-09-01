@@ -42,18 +42,42 @@ def verbose(self, message, *args, **kws):
 class FatalError(RuntimeError):
   pass
 
-def fatal(self, message, *args, **kws):
-  """
-    Attempt to emit fatal message
-  """
+def _getAnyException(args):
   exceptionType = [issubclass(arg,BaseException) if type(arg) is type else False for arg in args]
+  Exc = None
   if any(exceptionType):
     # Check if any args message is the exception type that should be raised
     args = list(args)
     Exc = args.pop( exceptionType.index( True ) )
     args = tuple(args)
-  else:
-    Exc = FatalError
+  return Exc, args
+
+def warning(self, message, *args, **kws):
+  Exc, args = _getAnyException(args)
+  if self.isEnabledFor(LoggingLevel.WARNING):
+    self._log(LoggingLevel.WARNING, message, args, **kws) 
+  if Exc is not None:
+    if args:
+      raise Exc(message % (args if len(args) > 1 else args[0]))
+    else:
+      raise Exc(message)
+
+def error(self, message, *args, **kws):
+  Exc, args = _getAnyException(args)
+  if self.isEnabledFor(LoggingLevel.ERROR):
+    self._log(LoggingLevel.ERROR, message, args, **kws) 
+  if Exc is not None:
+    if args:
+      raise Exc(message % (args if len(args) > 1 else args[0]))
+    else:
+      raise Exc(message)
+
+def fatal(self, message, *args, **kws):
+  """
+    Attempt to emit fatal message
+  """
+  Exc, args = _getAnyException(args)
+  if Exc is None: Exc = FatalError
   if self.isEnabledFor(LoggingLevel.FATAL):
     self._log(LoggingLevel.FATAL, message, args, **kws) 
   if args:
@@ -62,6 +86,8 @@ def fatal(self, message, *args, **kws):
     raise Exc(message)
 
 logging.Logger.verbose = verbose
+logging.Logger.warning = warning
+logging.Logger.error = error
 logging.Logger.fatal = fatal
 logging.Logger.critical = fatal
 
@@ -255,7 +281,7 @@ class Logger( object ):
       else:
         d.pop('level')
     self._logger = retrieve_kw(d,'logger', None)  or \
-        Logger.getModuleLogger(self.__class__.__name__, LoggingLevel.retrieve( self.level ) )
+        Logger.getModuleLogger( d.pop('logName', self.__class__.__name__), LoggingLevel.retrieve( self.level ) )
     self._logger.verbose('Initialiazing %s', self.__class__.__name__)
     self._logger._ringercore_logger_parent = self
     if self._logger.level != LoggingLevel.MUTE:
@@ -277,7 +303,7 @@ class Logger( object ):
                                                      , 'warning', 'error', 'critical'
                                                      , 'fatal'): 
       return getattr( self._logger, attr.lstrip('_') )
-    raise AttributeError( attr )
+    raise AttributeError( 'AttributeError was raised inside an instance of Logger class while attempting to get: %s' % attr )
 
   def getLevel(self):
     if hasattr( self, '_level' ):

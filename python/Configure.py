@@ -4,12 +4,22 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'checkForUnusedVars', 'setDefaultKey' 
           , 'Configure', 'EnumStringificationOptionConfigure'
           , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
+          , 'cmd_exists'
           ]
 
 import os, multiprocessing
 RCM_GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
 RCM_NO_COLOR = int(os.environ.get('RCM_NO_COLOR',1))
 OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',multiprocessing.cpu_count()))
+
+def cmd_exists(cmd):
+  """
+  Check whether command exists.
+  Taken from: http://stackoverflow.com/a/28909933/1162884
+  """
+  import subprocess
+  return subprocess.call("type " + cmd, shell=True, 
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 class NotSetType( type ):
   def __bool__(self):
@@ -190,7 +200,7 @@ class Configure( Logger ):
     if not hasattr(self,'name'):
       self.name = self.__class__.__name__.lstrip('_')
       self.name = self.name.replace('Configure','')
-    Logger.__init__( self, kw )
+    Logger.__init__( self, kw, logName = self.name )
 
   def get( self ):
     if self.configured():
@@ -206,7 +216,7 @@ class Configure( Logger ):
         self._fatal("Attempted to reconfigure %s twice.",  self.name)
       self._choice = self.retrieve(val)
       result = self.test() 
-      if result is not None and not self.test():
+      if result is not None and not result:
         self._fatal("%s test failed.", self.name )
       if hasattr(self, '_logger'):
         self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 

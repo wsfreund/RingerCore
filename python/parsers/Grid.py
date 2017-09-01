@@ -85,7 +85,7 @@ gridParserGroup.add_job_submission_csv_option('--excludedSite',
     #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
     help = "The excluded site location.", 
     required = False, )
-gridParserGroup.add_job_submission_option_group('--debug', default = '--skipScout',
+gridParserGroup.add_job_submission_option_group('--debug', default = None,
     const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
