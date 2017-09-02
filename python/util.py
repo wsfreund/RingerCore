@@ -2,7 +2,7 @@
 __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
            'mean',  'printArgs', 'reshape', 'reshape_to_array',
-           'stdvector_to_list', 'trunc_at', 'progressbar',
+           'stdvector_to_list','list_to_stdvector', 'trunc_at', 'progressbar',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 
            'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp', 
@@ -375,15 +375,22 @@ def start_after(s, d, n=1):
 #  v = vector(vecType)
 #  return v(*argl)
 
+def list_to_stdvector(vecType,l):
+  form ROOT.std import vector
+  v = vector(vecType)
+  for v in l:
+    v.push_back(v)
+  return v
+
 def stdvector_to_list(vec, size=None):
   if size:
     l=size*[0]
   else:
     l = vec.size()*[0]
-
   for i in range(vec.size()):
     l[i] = vec[i]
   return l
+
 
 def floatFromStr(str_):
   "Return float from string, checking if float is percentage"
