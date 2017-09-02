@@ -3,13 +3,23 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'conditionalOption', 'RCM_GRID_ENV', 'retrieve_kw'
           , 'checkForUnusedVars', 'setDefaultKey' 
           , 'Configure', 'EnumStringificationOptionConfigure'
-          , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR'
+          , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
+          , 'cmd_exists'
           ]
 
-import os
+import os, multiprocessing
 RCM_GRID_ENV = int(os.environ.get('RCM_GRID_ENV',0))
 RCM_NO_COLOR = int(os.environ.get('RCM_NO_COLOR',1))
+OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',multiprocessing.cpu_count()))
 
+def cmd_exists(cmd):
+  """
+  Check whether command exists.
+  Taken from: http://stackoverflow.com/a/28909933/1162884
+  """
+  import subprocess
+  return subprocess.call("type " + cmd, shell=True, 
+      stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 class NotSetType( type ):
   def __bool__(self):
@@ -92,6 +102,16 @@ class EnumStringification( object ):
             "with a enumeration value which is not allowed. Use one of the followings: "
             "%r") % allowedValues)
     return val
+
+  @classmethod
+  def stringList(cls):
+    from operator import itemgetter
+    return [v[0] for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
+
+  @classmethod
+  def intList(cls):
+    from operator import itemgetter
+    return [v[1] for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
 
 def checkForUnusedVars(d, fcn = None):
   """
@@ -180,7 +200,7 @@ class Configure( Logger ):
     if not hasattr(self,'name'):
       self.name = self.__class__.__name__.lstrip('_')
       self.name = self.name.replace('Configure','')
-    Logger.__init__( self, kw )
+    Logger.__init__( self, kw, logName = self.name )
 
   def get( self ):
     if self.configured():
@@ -196,7 +216,7 @@ class Configure( Logger ):
         self._fatal("Attempted to reconfigure %s twice.",  self.name)
       self._choice = self.retrieve(val)
       result = self.test() 
-      if result is not None and not self.test():
+      if result is not None and not result:
         self._fatal("%s test failed.", self.name )
       if hasattr(self, '_logger'):
         self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
@@ -318,6 +338,10 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
   core.
   """
 
+  # NOTE: To end circular import, master level configures it self to INFO
+  # message level in start-up, only afterwards it will configure itself to
+  # masterlevel
+
   _enumType = LoggingLevel
   # It is possible to reconfigure the master level
   allowReconfigure = True
@@ -327,12 +351,27 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
   def __init__(self, **kw):
     self.handledLoggers = []
     self.mutedLoggers = []
+    # Force ourself to start configuration with INFO level to avoid using
+    # ourself to configure our own level, which will lead into circular import
+    # This will be configured after auto, so all MasterLevel debug/verbose
+    # messages will only show after auto is called
+    kw['level'] = LoggingLevel.INFO
     EnumStringificationOptionConfigure.__init__(self, **kw)
     # Add us to be handled by ourself
     self.handledLoggers.append( self._logger )
 
   def auto(self):
-    self.set( LoggingLevel.INFO )
+    import argparse
+    simpleParser = argparse.ArgumentParser(add_help = False)
+    simpleParser.add_argument('--output-level', required = False, dest='level', default = None)
+    args, argv = simpleParser.parse_known_args()
+    if args.level not in (None, NotSet):
+      import sys
+      # Consume option
+      sys.argv = sys.argv[:1] + argv
+    else:
+      args.output_level = LoggingLevel.INFO
+    self.set( args.output_level )
 
   def retrieve(self, val):
     val = EnumStringificationOptionConfigure.retrieve( self, val )

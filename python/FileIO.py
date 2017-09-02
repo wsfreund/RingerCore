@@ -2,7 +2,7 @@ __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
-           'getFiles', 'expandPath']
+           'getFiles', 'expandPath', 'BadFilePath']
 
 import numpy as np
 import cPickle
@@ -15,8 +15,12 @@ import shutil
 import StringIO
 from time import sleep, time
 
+class BadFilePath(ValueError): pass
+
 def expandPath(path):
-  " Returns absolute path expanding variables and user symbols "
+  " Returns absolutePath path expanding variables and user symbols "
+  if not isinstance( path, basestring):
+    raise BadFilePath(path)
   return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
 
 def save(o, filename, **kw):
@@ -279,6 +283,9 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
     list matching the filter glob.
     -> logger: whether to print progress using logger;
     -> level: logging level to print messages with logger;
+
+    WARNING: This function is extremely slow and will severely decrease
+    performance if used to expand base paths with several folders in it.
   """
   if not isinstance( pathList, (list,tuple,) ):
     pathList = [pathList]
@@ -288,7 +295,8 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
   if not( type( filters ) in (list,tuple,) ):
     filters = [ filters ]
   retList = [[] for idx in range(len(filters))]
-  from RingerCore.util import progressbar
+  from RingerCore import progressbar, traverse
+  pathList = list(traverse([glob(path) if '*' in path else path for path in traverse(pathList,simple_ret=True)],simple_ret=True))
   for path in progressbar( pathList, len(pathList), 'Expanding folders: ', 60, 50,
                            True if logger is not None else False, logger = logger,
                            level = level):

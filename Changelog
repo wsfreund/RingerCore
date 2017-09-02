@@ -1,3 +1,35 @@
+2017-09-01 Werner S Freund
+  * Set git to ignore changes in Makefile.RootCore to allow tags to appear
+clean even when there are changes in MakeFile.RootCore
+  * Tagging RingerCore-01-00-11
+
+2017-09-01 Werner S Freund
+	* Improved git version handling (will optimize for speed later) as a
+	Configure instance which can also be parsed and send to remotely to jobs
+	which can't access the git version locally.
+	* Rearranged cmd_exists to be in Configure
+	* Tagging RingerCore-01-00-10
+
+2017-08-25 Werner S Freund
+	* Fixed looping newline when nesting many measureLoopTime and progressbars
+
+2017-08-24 Werner S Freund
+	* Added straverse and improved select method
+
+2017-08-02 Werner S Freund
+	* Fixed globing to use it only if * is found at file name
+
+2017-08-01 Werner S Freund
+	* LoopingBounds can be used directly in loops via iter method.
+
+2017-07-31 Werner S Freund
+	* expandFolders now deal with path globing 
+
+2017-07-28 Werner S Freund
+	* Added EnumStringification methods to retrieve enumeration string/ints
+	* Added protection when loading wrong file types
+	* Tagging RingerCore-01-00-09
+
 2017-04-30 Werner S Freund
 	* Added beamer ignore missing flag.
 	* Changed beamer outline format.

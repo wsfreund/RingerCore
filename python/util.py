@@ -4,9 +4,9 @@ __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'mean',  'printArgs', 'reshape', 'reshape_to_array',
            'stdvector_to_list', 'trunc_at', 'progressbar',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
-           'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
-           'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists', 
-           'getParentVersion', 'os_environ_get', 'measureCallTime']
+           'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 
+           'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp', 
+           'os_environ_get', 'measureCallTime']
 
 import re, os, __main__
 import sys
@@ -131,7 +131,7 @@ def printArgs(args, fcn = None):
     logger.info('Retrieved the following configuration: \n %r', vars(args))
 
 def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None, level = None,
-                no_bl = not(RCM_NO_COLOR or not(sys.stdout.isatty())), 
+                no_bl = RCM_GRID_ENV or sys.stdout.isatty(), 
                 measureTime = True):
   """
     Display progressbar.
@@ -150,6 +150,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
   """
   from RingerCore.Logger import LoggingLevel
   from logging import StreamHandler
+  from RingerCore.Logger import nlStatus, resetNlStatus
+  import sys
   if level is None: level = LoggingLevel.INFO
   def _show(_i):
     x = int(size*_i/count) if count else 0
@@ -177,6 +179,9 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
         start = time()
       # override emit to emit_no_nl
       if logger:
+        if not nlStatus(): 
+          sys.stdout.write("\n")
+          sys.stdout.flush()
         if no_bl:
           from RingerCore.Logger import StreamHandler2
           prev_emit = []
@@ -210,6 +215,8 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
           _show(i+1)
         if measureTime:
           logger.log( level, "%s... finished task in %3fs.", prefix, end - start )
+        if no_bl:
+          resetNlStatus()
       else:
         if measureTime:
           sys.stdout.write("\n%s... finished task in %3fs.\n" % ( prefix, end - start) )
@@ -246,10 +253,15 @@ def progressbar(it, count ,prefix="", size=60, step=1, disp=True, logger = None,
 
 def measureCallTime(f, *args, **kw):
   from logging import StreamHandler
+  from RingerCore.Logger import nlStatus, resetNlStatus
+  import sys
   msg = kw.pop('__msg', '' )
   logger = kw.pop('__logger', None )
   no_bl = kw.pop('__no_bl', True )
   if logger:
+    if not nlStatus(): 
+      sys.stdout.write("\n")
+      sys.stdout.flush()
     if no_bl:
       from RingerCore.Logger import StreamHandler2
       prev_emit = []
@@ -293,6 +305,8 @@ def measureCallTime(f, *args, **kw):
     record.msg = record.msg[:-1] + 'done!'
     logger.handle(record)
     logger.log( level, '%s execution took %.2fs.', f.__name__, end - start)
+    if no_bl:
+      resetNlStatus()
   return ret
 
 def measureLoopTime(it, prefix = 'Iteration', prefix_end = '', 
@@ -326,6 +340,10 @@ def select( fl, filters, popListInCaseOneItem = True ):
   WARNING: This selection method retrieves the same string contained in fl
   if it matches two different filters.
   """
+  try: 
+    iter(filters); 
+    if isinstance(filters,basestring): raise Exception
+  except: filters = [filters]
   ret = []
   from RingerCore import traverse
   for filt in filters:
@@ -589,76 +607,6 @@ def emptyArgumentsPrintHelp(parser):
     parser.print_help()
     sys.stdout.write(_getFormatter().reset_seq)
     parser.exit(1)
-
-def cmd_exists(cmd):
-  """
-  Check whether command exists.
-  Taken from: http://stackoverflow.com/a/28909933/1162884
-  """
-  import subprocess
-  return subprocess.call("type " + cmd, shell=True, 
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
-
-def git_description( init_fname ):
-  # FIXME: probably its needed to kill the git_version_cmd to avoid 
-  # having the git.lock file kept until the end of job execution
-  if not cmd_exists('git'):
-    raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.realpath( init_fname )
-  if os.path.isfile( git_dir ):
-    git_dir = os.path.dirname( git_dir )
-  if os.path.basename( git_dir ) == "python":
-    # Protect against RootCore architeture
-    git_dir = os.path.dirname( git_dir )
-  git_dir = os.path.join( git_dir, '.git' )
-  if os.path.isfile( git_dir ):
-    old_dir = git_dir
-    with open( git_dir ) as f:
-      relative_path = f.readline().split(' ')[-1].strip('\n')
-    git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
-  if not os.path.isdir( git_dir ):
-    if RCM_GRID_ENV:
-      return "<GRID>"
-    else:
-      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
-  import subprocess
-  git_version_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "describe"
-                                    ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  (output, stderr) = git_version_cmd.communicate()
-  output = output.rstrip('\n')
-  if git_version_cmd.returncode and not RCM_GRID_ENV:
-    raise RuntimeError("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr)
-  return output
-
-def getParentVersion( init_fname ):
-  if not cmd_exists('git'):
-    raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.realpath( init_fname )
-  if os.path.isfile( git_dir ):
-    git_dir = os.path.dirname( git_dir )
-  if os.path.basename( git_dir ) == "python":
-    # Protect against RootCore architeture
-    git_dir = os.path.dirname( git_dir )
-  git_dir = os.path.join( git_dir, '.git' )
-  if not os.path.exists( git_dir ):
-    if RCM_GRID_ENV:
-      return "GRID", "<GRID>"
-    else:
-      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
-  parent_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
-  import subprocess
-  git_parent_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]
-                                    , stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                                    , cwd=parent_dir)
-  (output, stderr) = git_parent_cmd.communicate()
-  parent_dir = output.rstrip('\n')
-  if os.path.isdir( parent_dir ):
-    try:
-      return os.path.basename( parent_dir ), git_description( parent_dir )
-    except RuntimeError, e:
-      return None, e
-  return None, None
-
 
 def os_environ_get( env, default_env ):
   import os

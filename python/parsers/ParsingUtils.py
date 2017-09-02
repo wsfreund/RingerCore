@@ -1,14 +1,9 @@
 __all__ = [ 'argparse','ArgumentParser', 'ArgumentError', 'BooleanRetrieve']
 
 from RingerCore.util import get_attributes
-import re, textwrap
+import re, textwrap, argparse
 
-try:
-  import argparse
-except ImportError:
-  from RingerCore.parsers import __py_argparse as argparse
-
-from argparse import ArgumentError
+ArgumentError = argparse.ArgumentError
 
 from RingerCore.Configure import BooleanStr, EnumStringification
 
@@ -61,11 +56,9 @@ class _ActionsContainer( object ):
         if not '.' in help_str[-2:]: help_str += '. '
         if help_str[-1:] != ' ': help_str += ' '
         help_str += "Possible options are: "
-        from operator import itemgetter
-        val = sorted(get_attributes( kwargs['type'], getProtected = False), key=itemgetter(1))
-        help_str += str([v[0] for v in val])
+        help_str += str(kwargs['type'].stringList())
         help_str += ', or respectively equivalent to the integers: '
-        help_str += str([v[1] for v in val])
+        help_str += str(kwargs['type'].intList())
         kwargs['help'] = help_str
         # Deal with BooleanStr special case:
         if issubclass(lType, BooleanStr):

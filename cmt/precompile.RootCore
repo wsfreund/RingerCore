@@ -9,6 +9,10 @@ fi
 
 source "$ROOTCOREBIN/../RootCoreMacros/base_env.sh" || { echo "Couldn't load base shell environment." && exit 1; }
 
+if type git >/dev/null 2>&1; then
+  git update-index --assume-unchanged $MAKEFILE
+fi
+
 echo -n > "$NEW_ENV_FILE"
 chmod +x "$NEW_ENV_FILE"
 
