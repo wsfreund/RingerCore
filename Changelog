@@ -1,4 +1,9 @@
 2017-09-01 Werner S Freund
+  * Set git to ignore changes in Makefile.RootCore to allow tags to appear
+clean even when there are changes in MakeFile.RootCore
+  * Tagging RingerCore-01-00-11
+
+2017-09-01 Werner S Freund
 	* Improved git version handling (will optimize for speed later) as a
 	Configure instance which can also be parsed and send to remotely to jobs
 	which can't access the git version locally.
