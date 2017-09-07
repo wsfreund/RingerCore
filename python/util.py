@@ -376,11 +376,11 @@ def start_after(s, d, n=1):
 #  return v(*argl)
 
 def list_to_stdvector(vecType,l):
-  form ROOT.std import vector
-  v = vector(vecType)
+  from ROOT.std import vector
+  vec = vector(vecType)()
   for v in l:
-    v.push_back(v)
-  return v
+    vec.push_back(v)
+  return vec
 
 def stdvector_to_list(vec, size=None):
   if size:
