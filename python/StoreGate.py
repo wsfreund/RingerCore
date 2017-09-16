@@ -52,7 +52,7 @@ class StoreGate( Logger) :
       self._file.mkdir(fullpath)
       self._file.cd(fullpath)
       self._currentDir = fullpath
-      self._verbose('Created directory with name %s', theDir)
+      self._logger.verbose('Created directory with name %s', theDir)
 
   #Go to the pointed directory
   def cd(self, theDir):
@@ -63,7 +63,7 @@ class StoreGate( Logger) :
       self._currentDir = fullpath
       if self._file.cd(fullpath):
         return True
-    self._error("Couldn't cd to folder %s", fullpath)
+    self._logger.error("Couldn't cd to folder %s", fullpath)
     return False
 
 
@@ -76,7 +76,7 @@ class StoreGate( Logger) :
       self._dirs.append(fullpath)
       self._objects[fullpath] = obj
       #obj.Write()
-      self._debug('Saving object type %s into %s',type(obj), fullpath)
+      self._logger.debug('Saving object type %s into %s',type(obj), fullpath)
   
   def histogram(self, feature):
     fullpath = (feature).replace('//','/')
@@ -84,11 +84,11 @@ class StoreGate( Logger) :
       fullpath='/'+fullpath
     if fullpath in self._dirs:
       obj = self._objects[fullpath]
-      self._verbose('Retrieving object type %s into %s',type(obj), fullpath)
+      self._logger.verbose('Retrieving object type %s into %s',type(obj), fullpath)
       return obj
     else:
       #None object if doesnt exist into the store
-      self._warning('Object with path %s doesnt exist', fullpath)
+      self._logger.warning('Object with path %s doesnt exist', fullpath)
       return None
 
   # Use this to set labels into the histogram
@@ -102,9 +102,9 @@ class StoreGate( Logger) :
 	        for i in range( histo.GetNbinsX(), min( len(labels), histo.GetNbinsX()+histo.GetNbinsY() ) ):
 	          bin = i+1-histo.GetNbinsX();  histo.GetYaxis().SetBinLabel(bin, labels[i])
       except:
-        self._fatal("Can not set the labels! abort.")
+        self._logger.fatal("Can not set the labels! abort.")
     else:
-      self._warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
+      self._logger.warning("Can not set the labels because this feature (%s) does not exist into the storage",feature)
 
   def collect(self):
     self._objects.clear()
@@ -123,9 +123,10 @@ class StoreGate( Logger) :
       sg = StoreGateCollection(sg)
     if not isinstance(sg, StoreGateCollection):
       raise TypeError(type(sg))
+    from ROOT import TH1, TH2
     for s in sg:
-      for path, obj in s.getObjects():
-        if isinstance(obj, ROOT.TH1):
+      for path, obj in s.getObjects().iteritems():
+        if isinstance(obj, (TH1,TH2)):
           if path in self._objects:
             mobj = self.histogram(path)  
             if mobj: mobj.Add( obj )

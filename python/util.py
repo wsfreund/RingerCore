@@ -2,11 +2,11 @@
 __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'csvStr2List', 'floatFromStr', 'geomean', 'get_attributes',
            'mean',  'printArgs', 'reshape', 'reshape_to_array',
-           'stdvector_to_list', 'trunc_at', 'progressbar',
+           'stdvector_to_list','list_to_stdvector', 'trunc_at', 'progressbar',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
-           'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 'git_description',
-           'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp','cmd_exists', 
-           'getParentVersion', 'os_environ_get', 'measureCallTime']
+           'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 
+           'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp', 
+           'os_environ_get', 'measureCallTime']
 
 import re, os, __main__
 import sys
@@ -375,15 +375,22 @@ def start_after(s, d, n=1):
 #  v = vector(vecType)
 #  return v(*argl)
 
+def list_to_stdvector(vecType,l):
+  from ROOT.std import vector
+  vec = vector(vecType)()
+  for v in l:
+    vec.push_back(v)
+  return vec
+
 def stdvector_to_list(vec, size=None):
   if size:
     l=size*[0]
   else:
     l = vec.size()*[0]
-
   for i in range(vec.size()):
     l[i] = vec[i]
   return l
+
 
 def floatFromStr(str_):
   "Return float from string, checking if float is percentage"
@@ -607,76 +614,6 @@ def emptyArgumentsPrintHelp(parser):
     parser.print_help()
     sys.stdout.write(_getFormatter().reset_seq)
     parser.exit(1)
-
-def cmd_exists(cmd):
-  """
-  Check whether command exists.
-  Taken from: http://stackoverflow.com/a/28909933/1162884
-  """
-  import subprocess
-  return subprocess.call("type " + cmd, shell=True, 
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
-
-def git_description( init_fname ):
-  # FIXME: probably its needed to kill the git_version_cmd to avoid 
-  # having the git.lock file kept until the end of job execution
-  if not cmd_exists('git'):
-    raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.realpath( init_fname )
-  if os.path.isfile( git_dir ):
-    git_dir = os.path.dirname( git_dir )
-  if os.path.basename( git_dir ) == "python":
-    # Protect against RootCore architeture
-    git_dir = os.path.dirname( git_dir )
-  git_dir = os.path.join( git_dir, '.git' )
-  if os.path.isfile( git_dir ):
-    old_dir = git_dir
-    with open( git_dir ) as f:
-      relative_path = f.readline().split(' ')[-1].strip('\n')
-    git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
-  if not os.path.isdir( git_dir ):
-    if RCM_GRID_ENV:
-      return "<GRID>"
-    else:
-      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
-  import subprocess
-  git_version_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "describe"
-                                    ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  (output, stderr) = git_version_cmd.communicate()
-  output = output.rstrip('\n')
-  if git_version_cmd.returncode and not RCM_GRID_ENV:
-    raise RuntimeError("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr)
-  return output
-
-def getParentVersion( init_fname ):
-  if not cmd_exists('git'):
-    raise RuntimeError("Couldn't find git commnad.")
-  git_dir = os.path.realpath( init_fname )
-  if os.path.isfile( git_dir ):
-    git_dir = os.path.dirname( git_dir )
-  if os.path.basename( git_dir ) == "python":
-    # Protect against RootCore architeture
-    git_dir = os.path.dirname( git_dir )
-  git_dir = os.path.join( git_dir, '.git' )
-  if not os.path.exists( git_dir ):
-    if RCM_GRID_ENV:
-      return "GRID", "<GRID>"
-    else:
-      raise RuntimeError("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", init_fname, git_dir)
-  parent_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
-  import subprocess
-  git_parent_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]
-                                    , stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                                    , cwd=parent_dir)
-  (output, stderr) = git_parent_cmd.communicate()
-  parent_dir = output.rstrip('\n')
-  if os.path.isdir( parent_dir ):
-    try:
-      return os.path.basename( parent_dir ), git_description( parent_dir )
-    except RuntimeError, e:
-      return None, e
-  return None, None
-
 
 def os_environ_get( env, default_env ):
   import os

@@ -9,7 +9,6 @@ from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubm
                                               , clusterManagerConf, EnumStringOptionRetrieve
                                               )
 from RingerCore.Configure import get_attributes, EnumStringification, BooleanStr, NotSet
-from RingerCore.parsers.Logger import LoggerNamespace
 
 class PBSOutputMerging( EnumStringification ):
   """
@@ -80,13 +79,14 @@ lsfParser = None
 
 ################################################################################
 ## LocalClusterNamespace
-class LocalClusterNamespace( JobSubmitNamespace ):
+class LocalClusterNamespace( JobSubmitNamespace, Logger, ):
   """
     Improves argparser workspace object to support creating a string object
     with the input options.
   """
 
   def __init__(self, localCluster = None, **kw):
+    Logger.__init__( self, kw )
     if localCluster in (None, NotSet):
       localCluster = clusterManagerConf()
     self.localCluster = AvailableManager.retrieve( localCluster )
@@ -95,7 +95,19 @@ class LocalClusterNamespace( JobSubmitNamespace ):
       prog = 'bsub'
     elif self.localCluster is ClusterManager.PBS:
       self.prefix = PBSJobArgumentParser.prefix
+      from socket import gethostname
       prog = 'qsub'
+      # Work on environment
+      if "service1" in gethostname():
+        import re
+        THEANO_FLAGS = os.getenv('THEANO_FLAGS')
+        m = re.search('cxx=([^,]*)(,*)?',THEANO_FLAGS)
+        if m:
+          CXX_THEANO_FLAGS = m.group(1)
+          os.environ['THEANO_FLAGS'] = re.sub('cxx=[^,]*', "cxx=ssh service1 " + CXX_THEANO_FLAGS, THEANO_FLAGS)
+          self._debug("Set THEANO_FLAGS to: %s", os.getenv('THEANO_FLAGS'))
+        else:
+          self._warning("THEANO FLAGS continues equal to: %s", os.getenv('THEANO_FLAGS') )
     else:
       self._fatal("Not implemented LocalClusterNamespace for cluster manager %s", AvailableManager.retrieve(self.localCluster), NotImplementedError)
     JobSubmitNamespace.__init__( self, prog = prog)

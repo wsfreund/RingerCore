@@ -1,14 +1,9 @@
 __all__ = [ 'argparse','ArgumentParser', 'ArgumentError', 'BooleanRetrieve']
 
 from RingerCore.util import get_attributes
-import re, textwrap
+import re, textwrap, argparse
 
-try:
-  import argparse
-except ImportError:
-  from RingerCore.parsers import __py_argparse as argparse
-
-from argparse import ArgumentError
+ArgumentError = argparse.ArgumentError
 
 from RingerCore.Configure import BooleanStr, EnumStringification
 
