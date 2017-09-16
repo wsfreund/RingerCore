@@ -2,14 +2,22 @@ __all__ = ['LoopingBounds', 'MatlabLoopingBounds', 'PythonLoopingBounds',
            'transformToMatlabBounds', 'transformToPythonBounds',
            'transformToSeqBounds', 'LoopingBoundsCollection',
            'MatlabLoopingBoundsCollection', 'PythonLoopingBoundsCollection',
-           'SetDepth','straverse','traverse', 'window']
+           'SetDepth','ltraverse', 'straverse','traverse', 'window']
 
 import numpy as np
 from RingerCore.Logger import Logger
 
 class SetDepth(Exception):
-  def __init__(self, value):
+  def __init__(self, idx, value):
+    self.idx = idx
     self.depth = value
+
+def ltraverse(o, **kw):
+  """
+  As traverse, but simple_ret is set to True as default
+  """
+  if not 'length_ret' in kw: kw['length_ret'] = True
+  return traverse(o, **kw)
 
 def straverse(o, **kw):
   """
@@ -20,8 +28,8 @@ def straverse(o, **kw):
 
 def traverse(o, tree_types=(list, tuple),
     max_depth_dist=0, max_depth=np.iinfo(np.uint64).max, 
-    level=0, idx=0, parent=None,
-    simple_ret=False):
+    level=0, parent_idx=0, parent=None,
+    simple_ret=False, length_ret=False):
   """
   Loop over each holden element. 
   Can also be used to change the holden values, e.g.:
@@ -76,6 +84,8 @@ def traverse(o, tree_types=(list, tuple),
     if level > max_depth:
       if simple_ret:
         yield o
+      elif length_ret:
+        yield level
       else:
         yield o, idx, parent, 0, level
       return
@@ -87,7 +97,13 @@ def traverse(o, tree_types=(list, tuple),
       loopingObj = enumerate(o)
     for idx, value in loopingObj:
       try:
-        for subvalue, subidx, subparent, subdepth_dist, sublevel in traverse(value, tree_types, max_depth_dist, max_depth, level, idx, o ):
+        for subvalue, subidx, subparent, subdepth_dist, sublevel in traverse(value 
+                                                                            , tree_types     = tree_types
+                                                                            , max_depth_dist = max_depth_dist
+                                                                            , max_depth      = max_depth
+                                                                            , level          = level
+                                                                            , parent_idx     = idx
+                                                                            , parent         = o ):
           if subdepth_dist == max_depth_dist:
             if skipped:
               subdepth_dist += 1
@@ -95,6 +111,8 @@ def traverse(o, tree_types=(list, tuple),
             else:
               if simple_ret:
                 yield subvalue
+              elif length_ret:
+                yield sublevel
               else:
                 yield subvalue, subidx, subparent, subdepth_dist, sublevel 
           else:
@@ -105,8 +123,10 @@ def traverse(o, tree_types=(list, tuple),
       except SetDepth, e:
         if simple_ret:
           yield o
+        elif length_ret:
+          yield level
         else:
-          yield o, idx, parent, e.depth, level
+          yield o, parent_idx, parent, e.depth, level
         break
       if subdepth_dist == max_depth_dist:
         if skipped:
@@ -115,8 +135,10 @@ def traverse(o, tree_types=(list, tuple),
         else:
           if simple_ret:
             yield o
+          elif length_ret:
+            yield level
           else:
-            yield o, idx, parent, subdepth_dist, level
+            yield o, parent_idx, parent, subdepth_dist, level
           break
       else:
         if level > (max_depth_dist - subdepth_dist):
@@ -124,8 +146,10 @@ def traverse(o, tree_types=(list, tuple),
   else:
     if simple_ret:
       yield o
+    elif length_ret:
+      yield level
     else:
-      yield o, idx, parent, 0, level
+      yield o, parent_idx, parent, 0, level
 
 class LoopingBounds ( Logger ):
   """

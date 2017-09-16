@@ -5,6 +5,7 @@ __all__ = [ 'escape_decode', 'TexException', 'TexSessionStream', 'PDFTexOutput'
           , 'TexPassOptionsToPackage', 'TexPassOptionsToPackageCollection'
           , 'tss', 'gco', 'gcc', '_', 'Columns', 'Column', 'IncludeGraphics'
           , 'Centering', 'escape_latex', 'OverPic']
+# TODO Create PhantomSection
 
 from StringIO import StringIO
 def _writeline(self, *l, **kw ):
@@ -176,13 +177,13 @@ class PDFTexOutput( TexSessionStream ):
 
   def __init__( self, outputFile ):
     self._hasConverter = True
+    TexSessionStream.__init__( self, outputFile )
     try:
       import tex
     except ImportError as e:
       self._hasConverter = False
       self._outputExtension = 'tex'
       self._error( "PDFTexOutput will work as a standard TexSessionStream as there was an error when compiling tex code:\n%s", e)
-    TexSessionStream.__init__( self, outputFile )
 
   def __enter__( self ):
     if self._hasConverter:
