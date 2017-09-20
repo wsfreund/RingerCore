@@ -1,6 +1,7 @@
 __all__ = [ 'BeamerSlide', 'BeamerTexReport'
           , 'BeamerFigureSlide', 'BeamerMultiFigureSlide', 'BeamerTableSlide'
           , 'BeamerSection', 'BeamerSubSection', 'BeamerSubSubSection'
+          , 'BeamerPhantomSection', 'BeamerPhantomSubSection', 'BeamerPhantomSubSubSection'
           , 'TexBeamerTemplate', 'TexBeamerTemplateCollection'
           , 'BeamerOutlineSlide', 'outlineSession', 'BeamerTexReportTemplate1'
           , 'BeamerTexReportTemplate2','gcb']
@@ -127,14 +128,75 @@ outlineSession = BeamerSection( BeamerOutlineSlide()
                               , star = True
                               , _contextManaged = False )
 
+class _BeamerPhantomSectionBase( _BeamerSectionBase ):
+  """
+  Base class for beamer phantom sections
+  """
+  _global_extra = _(  
+      r"""
+      \makeatletter
+      \newcommand{\phantomsectionfortoc}[1]{%%
+        \global\advance\beamer@tocsectionnumber by 1%%
+        \addtocontents{toc}{\protect\beamer@sectionintoc{0}{#1}{0}{0}%%
+          {\the\beamer@tocsectionnumber}}}
+      \makeatother
+      \makeatletter
+      \newcommand{\phantomsubsectionfortoc}[1]{%%
+        \global\advance\beamer@tocsubsectionnumber by 1%%
+        \addtocontents{toc}{\protect\beamer@subsectionintoc{0}{#1}{0}{0}%%
+          {\the\beamer@tocsubsectionnumber}}}
+      \makeatother
+      \makeatletter
+      \newcommand{\phantomsubsubsectionfortoc}[1]{%%
+        \global\advance\beamer@tocsubsubsectionnumber by 1%%
+        \addtocontents{toc}{\protect\beamer@subsubsectionintoc{0}{#1}{0}{0}%%
+          {\the\beamer@tocsubsubsectionnumber}}}
+      \makeatother
+      """ )
+#\newcommand{\phantomsubsectionfortoc}[1]{%
+#  %\global\advance\beamer@tocsubsectionnumber by 1%
+#  \addtocontents{toc}{\protect\beamer@subsectionintoc{0}{\inserttocsectionnumber}{#1}{0}{0}%
+#  %{\the\beamer@tocsectionnumber}
+#}}
+
+class BeamerPhantomSubSubSection( _BeamerPhantomSectionBase ):
+  """
+  Create a subsubsection that can handle slides
+  """
+  _preamble = """%%--------------------- --------- -------- ---------------------"""
+  _header = r"\phantomsubsubsectionfortoc{%(name)s}"
+  _acceptedTypes = BeamerSlide,
+
+class BeamerPhantomSubSection( _BeamerPhantomSectionBase ):
+  """
+  Create a subsection that can handle slides and subsubsections
+  """
+  _preamble = """%%--------------------- --------- -------- ---------------------
+                 %%--------------------- --------- -------- ---------------------"""
+  _header = r"\phantomsubsectionfortoc{%(name)s}"
+  _acceptedTypes = BeamerSlide, BeamerPhantomSubSubSection
+
+class BeamerPhantomSection( _BeamerPhantomSectionBase ):
+  """
+  Create a subsection that can handle slides and subsections
+  """
+  _preamble = _( """
+                 %%--------------------- --------- -------- ---------------------
+                 %%--------------------- --------- -------- ---------------------
+                 %%--------------------- --------- -------- ---------------------"""
+               )
+  _header = r"\phantomsectionfortoc{%(name)s}"
+  _acceptedTypes = BeamerSlide, _BeamerPhantomSectionBase
+
 class BeamerFigureSlide( BeamerSlide ):
   """
   Beamer figure slide
   """
-  def __init__(self, path, **kw):
-    BeamerSlide.__init__(self, **kw) 
+  def __init__(self, path,config = None ,**kw):
+    BeamerSlide.__init__(self ,**kw) 
     if not 'width' in kw and not 'height' in kw: kw['width'] = 0.7
-    self += Center( Figure( path, _contextManaged = False, **kw ), _contextManaged = False )
+    self += Center( Figure( path, _contextManaged = False, **kw ), 
+                    _contextManaged = False )
 
 class BeamerMultiFigureSlide( BeamerSlide ):
   """
@@ -227,22 +289,28 @@ class BeamerMultiFigureSlide( BeamerSlide ):
       self += GenericTexCode( code = r'\fontsize{11}{0}\selectfont', _contextManaged = False )
 
 class BeamerTableSlide( BeamerSlide ):
-  """
-  Beamer table slide
-  """
+  def __init__( self, lines=[], columns='', caption = '', table_width = 1.
+              , sideline = '', rounding = None, config = None, **kw ):
+    BeamerSlide.__init__( self , **kw )
+                    
+    with Table( caption = caption, _contextManaged = False ) as table:
+      self._table = table
+      self += table
+      with ResizeBox( size = table_width, _contextManaged = False) as rb:
+        table += rb
+        with Tabular( columns = columns
+                    , _contextManaged = False 
+                    ) as tabular:
+          rb += tabular
+          self._tabular = tabular
+          for line in lines:
+            if isinstance(line, TableLine):
+              self._tabular += line
+            else:
+              TableLine(line, rounding = rounding)
+    # Make user directly modify tabular object
+    #self._contextManager += self._tabular
 
-  def __init__(self, d = {}, *args, **kw):
-    d.update( kw )
-    self._tabular = Tabular( _contextManaged = False, **d )
-    self._table = Table( self._tabular, _contextManaged = False, **d )
-    BeamerSlide.__init__( self._table, *args, **d )
-
-  def addRow( self, row ):
-    """
-    Adds a row to beamer table slide
-    """
-    # FIXME Change this to be added to the holden objects by default
-    self._tabular.append( row )
 
 class TexBeamerTemplate( TexObject ):
   """
@@ -281,7 +349,7 @@ class BeamerTexReport( TexObjectCollection ):
   A BeamerTexReport object can be used to generate templated slides 
   containing plots, tables etc.
   """
-  _acceptedTypes = BeamerSlide, BeamerSection, BeamerSubSection, BeamerSubSubSection
+  _acceptedTypes = BeamerSlide, _BeamerSectionBase
 
   _preamble = _( r"""
                   %(passOptionsToPackages)s
@@ -400,6 +468,11 @@ class BeamerTexReport( TexObjectCollection ):
   def __enter__( self ):
     self._info( "Started creating beamer file %s latex code...", self._stream().outputFile )
     self._contextManager += self
+    # FIXME The objects are not being added as we would prefer them to be. They
+    # are currently being added at each other and BeamerTemplate do not
+    # contains sections in it, but rather hold each other..
+    #if any([isinstance(obj, _BeamerPhantomSectionBase) for obj in self]):
+    self._preamble += _(_BeamerPhantomSectionBase._global_extra)
     if not hasattr(self._stream(), 'file'):
       self._stream().__enter__()
       setattr(self._stream(), '_setVia_BeamerTexReport', True)

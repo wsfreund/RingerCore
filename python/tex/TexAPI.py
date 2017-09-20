@@ -1,10 +1,10 @@
 __all__ = [ 'escape_decode', 'TexException', 'TexSessionStream', 'PDFTexOutput'
           , 'TexObject', 'TexObjectCollection', 'Center', 'Table'
-          , 'GenericTexCode', 'Figure', 'Tabular', 'formatTex'
+          , 'GenericTexCode', 'Figure', 'Tabular', 'TableLine', 'HLine', 'formatTex'
           , 'TexPackage', 'TexPackageCollection', 'assertProp'
           , 'TexPassOptionsToPackage', 'TexPassOptionsToPackageCollection'
           , 'tss', 'gco', 'gcc', '_', 'Columns', 'Column', 'IncludeGraphics'
-          , 'Centering', 'escape_latex', 'OverPic']
+          , 'Centering', 'escape_latex', 'OverPic', 'ResizeBox']
 # TODO Create PhantomSection
 
 from StringIO import StringIO
@@ -462,7 +462,6 @@ gcc = Holder( None , replaceable = True )
 
 class Center( TexObjectCollection ):
   _enclosure = 'center'
-
   def __init__( self, *args, **kw ):
     TexObjectCollection.__init__( self, *args, **kw )
 
@@ -513,6 +512,21 @@ class RaiseBox( TexObjectCollection ):
       TexObject._write( self, stream, False, True )
 
 
+class ResizeBox( TexObjectCollection ):
+  _header = r"\resizebox{%(size)s}{%(option)s}{%%"
+  _footer = r"}"
+
+  def __init__( self, size=1., option='!',  *args, **kw ):
+    if isinstance(size,(int,float)):
+      self.size = r'%f\textwidth' % size
+    elif isinstance(size,(basestring)):
+      self.size = size
+    else:
+      TexObjectCollection.__init__( self, *args, **kw )
+      self._fatal("Cannot handle size: %r", size, TypeError) 
+    self.option = option
+    TexObjectCollection.__init__( self, *args, **kw )
+  
 class OverPic( TexObject ):
   _enclosure = r'overpic'
   _header = r'[%(graphics_option)s]'
@@ -582,9 +596,6 @@ class IncludeGraphics( TexObject ):
     self.graphics_option = graphics_option
     TexObject.__init__( self, *args, **kw )
 
-class Table( TexObjectCollection ):
-  _enclosure = 'table'
-  _header = r'%(header)s' # FIXME scriptsize?
 
 class Figure( TexObject ):
   """
@@ -600,7 +611,7 @@ class Figure( TexObject ):
               , width = None, height = None, keepaspectratio = None,
               **kw ):
     self.caption = caption
-    self.config=''
+    self.config = ''
     if config:
       self.config += '['
       self.config += config
@@ -613,26 +624,57 @@ class Figure( TexObject ):
                       , path = path
                       , **kw )
 
+class Table( TexObjectCollection ):
+  _enclosure = 'table'
+  _header = r'\scriptsize' # FIXME scriptsize?
+  _footer = r'%(caption)s'
+  def __init__(self, **kw):
+    if 'caption' in kw:
+      caption = kw['caption']
+      if not caption.startswith(r'\caption{'): caption = r'\caption{' + caption
+      if not caption.endswith(r'}'): caption += '}'
+      kw['caption'] = caption
+    TexObjectCollection.__init__( self,  **kw )
+
+class TableLine( TexObject ):
+  _body = r'%(line)s \\'
+  def __init__( self, columns, rounding = None, d = {}, **kw ):
+    d.update(kw)
+    if isinstance(rounding, basestring):
+      def roundingMethod(v):
+        if isinstance(v, basestring):
+          return v
+        else:
+          return rounding % v
+    elif hasattr(rounding, '__call__'):
+      roundingMethod = rounding
+    elif rounding is None:
+      roundingMethod = lambda v: str(v)
+    else:
+      TexObject.__init__(self, d)
+      self._error("Could not parse rounding method", ValueError)
+    self.line = ' & '.join([(roundingMethod(v) if v is not None else ' ') for v in columns])
+    TexObject.__init__(self, d)
+
+class HLine( TableLine ):
+  _body = r'\hline'
+  def __init__( self, d = {}, **kw ):
+    d.update(kw)
+    TexObject.__init__(self, d)
+
 class Tabular( TexObjectCollection ):
   """
   Create tabular tex code
   """
   _enclosure = "tabular"
-  _header = _( r"""{%(columns)s}
-                 \toprule
-              """
-           )
+  _header = _( r"%(columns)s" )
+ # _assertVars = ('columns', 'title', 'body','tabular_header' )
 
-  _body = _( r"""%(tabular_header)s
-                  \midrule
-              """
-           )
-
-  _footer = r"\bottomrule"
-
-  _appendix = r'\caption{%(caption)s}'
-
-  _assertVars = ('columns', 'title', 'body', )
+  def __init__(self, columns='', **kw):
+    if not columns.startswith('{'): columns = '{' + columns
+    if not columns.endswith('}'): columns += '}'
+    self.columns = columns
+    TexObjectCollection.__init__( self,  **kw )
 
 class TexPackage( TexObject ):
   """

@@ -36,6 +36,9 @@ from .StoreGate import *
 from . import Git
 __all__.extend( Git.__all__ )
 from .Git import *
+from . import Rounding
+__all__.extend( Rounding.__all__ )
+from .Rounding import *
 
 from . import tex
 __all__.extend( tex.__all__ )

@@ -3,18 +3,19 @@ from RingerCore  import Logger, LoggingLevel, retrieve_kw, LimitedTypeList, expa
 import numpy as np
 
 
-class StoreGate( Logger) :
+class StoreGate( Logger ) :
 
   def __init__( self, outputFile, **kw ):
     Logger.__init__(self,kw)
     if not outputFile.endswith('.root'):
       outputFile += '.root'
     # Use this property to rebuild the storegate from a root file
-    restoreStoreGate=retrieve_kw(kw,'restoreStoreGate',False)
+    self._restoreStoreGate=retrieve_kw(kw,'restoreStoreGate',False)
+    filterDirs=retrieve_kw(kw,'filterDirs', None)
     #Create TFile object to hold everything
     from ROOT import TFile
     outputFile = expandPath( outputFile )
-    if restoreStoreGate:
+    if self._restoreStoreGate:
       import os.path
       if not os.path.exists( outputFile ):
         raise ValueError("File '%s' does not exist" % outputFile)
@@ -28,8 +29,8 @@ class StoreGate( Logger) :
     import os
     self._outputFile = os.path.abspath(outputFile)
 
-    if restoreStoreGate:
-      retrievedObjs = self.__restore(self._file)
+    if self._restoreStoreGate:
+      retrievedObjs = self.__restore(self._file, filterDirs=filterDirs)
       for name, obj in retrievedObjs:
         self._dirs.append(name)
         self._objects[name]=obj
@@ -39,7 +40,16 @@ class StoreGate( Logger) :
 
   #Save objects and delete storegate
   def __del__(self):
-    self._file.Close()
+    self._dirs = None
+    #for val in self._objects.itervalues():
+    #  print "deleting", val
+    #  val.Delete()
+    self._objects = None
+    import gc
+    gc.collect()
+    if not self._restoreStoreGate:
+      self._file.Close()
+    print "deleted"
 
   def write(self):
     self._file.Write()
@@ -91,6 +101,9 @@ class StoreGate( Logger) :
       self._logger.warning('Object with path %s doesnt exist', fullpath)
       return None
 
+  def getDir(self, path):
+    return self._file.GetDirectory(path)
+
   # Use this to set labels into the histogram
   def setLabels(self, feature, labels):
     histo = self.histogram(feature)
@@ -132,7 +145,7 @@ class StoreGate( Logger) :
             if mobj: mobj.Add( obj )
 
   # Use this method to retrieve the dirname and root object
-  def __restore(self,d, basepath="/"):
+  def __restore(self,d, basepath="/", filterDirs=None):
     """
     Generator function to recurse into a ROOT file/dir and yield (path, obj) pairs
     Taken from: https://root.cern.ch/phpBB3/viewtopic.php?t=11049
@@ -141,6 +154,8 @@ class StoreGate( Logger) :
       for key in d.GetListOfKeys():
         kname = key.GetName()
         if key.IsFolder():
+          if filterDirs and kname not in filterDirs: 
+            continue
           for i in self.__restore(d.Get(kname), basepath+kname+"/"):
             yield i
         else:

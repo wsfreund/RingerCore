@@ -1,3 +1,6 @@
+2017-09-20 Werner S Freund
+  * Added rounding method and improved texAPI table
+
 2017-09-15 Werner S Freund
   * Important bugfix in traverse
 
