@@ -10,6 +10,7 @@ class _RetrieveOutputLevelAction(argparse.Action):
   def __call__(self, parser, namespace, value, option_string=None):
     from RingerCore.Configure import masterLevel
     if masterLevel.configured():
+      # update master level
       masterLevel.set( value )
     self.level = value
     namespace.level = value

@@ -214,12 +214,16 @@ class Configure( Logger ):
       value = self.retrieve( val )
       if not self.allowReconfigure and self.configured() and self._choice != value:
         self._fatal("Attempted to reconfigure %s twice.",  self.name)
-      self._choice = self.retrieve(val)
-      result = self.test() 
-      if result is not None and not result:
-        self._fatal("%s test failed.", self.name )
-      if hasattr(self, '_logger'):
-        self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
+      newChoice = self.retrieve(val)
+      if newChoice != self._choice:
+        self._choice = newChoice
+        result = self.test() 
+        if result is not None and not result:
+          self._fatal("%s test failed.", self.name )
+        if hasattr(self, '_logger'):
+          self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
+      else:
+        self._verbose('Ignored setting to same value. (Previous|New): (%s|%s)', self._choice, val ) 
     else:
       self._debug('Called %s set method with empty value.', self.name )
 
@@ -365,11 +369,9 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
     simpleParser = argparse.ArgumentParser(add_help = False)
     simpleParser.add_argument('--output-level', required = False, dest='level', default = None)
     args, argv = simpleParser.parse_known_args()
-    if args.level not in (None, NotSet):
-      import sys
-      # Consume option
-      sys.argv = sys.argv[:1] + argv
-    else:
+    # We don't consume the option so that other parsers can also retrieve the
+    # logging level
+    if args.level in (None, NotSet):
       args.output_level = LoggingLevel.INFO
     self.set( args.output_level )
 

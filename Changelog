@@ -4,6 +4,11 @@
 2017-09-15 Werner S Freund
   * Important bugfix in traverse
 
+2017-09-02 Werner S Freund
+  * Fixed loggers not being able to retrieve --output-level since the option
+	was being consumed by masterLevel
+  * Tagging RingerCore-01-00-12
+
 2017-09-01 Werner S Freund
   * Set git to ignore changes in Makefile.RootCore to allow tags to appear
 clean even when there are changes in MakeFile.RootCore
