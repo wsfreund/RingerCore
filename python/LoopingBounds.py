@@ -87,7 +87,7 @@ def traverse(o, tree_types=(list, tuple),
       elif length_ret:
         yield level
       else:
-        yield o, idx, parent, 0, level
+        yield o, parent_idx, parent, 0, level
       return
     skipped = False
     isDict = isinstance(o, dict)
