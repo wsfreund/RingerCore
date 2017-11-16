@@ -89,6 +89,8 @@ gridParserGroup.add_job_submission_option_group('--debug', default = None,
     const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode',
     help = "Submit GRID job on debug mode.", action='store_const',
     required = False )
+gridParserGroup.add_job_submission_option('--nCore', type=int,
+    required = False, help = """Number of cores to be used by the job.""")
 gridParserGroup.add_job_submission_option('--nJobs', type=int,
     required = False, help = """Number of jobs to submit.""")
 gridParserGroup.add_job_submission_option('--excludeFile', 

@@ -330,12 +330,14 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     for name, value in get_attributes(self):
       csv = False
       suboption = False
+      parseName = True
       if name.startswith(self.prefix):
         name = name.replace(self.prefix,'',1)
         if name.startswith('_Group'):
           if value:
             name = value
             value = True
+            parseName = False
           else:
             continue
         elif name.startswith('_CSV'):
@@ -345,8 +347,7 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
           suboption = True
           name = name.replace('_Suboption_','',1)
           option = name.split('')
-
-        name = name[:2].replace('_', '-') + name[2:]
+        if parseName: name = name[:2].replace('_', '-') + name[2:]
       else:
         continue
       tVal = type(value)
