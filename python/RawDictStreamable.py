@@ -158,6 +158,32 @@ class RawDictCnv( Logger ):
     """
     return obj
 
+  def __getstate__(self):
+    """
+      Makes logger invisible for pickle
+    """
+    odict = Logger.__getstate__(self)
+    #def getStr(i):
+    #  if isinstance(i, re
+    if 'ignoreAttrs' in odict:
+      s = odict['ignoreAttrs']
+      def getStr(c):
+        try:
+          return  c.pattern
+        except AttributeError:
+          return c
+      odict['ignoreAttrs'] = [getStr(v) for v in s]
+    return odict
+
+  def __setstate__(self, d):
+    """
+      Add logger to object if it doesn't have one:
+    """
+    v = d.pop('ignoreAttrs')
+    self.__dict__['ignoreAttrs'] = [re.compile(s) for s in v]
+    Logger.__setstate__(self,d)
+
+
 def isRawDictFormat( d ):
   """
   Returns if dictionary is on streamed raw dictionary format.
@@ -244,12 +270,17 @@ class RawDictStreamable( type ):
       otherwise work on a deep copy.
       -> kw: Changes attributes from RawDictCnv object.
     """
+    from copy import deepcopy
     if workOnCopy:
-      from copy import deepcopy
       obj = deepcopy( obj )
-    for key, val in kw.iteritems():
-      setattr( cls._cnvObj, key, val)
-    self = cls().buildFromDict( obj )
+    self = cls()
+    if kw:
+      self._cnvObj = deepcopy(cls._cnvObj)
+      for key, val in kw.iteritems():
+        setattr( self._cnvObj, key, val)
+    self = self.buildFromDict( obj )
+    # Delete instance specific converter
+    if kw: del self._cnvObj
     return self
 
 def _RawDictStreamable__toRawObj(self):
