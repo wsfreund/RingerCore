@@ -6,7 +6,7 @@ __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 
            'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp', 
-           'os_environ_get', 'measureCallTime']
+           'os_environ_get', 'measureCallTime', 'grouper']
 
 import re, os, __main__
 import sys
@@ -622,5 +622,12 @@ def os_environ_get( env, default_env ):
     return default_env
   return ENV
 
+
+def grouper(iterable, n, fillvalue=None):
+  "Collect data into fixed-length chunks or blocks"
+  # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+  args = [iter(iterable)] * n
+  from itertools import izip_longest
+  return izip_longest(fillvalue=fillvalue, *args)
 
 
