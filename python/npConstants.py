@@ -22,6 +22,11 @@ class npConstants( Logger ):
       o scounter_dtype: short integer dtype to use as counter
       o flag_dtype: the integer to use on flags (usually only -1,0,1 are
       flagged)
+    - operations:
+      o c_multiply: multiply input1 and input2 assuming that they are c arrays,
+      if not multiply input2 by input1
+      o fortran_multiply: multiply input2 and input1 assuming that they are c arrays,
+      if not multiply input1 by input2
   """
 
   def __init__(self, **kw):
@@ -79,6 +84,20 @@ class npConstants( Logger ):
     else:
       return oidx, pidx
   # access
+
+  def fotran_multiply(self, i1, i2):
+    "Return fortran multiplication of i1*i2."
+    if self.__useFortran:
+      return i1*i2
+    else:
+      return i2*i1
+
+  def c_multiply(self, i1, i2):
+    "Return c multiplication of i1*i2."
+    if self.__useFortran:
+      return i2*i1
+    else:
+      return i1*i2
 
   def shape(self, **kw):
     """

@@ -1,3 +1,12 @@
+2017-11-19 Werner S Freund
+  * Do not work with class converter to avoid keeping old attributes and
+	leading in difficult to track errors
+  * Tagging RingerCore-01-00-14
+
+2017-11-15 Werner S Freund
+  * Added multi-core option
+  * Tagging RingerCore-01-00-13
+
 2017-09-20 Werner S Freund
   * Added rounding method and improved texAPI table
 
