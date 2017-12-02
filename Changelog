@@ -1,3 +1,7 @@
+2017-12-02 Werner S Freund
+  * Fixed logging parser 
+  * Tagging RingerCore-01-00-15
+
 2017-11-19 Werner S Freund
   * Do not work with class converter to avoid keeping old attributes and
 	leading in difficult to track errors

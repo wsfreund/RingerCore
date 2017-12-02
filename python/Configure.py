@@ -372,8 +372,8 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
     # We don't consume the option so that other parsers can also retrieve the
     # logging level
     if args.level in (None, NotSet):
-      args.output_level = LoggingLevel.INFO
-    self.set( args.output_level )
+      args.level = LoggingLevel.INFO
+    self.set( args.level )
 
   def retrieve(self, val):
     val = EnumStringificationOptionConfigure.retrieve( self, val )
