@@ -1,3 +1,9 @@
+2017-12-15 Werner S Freund
+	* Added option to inspect_list_attrs to not complain if input dimension it
+	does not match required dimension size when it is required to be of single
+	dimension.
+  * Tagging RingerCore-01-00-16
+
 2017-12-02 Werner S Freund
   * Fixed logging parser 
   * Tagging RingerCore-01-00-15

@@ -250,7 +250,7 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
     dct = t1.__dict__.copy()
     return LimitedTypeList.__new__(cls, name, bases, dct)
 
-def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False ):
+def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False, acceptSingleDim = False ):
   """
   Check if list can be set into a LimitedTypeList of <wantedType> at the depth
   <nDepth>.
@@ -261,6 +261,9 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
   Use <name> to dimension name.
 
   <level> can be used to change the value of the logging level of the objects.
+
+  When acceptSingleDim is set, and <dim> is set to 1, then it will not complain
+  with different dim size at <nDepth>
   """
   if nDepth == 0:
     if level is not None and obj is not None:
@@ -288,7 +291,7 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
       if wantedType is not None and type(obj) is not wantedType:
         parent[idx] = wantedType(obj)
       # Make sure that its size spans over dim:
-      if dim:
+      if dim and ( dim != 1 or not acceptSingleDim ):
         lPar = len(parent[idx])
         if lPar == 1:
           if wantedType is not None:
