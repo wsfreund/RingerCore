@@ -126,6 +126,24 @@ class GitConfiguration( Configure ):
     import re
     return bool(re.match(self._tagStr,self.tag))
 
+  def ensure_clean(self):
+    from RingerCore import development
+    if not self.is_clean():
+      if not development:
+        self._fatal(("By the project policy, it is not possible to run production"
+          " jobs without having a clean environment for module %s. Current tag is %s,"
+          " make sure to commit or stash your changes before submiting the job.\n"
+          "In case you are developing code, add --development option to the command "
+          "line, or add the following code snippet to the start of your job:\n"
+          "from RingerCore.Configure import development\n"
+          "development.set( True )\n"
+          "Remove the snippet when you are done for sending a production job.")
+          , self.name.replace('Git',''), self.tag )
+      else:
+        self._warning(("Running development job! Make sure to commit your"
+          " changes when you are done and submit production jobs with the"
+          " final version only. Current module tag is: %s"), self.tag )
+
   def dumpToParser(self):
     if not self._parser:
       self._logger.fatal("Attempted to get parser option, but no parser is "

@@ -5,6 +5,7 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'Configure', 'EnumStringificationOptionConfigure'
           , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
           , 'cmd_exists', 'LimitedTypeOptionConfigure', 'CastToTypeOptionConfigure'
+          , 'development'
           ]
 
 import os, multiprocessing
@@ -404,7 +405,7 @@ class EnumStringificationOptionConfigure( LimitedTypeOptionConfigure ):
       self._fatal( "Accepted type is not a subclass of EnumStringification" )
 
   def __str__( self ):
-    if self:
+    if self.configured():
       return self._enumType.tostring( self.get() )
     else:
       return str(self._choice)
@@ -426,10 +427,7 @@ def _mutedLogger(self, value = None ):
 
 class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
   """
-  Singleton class for configurating the core framework used tuning data
-
-  It also specifies how the numpy data should be represented for that specified
-  core.
+  Master switch for all loggers
   """
 
   # NOTE: To end circular import, master level configures it self to INFO
@@ -504,3 +502,31 @@ class _ConfigureMasterLevel( EnumStringificationOptionConfigure ):
 MasterLevel = Holder( _ConfigureMasterLevel() )
 
 masterLevel = MasterLevel()
+
+class _ConfigureDevelopment( EnumStringificationOptionConfigure ):
+  """
+  Defines whether jobs are run in development mode
+  """
+
+  _enumType = BooleanStr
+
+  value = property( EnumStringificationOptionConfigure.get, EnumStringificationOptionConfigure.set )
+
+  def __init__(self, **kw):
+    EnumStringificationOptionConfigure.__init__(self, **kw)
+
+  def auto(self):
+    import argparse
+    simpleParser = argparse.ArgumentParser(add_help = False)
+    simpleParser.add_argument('--development', required=False, action='store_true')
+    args, argv = simpleParser.parse_known_args()
+    # We consume the option so that we don't need other parsers to evaluate this option
+    if args.development in (None, NotSet):
+      args.development = False
+    else:
+      # Consume option
+      import sys
+      sys.argv = sys.argv[:1] + argv
+    self.set( args.development )
+
+development = _ConfigureDevelopment()()

@@ -1,3 +1,7 @@
+2017-12-18 Werner S Freund
+	* Added development flag.
+  * Tagging RingerCore-01-00-18.
+
 2017-12-17 Werner S Freund
 	* Added specific configuration classes that allow setting 
 	limited or cast to type configuration instances.
