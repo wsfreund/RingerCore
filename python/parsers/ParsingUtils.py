@@ -296,7 +296,11 @@ class ArgumentParser( _ActionsContainer, argparse.ArgumentParser ):
     """
     raise ArgumentError( None, message )
 
-
+  def _print_message(self, message, file=None):
+    from RingerCore.Logger import Logger
+    logger = Logger.getModuleLogger( self.__class__.__name__ )
+    if message:
+      logger.info('\n' + message)
 
 class _ArgumentGroup( _ActionsContainer, argparse._ArgumentGroup ):
   def __init__(self, *args, **kw):

@@ -1,5 +1,7 @@
 2017-12-18 Werner S Freund
-	* Added excluded sites flag.
+	* Temporarily added excluded sites flag.
+	* Argparser now prints help using logger instance.
+	* Tagging RingerCore-01-00-19.
 
 2017-12-18 Werner S Freund
 	* Added development flag.
