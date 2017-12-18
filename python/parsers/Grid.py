@@ -1,6 +1,7 @@
 __all__ = ['SecondaryDataset','SecondaryDatasetCollection', 
            'GridOutput','GridOutputCollection', 'GridNamespace',  
-           'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser']
+           'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser',
+           'MultiThreadGridConfigure' ]
 
 import os
 from RingerCore.Logger import Logger
@@ -8,7 +9,7 @@ from RingerCore.parsers.Logger import LoggerNamespace
 from RingerCore.parsers.ClusterManager import ( JobSubmitArgumentParser, JobSubmitNamespace
                                               , clusterManagerParser ) 
 from RingerCore.LimitedTypeList import LimitedTypeList
-from RingerCore.Configure import BooleanStr
+from RingerCore.Configure import BooleanStr, CastToTypeOptionConfigure, NotSet
 
 ################################################################################
 # Grid parser related objects
@@ -72,6 +73,91 @@ class GridOutput( object ):
 class GridOutputCollection( object ):
   __metaclass__ = LimitedTypeList
   _acceptedTypes = GridOutput,
+
+class MultiThreadGridConfigure( CastToTypeOptionConfigure ):
+  """
+  This class can be used to auto-configure multi-thread jobs submition by
+  estimating how much memory it will be required through the use of the input
+  file size and a multiplication factor.
+  """
+  _castType = int
+  alwaysAutoConfigure = True
+
+  _inputFile = NotSet
+
+  def __init__( self, mem_multiplier = 3., single_thread_mem_limit = 3000
+              , mt_ncores = 8, useRucio = True, **kw ):
+    """
+    * mem_multiplier: estimate job memory usage by multiplying input file size by <mem_multiplier>
+    * single_thread_mem_limit: the upper limit (in mbs) to submit single thread jobs
+    * mt_ncores: number of cores for multi-thread job
+    * useRucio: whether we should use rucio to acquire file size
+    """
+    self.mem_multiplier = mem_multiplier
+    self.single_thread_mem_limit = single_thread_mem_limit
+    self.mt_ncores = mt_ncores
+    self.useRucio = useRucio
+    self.job_memory_consumption = None
+    self.mt_job = False
+    CastToTypeOptionConfigure.__init__( self, **kw )
+
+  def setInputFile( self, path ):
+    if not self.useRucio:
+      from RingerCore import expandPath
+      path = expandPath( path )
+      if not os.path.isfile( path ):
+        self._fatal( 'Attempted to set input file to a non-existent path: %s', path, ValueError )
+    self._inputFile = path
+
+  def getInputFile( self ):
+    if self._inputFile not in (None, NotSet):
+      return self._inputFile
+    else:
+      self._fatal( 'Input file was not set.', RuntimeError )
+
+  inputFile = property( getInputFile, setInputFile )
+
+  def auto( self ):
+    """
+    Check memory size of file in rucio container and submit multi-thread jobs
+    accordingly to grid limit
+    """
+    if self.useRucio:
+      try:
+        from rucio.client import DIDClient
+        from rucio.common.exception import DataIdentifierNotFound
+      except ImportError:
+        self._fatal("Please set rucio client.", ImportError)
+      didClient = DIDClient()
+      if isinstance(self.inputFile, SecondaryDataset):
+        container = self.inputFile.container
+      else:
+        container = self.inputFile
+      from RingerCore.RucioTools import extract_scope
+      scope, dataset = extract_scope(container)
+      try:
+        d = didClient.list_files(scope, dataset).next()
+        files = list( didClient.list_files(scope, dataset) )
+        if len(files) > 1:
+          self._fatal("More than one file in container, possibly wrong container input.")
+        job_memory_consumption = ( files[0]['bytes'] * self.mem_multiplier ) / 1024.**(2)
+        if job_memory_consumption > self.single_thread_mem_limit:
+          self._info( "Setting multi-thread job for file %s since its forseen memory consumption is %.0f MB."
+                     , files[0]['name'], job_memory_consumption )
+          self._choice = self.mt_ncores  
+          self.mt_job = True
+        else:
+          self._debug( "Setting single-thread job for file %s since its forseen memory consumption is %.0f MB."
+                     , files[0]['name'], job_memory_consumption )
+          self._choice = 1
+          self.mt_job = False
+        self.job_memory_consumption = job_memory_consumption
+      except DataIdentifierNotFound, e:
+        self._fatal(("Could not retrieve number of files on informed data DID. "
+                     "Did you send the dataset to the GRID (e.g. by running add_container?). "
+                     "Rucio error:\n%s"), e, RuntimeError)
+    else:
+      self._fatal("Estimation only available when using rucio.", NotImplementedError)
 
 # Basic grid parser
 gridParser = GridJobArgumentParser( add_help = False, parents = [clusterManagerParser] )

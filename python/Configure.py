@@ -4,7 +4,7 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'checkForUnusedVars', 'setDefaultKey' 
           , 'Configure', 'EnumStringificationOptionConfigure'
           , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
-          , 'cmd_exists'
+          , 'cmd_exists', 'LimitedTypeOptionConfigure', 'CastToTypeOptionConfigure'
           ]
 
 import os, multiprocessing
@@ -104,6 +104,16 @@ class EnumStringification( object ):
     return val
 
   @classmethod
+  def sretrieve(cls, val):
+    "Return enumeration equivalent value in string if it is a valid enumeration code."
+    return cls.tostring(cls.retrieve(val))
+
+  @classmethod
+  def optionList(cls):
+    from operator import itemgetter
+    return [v for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
+
+  @classmethod
   def stringList(cls):
     from operator import itemgetter
     return [v[0] for v in sorted(get_attributes( cls, getProtected = False), key=itemgetter(1))]
@@ -194,6 +204,12 @@ class Configure( Logger ):
 
   # This property set whether this class can only be configured once or not
   allowReconfigure = False
+  # When this property is set, you must implement a method auto which will be
+  # called every time the instance get is used
+  alwaysAutoConfigure = False
+  # If this option is set, user can manually set the option which will disable
+  # alwaysAutoConfigure option
+  allowManualConfigure = True
 
   def __init__(self, **kw):
     self._choice = NotSet
@@ -211,21 +227,33 @@ class Configure( Logger ):
 
   def set( self, val ):
     if val not in (NotSet, None):
+      if not self.allowManualConfigure:
+        if hasattr(self, '_logger'):
+          self._fatal("Cannot manually change choice value")
+        else:
+          raise RuntimeError("Cannot manually change choice value")
+      if self.alwaysAutoConfigure:
+        self.alwaysAutoConfigure = False
+        if hasattr(self, '_logger'): self._debug("Disabled auto configuration for %s due to manual value setup.", self.name)
       value = self.retrieve( val )
-      if not self.allowReconfigure and self.configured() and self._choice != value:
+      if not self.allowReconfigure and self.configured():
         self._fatal("Attempted to reconfigure %s twice.",  self.name)
-      newChoice = self.retrieve(val)
+      newChoice = value
       if newChoice != self._choice:
         self._choice = newChoice
-        result = self.test() 
-        if result is not None and not result:
-          self._fatal("%s test failed.", self.name )
+        test_result = self.test() 
+        if test_result is not None and not test_result:
+          if hasattr(self, '_logger'):
+            self._fatal("%s test failed.", self.name )
+          else:
+            raise RuntimeError('%s test failed', self.name )
         if hasattr(self, '_logger'):
           self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
-      else:
+      elif hasattr(self, '_logger'):
         self._verbose('Ignored setting to same value. (Previous|New): (%s|%s)', self._choice, val ) 
-    else:
+    elif hasattr(self, '_logger'):
       self._debug('Called %s set method with empty value.', self.name )
+    return self._choice
 
   def retrieve(self, val):
     """
@@ -238,24 +266,32 @@ class Configure( Logger ):
     return True
 
   def configured( self ):
-    if self._choice in (NotSet, None):
+    if self._choice in (NotSet, None) or self.alwaysAutoConfigure:
       return False
     return True
 
   def check_configure( self ):
-    " Check if configured, if not, run auto-configuration. "
+    """Check whether this class is configured, raise otherwise except when it can
+    auto-configure itself"""
     if not self.configured():
-      if hasattr(self,'auto'): 
-        self.auto()
-        return
-    self._fatal("%s was not configured.", self.name )
+      self._autoconfiguration() 
+    else:
+      self._fatal("%s was not configured.", self.name )
 
-  def __call__( self ):
-    return self.get()
+  def parser_set( self, value ):
+    """ Special method for parsers to use Configure classes: set value and return self."""
+    self.set( value )
+    return self
+
+  class __retrieve: pass
+  def __call__( self, value = __retrieve ):
+    if value is self.__class__.__retrieve:
+      return self.get()
+    else:
+      return self.set( value )
 
   def __nonzero__( self ):
-    "Check whether we are configured"
-    return self.configured()
+    return bool(self.get())
 
   def __lt__(self, val):
     return self.get() < val
@@ -278,11 +314,10 @@ class Configure( Logger ):
   def _autoconfiguration(self):
     if hasattr(self,'auto'):
       self.auto()
-      if not self.configured():
-        self._logger.fatal( "Autoconfiguration failed to configure %s", self.name )
+      if not self.configured() and not self.alwaysAutoConfigure:
+        self._logger.fatal( "Autoconfiguration failed for %s", self.name )
     else:
-      self._logger.fatal( 'Class %s cannot auto-configure itself.'
-                        , self.name )
+      self._logger.fatal( 'Class %s cannot auto-configure itself.', self.name )
     # Make sure that the autoconfiguration set choice to a valid option
     self._choice = self.retrieve( self._choice )
 
@@ -290,36 +325,91 @@ class Configure( Logger ):
     return str(self._choice)
 
   def __repr__( self ):
-    return self.name + "(" + str( self ) + ")"
+    return '%s[%s](%s)' % (self.name
+                          , ','.join( [ 'ALWAYS_AUTO' if self.alwaysAutoConfigure else ('CAN_AUTO' if hasattr(self,'auto') else 'MANUAL_ONLY') ]
+                                    + (['CAN_RECONFIGURE' if self.allowReconfigure else 'CANNOT_RECONFIGURE'] if not self.alwaysAutoConfigure else [])
+                                    + (['ALLOW_MANUAL' if self.allowManualConfigure else 'NO_MANUAL_CONFIG'] if self.alwaysAutoConfigure else []) 
+                                    )
+                          , self)
 
-
-class EnumStringificationOptionConfigure( Configure ):
+class LimitedTypeOptionConfigure( Configure ):
   """
-  Configure specialization for EnumStringification options.
+  Configure specialization which accepts only values with types specified by _acceptedTypes.
+  """
+  def __init__(self, **kw):
+    Configure.__init__( self, **kw )
+    self._acceptedTypesAvailable()
+
+  def test(self):
+    return isinstance( self, self._acceptedTypes )
+
+  def retrieve( self, val ):
+    if not isinstance(val, self._acceptedTypes):
+      self._fatal("Attempted to set %s to a value (%s) which is not of _acceptedTypes: %r", self.name, self._acceptedTypes)
+    return val
+
+  def _acceptedTypesAvailable(self):
+    if not hasattr(self, '_acceptedTypes'):
+      self._fatal( "Class %s does not have _acceptedTypes value. Please, make sure to add it."
+                        , self.name
+                        , TypeError )
+    elif not isinstance(self._acceptedTypes, tuple) or not all([isinstance(t,type) for t in self._acceptedTypes]):
+      self._fatal( "_acceptedTypes must be a tuple of types")
+
+class CastToTypeOptionConfigure( Configure ):
+  """
+  This configurable will attempt to recast option to _castType
+  """
+  def __init__(self, **kw):
+    Configure.__init__( self, **kw )
+    self._castTypeAvailable()
+
+  def test(self):
+    return isinstance( self(), self._castType )
+
+  def retrieve( self, val ):
+    if not isinstance(val, self._castType ):
+      val = self._castType( val )
+    return val
+
+  def _castTypeAvailable(self):
+    if not hasattr(self, '_castType'):
+      self._fatal( "Class %s does not have _castType value. Please, make sure to add it."
+                        , self.name
+                        , TypeError )
+    elif not isinstance(self._castType, type):
+      self._fatal( "Cast type set (%r) is not an instance of type", self._castType)
+
+class EnumStringificationOptionConfigure( LimitedTypeOptionConfigure ):
+  """
+  LimitedTypeOptionConfigure specialization for EnumStringification options.
   """
 
   def __init__(self, **kw):
     Configure.__init__( self, **kw )
-    self._enumTypeAvailable()
+    self._acceptedTypesAvailable()
 
   def retrieve( self, val ):
     return self._enumType.retrieve( val )
 
-  def _enumTypeAvailable(self):
+  def test( self ):
+    return True
+
+  def _acceptedTypesAvailable(self):
     if not hasattr(self, '_enumType'):
       self._fatal( "Class %s does not have _enumType value. Please, make sure to add it."
                         , self.name
                         , TypeError )
+    elif not issubclass(self._enumType, EnumStringification):
+      self._fatal( "Accepted type is not a subclass of EnumStringification" )
 
   def __str__( self ):
-    self._enumTypeAvailable()
     if self:
       return self._enumType.tostring( self.get() )
     else:
       return str(self._choice)
 
   def __repr__( self ):
-    self._enumTypeAvailable()
     return self.name + "(" + self._enumType.tostring( self.get() ) + ")"
 
 from RingerCore.Logger import LoggingLevel

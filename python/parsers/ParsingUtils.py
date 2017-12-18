@@ -5,7 +5,7 @@ import re, textwrap, argparse
 
 ArgumentError = argparse.ArgumentError
 
-from RingerCore.Configure import BooleanStr, EnumStringification
+from RingerCore.Configure import BooleanStr, EnumStringification, Configure
 
 class BooleanRetrieve( argparse.Action ):
 
@@ -50,34 +50,57 @@ class _ActionsContainer( object ):
   def add_argument(self, *args, **kwargs):
     if 'type' in kwargs:
       lType = kwargs['type']
-      if issubclass(lType, EnumStringification):
-        # Deal with the help option:
-        help_str = ' '.join(textwrap.wrap(kwargs.pop('help','')))
-        if not '.' in help_str[-2:]: help_str += '. '
-        if help_str[-1:] != ' ': help_str += ' '
-        help_str += "Possible options are: "
-        help_str += str(kwargs['type'].stringList())
-        help_str += ', or respectively equivalent to the integers: '
-        help_str += str(kwargs['type'].intList())
-        kwargs['help'] = help_str
-        # Deal with BooleanStr special case:
-        if issubclass(lType, BooleanStr):
-          if kwargs.pop('nargs','?') != '?':
-            raise ValueError('Cannot specify nargs different from \'?\' when using boolean argument')
-          kwargs['nargs'] = '?'
-          if not 'default' in kwargs:
-            kwargs['default'] = False
-          if not 'action' in kwargs:
-            del kwargs['type']
-            kwargs['action'] = BooleanRetrieve
+      if isinstance(lType,type):
+        if issubclass(lType, EnumStringification):
+          # Deal with the help option:
+          help_str = ' '.join(textwrap.wrap(kwargs.pop('help','')))
+          if not '.' in help_str[-2:]: help_str += '. '
+          if help_str[-1:] != ' ': help_str += ' '
+          # Append possible options
+          help_str += """Possible options, that can equivalently be input either
+          as a string %s or an integer as in the template (Option, 0), are: """ % ("(case insensitive)" if lType._ignoreCase else "(case sensitive)")
+          help_str += str(kwargs['type'].optionList()).strip("[]").replace("'","").replace('),',');')
+          kwargs['help'] = help_str
+          # Deal with BooleanStr special case:
+          if issubclass(lType, BooleanStr):
+            # Accept it not to be specified
+            if kwargs.pop('nargs','?') != '?':
+              raise ValueError('Cannot specify nargs different from \'?\' when using boolean argument')
+            kwargs['nargs'] = '?'
+            if not 'default' in kwargs:
+              kwargs['default'] = False
+            if not 'action' in kwargs:
+              del kwargs['type']
+              kwargs['action'] = BooleanRetrieve
+            else:
+              if not lType in self._registries['type']: self.register('type', lType, lType.retrieve)
           else:
+            # Make sure that there will be registered the type and the action that
+            # will be used for it:
             if not lType in self._registries['type']:
               self.register('type', lType, lType.retrieve)
-        else:
-          # Make sure that there will be registered the type and the action that
-          # will be used for it:
-          if not lType in self._registries['type']:
-            self.register('type', lType, lType.retrieve)
+        elif issubclass(lType, Configure):
+          # Start a default Configure instance
+          cConf = lType()
+          kwargs['type'] = cConf
+          if not 'default' in kwargs: kwargs['default'] = cConf
+          if not cConf in self._registries['type']: self.register('type', cConf, cConf.parser_set)
+      else: # not an instance of type
+        if isinstance(lType, Configure):
+          kwargs['type'] = lType
+          if not 'default' in kwargs: kwargs['default'] = lType
+          if not lType in self._registries['type']: self.register('type', lType, lType.parser_set )
+    if 'help' in kwargs and isinstance(kwargs['help'],basestring) and kwargs.get('default',None) is not argparse.SUPPRESS:
+      kwargs['help'] = kwargs['help'].rstrip(' \n')
+      if not(kwargs['help'].endswith('.') or kwargs['help'].endswith('. ')): kwargs['help'] += '. '
+      if kwargs['help'].endswith('.'): kwargs['help'] += ' '
+      default = kwargs.get('default', None)
+      if 'type' in kwargs and isinstance(lType,type) and issubclass(lType, EnumStringification):
+        kwargs['help'] += 'Default value is: %s.' % ( lType.tostring(default) if default is not None else None )
+      elif 'type' in kwargs and ( ( isinstance(lType,type) and issubclass(lType, Configure) ) or isinstance(lType,Configure) ):
+        kwargs['help'] += 'Default value is: %r.' % default
+      else:
+        kwargs['help'] += 'Default value is: %s.' % default
     argparse._ActionsContainer.add_argument(self, *args, **kwargs)
 
   def add_argument_group(self, *args, **kwargs):

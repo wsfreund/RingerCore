@@ -144,7 +144,7 @@ class StreamHandler2( logging.StreamHandler ):
         try:
           if (isinstance(msg, unicode) and
             getattr(stream, 'encoding', None)):
-            ufs = u'%s'
+            ufs = unicode(fs)
             try:
               stream.write(ufs % msg)
             except UnicodeEncodeError:

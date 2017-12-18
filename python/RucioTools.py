@@ -1,6 +1,26 @@
-__all__ = ['RucioTools']
+__all__ = ['RucioTools', 'extract_scope']
 
 from RingerCore import Logger
+
+def extract_scope(did):
+  """
+  Taken from rucio client v1.13.2 itself
+  """
+  # Try to extract the scope from the DSN
+  if did.find(':') > -1:
+    if len(did.split(':')) > 2:
+      raise RuntimeError('Too many colons. Cannot extract scope and name')
+    scope, name = did.split(':')[0], did.split(':')[1]
+    if name.endswith('/'):
+      name = name[:-1]
+    return scope, name
+  else:
+    scope = did.split('.')[0]
+    if did.startswith('user') or did.startswith('group'):
+      scope = ".".join(did.split('.')[0:2])
+    if did.endswith('/'):
+      did = did[:-1]
+    return scope, did
 
 #Rucio Class
 class RucioTools( Logger ):
