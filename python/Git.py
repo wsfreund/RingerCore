@@ -1,6 +1,6 @@
 __all__ = ['ProjectGit','RingerCoreGit','GitConfiguration']
 
-import os
+import os, subprocess
 from RingerCore.Configure import Configure, RCM_GRID_ENV, cmd_exists, NotSet
 from RingerCore.parsers.Git import createGitParser
 from RingerCore.Logger import Logger
@@ -73,9 +73,24 @@ class GitConfiguration( Configure ):
     else:
       self._moduleName = value
 
-  def _git_description( self, getModuleProject = False ):
+  def __get_tag( self, module_path, git_dir ):
     # FIXME: probably its needed to kill the git_version_cmd to avoid 
     # having the git.lock file kept until the end of job execution
+    module_name = os.path.basename( module_path )
+    git_version_cmd = subprocess.Popen( ["git", "--git-dir", git_dir, "describe"
+                                      , "--always","--dirty",'--tags']
+                                      , stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                                      , cwd=os.path.dirname(git_dir))
+    (output, stderr) = git_version_cmd.communicate()
+    tag = output.rstrip('\n')
+    if git_version_cmd.returncode:
+      self._logger.warning("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr, RuntimeWarning)
+    if not module_name in tag:
+      tag = module_name + '-' + tag
+    #tag = tag.replace('-dirty','')
+    return module_name, tag, module_path
+
+  def _git_description( self, getModuleProject = False ):
     import re
     if not cmd_exists('git'):
       self._logger.warning("Couldn't find git commnad.")
@@ -91,36 +106,35 @@ class GitConfiguration( Configure ):
       with open( git_dir ) as f:
         relative_path = f.readline().split(' ')[-1].strip('\n')
       git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
-    import subprocess
+    elif os.path.isdir( git_dir ) and getModuleProject:
+      # Deal with module with .git files
+      git_dir_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]
+                                     , stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                                     , cwd=os.path.join(git_dir,'../../..'))
+      (output, stderr) = git_dir_cmd.communicate()
+      if not git_dir_cmd.returncode:
+        # Assume that module path is the remaining output:
+        module_path  = output.rstrip('\n')
+        git_dir = os.path.join( module_path, '.git' )
+        return self.__get_tag( module_path, git_dir)
     if getModuleProject: git_dir = os.path.abspath( os.path.join( os.path.dirname( git_dir ), '..' ) )
     # Strip any possible remaining .git directories:
     git_dir = re.sub('/.git(/modules)?/?$','',git_dir)
     git_dir_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "rev-parse", "--show-toplevel"]
                                    , stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                                   , cwd=git_dir)
+                                   , cwd=os.path.dirname(git_dir))
     (output, stderr) = git_dir_cmd.communicate()
     if git_dir_cmd.returncode:
       git_dir = os.path.join(git_dir, '.git')
       git_dir_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "rev-parse", "--show-toplevel"]
                                      , stdout=subprocess.PIPE, stderr=subprocess.PIPE
-                                     , cwd=git_dir)
+                                     , cwd=os.path.dirname(git_dir))
       (output, stderr) = git_dir_cmd.communicate()
     # Strip casual .git in output
     output = re.sub('/.git$','',git_dir)
     # Assume that module path is the remaining output:
     module_path = output.rstrip('\n')
-    if not os.path.isdir( module_path ):
-      self._logger.warning("Couldn't determine git dir. Retrieved %s as input file and tested for %s as git dir", self._fname, git_dir, RuntimeWarning)
-    module_name = os.path.basename( module_path )
-    git_version_cmd = subprocess.Popen(["git", "--git-dir", git_dir, "describe"
-                                      ,"--always","--dirty",'--tags'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (output, stderr) = git_version_cmd.communicate()
-    tag = output.rstrip('\n')
-    if git_version_cmd.returncode:
-      self._logger.warning("git command failed with code %d. Error message returned was:\n%s", git_version_cmd.returncode, stderr, RuntimeWarning)
-    if not module_name in tag:
-      tag = module_name + '-' + tag
-    return module_name, tag, module_path
+    return self.__get_tag( module_path, git_dir )
 
   def is_clean(self):
     import re

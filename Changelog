@@ -1,4 +1,9 @@
 2017-12-18 Werner S Freund
+	* Improved git version retrieval when .git file is a folder instead of a
+	pointer to the submodule path.
+	* Tagging RingerCore-01-00-20.
+
+2017-12-18 Werner S Freund
 	* Temporarily added excluded sites flag.
 	* Argparser now prints help using logger instance.
 	* Tagging RingerCore-01-00-19.
