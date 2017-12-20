@@ -102,8 +102,9 @@ class npConstants( Logger ):
   def shape(self, **kw):
     """
     Return shape using total number of observations and patterns.
-    Retuned shape will always be a matrix.
+    Retuned shape will always be 2D.
     """
+    # FIXME This code is not very useful, why is it here?
     if set(("npat","nfeat")) <= set(kw.keys()):
       raise KeyError('Cannot use both pidx and fidx keywords')
     npat = kw.pop('npat', None)

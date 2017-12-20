@@ -8,8 +8,7 @@ import numpy as np
 from RingerCore.Logger import Logger
 
 class SetDepth(Exception):
-  def __init__(self, idx, value):
-    self.idx = idx
+  def __init__(self, value):
     self.depth = value
 
 def ltraverse(o, **kw):

@@ -22,8 +22,8 @@ def mangle_attr(source, attr):
 
 class RawDictStreamer( Logger ):
   """
-  This is the default streamer class. Overload this method to deal with
-  special cases.
+  This is the default streamer class, responsible of converting python classes
+  to raw dictionaries.
   """
 
   def __init__(self, transientAttrs = set(), toPublicAttrs = set(), **kw):
@@ -94,8 +94,8 @@ class RawDictStreamer( Logger ):
 
 class RawDictCnv( Logger ):
   """
-  This is the default converter class. Overload this method to deal with
-  special cases.
+  This is the default converter class: it transforms raw dictionaries saved
+  using RawDictStreamer into python classes.
   """
   # FIXME: class should be __class. How to treat __class so that matlab can
   # read it as well?
@@ -123,18 +123,25 @@ class RawDictCnv( Logger ):
   def _searchAttr(self, val):
     return [protectedAttr.lstrip('_') for protectedAttr in self.toProtectedAttrs].index(val)
 
+  def preCall(self, obj, d):
+    "Overload this method if you want to make special treatments before streaming the object."
+    return obj, d
+
   def __call__(self, obj, d):
     """
     Add information to python class from dictionary d
     """
+    obj, d = self.preCall(obj, d)
     try:
       obj._readVersion = d['__version']
     except KeyError:
       obj._readVersion = 0
-    for k, val in d.iteritems():
+    for k in d:
       if any([bool(ignoreAttr.match(k)) for ignoreAttr in self.ignoreAttrs]): 
         continue
       try:
+        # We only load val if it is not in ignoredAttr
+        val = d[k]
         nK = mangle_attr( self.__class__, 
                           list(self.toProtectedAttrs)[self._searchAttr(k)] 
                         )
@@ -274,8 +281,11 @@ class RawDictStreamable( type ):
     if workOnCopy:
       obj = deepcopy( obj )
     self = cls()
+    # NOTE: We always replace the cnvObj by the one available in the class to
+    # ensure that it will behave as desired in case it is used to read an 
+    # object twice, though this will probably very rarely (if ever) be used.
+    self._cnvObj = deepcopy(cls._cnvObj)
     if kw:
-      self._cnvObj = deepcopy(cls._cnvObj)
       for key, val in kw.iteritems():
         setattr( self._cnvObj, key, val)
     self = self.buildFromDict( obj )
