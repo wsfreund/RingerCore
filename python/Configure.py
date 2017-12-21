@@ -529,4 +529,4 @@ class _ConfigureDevelopment( EnumStringificationOptionConfigure ):
       sys.argv = sys.argv[:1] + argv
     self.set( args.development )
 
-development = _ConfigureDevelopment()()
+development = _ConfigureDevelopment()
