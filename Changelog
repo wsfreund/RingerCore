@@ -1,3 +1,7 @@
+2017-12-21 Werner S Freund
+	* Fix for the git tag also accept commits in the git describe str
+	* Not tagging yet
+
 2017-12-20 Werner S Freund
 	* Fix on traverse with max_depth_level.
 	* Improve rawDict speed by loading keys when they are not in

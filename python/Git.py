@@ -17,7 +17,7 @@ class GitConfiguration( Configure ):
               , name
               , fname
               , tagArgStr = None
-              , tagStr = '.*-?(\d+-)+\d+$'
+              , tagStr = '.*-?(\d+-)+\d+(-[0-9a-z]+)?$'
               ):
     """
     -> fname: path pointing to the corresponding --git-dir of the module or any
