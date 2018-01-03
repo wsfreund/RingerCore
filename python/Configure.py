@@ -5,7 +5,7 @@ __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'Configure', 'EnumStringificationOptionConfigure'
           , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
           , 'cmd_exists', 'LimitedTypeOptionConfigure', 'CastToTypeOptionConfigure'
-          , 'development'
+          , 'Development'
           ]
 
 import os, multiprocessing
@@ -520,13 +520,10 @@ class _ConfigureDevelopment( EnumStringificationOptionConfigure ):
     simpleParser = argparse.ArgumentParser(add_help = False)
     simpleParser.add_argument('--development', required=False, action='store_true')
     args, argv = simpleParser.parse_known_args()
-    # We consume the option so that we don't need other parsers to evaluate this option
+    # We don't consume the option so that other parsers can also retrieve the
+    # logging level
     if args.development in (None, NotSet):
       args.development = False
-    else:
-      # Consume option
-      import sys
-      sys.argv = sys.argv[:1] + argv
     self.set( args.development )
 
-development = _ConfigureDevelopment()
+Development = _ConfigureDevelopment()
