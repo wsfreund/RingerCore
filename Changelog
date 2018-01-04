@@ -3,7 +3,7 @@
 	* Set development to be auto configured only when first requested
 	allowing user to manual set it before if needed.
 	* development is now a Configure instance instead of the resulting int
-	* Not tagging yet
+	* Tagging RingerCore-01-00-22
 
 2017-12-20 Werner S Freund
 	* Fix on traverse with max_depth_level.
