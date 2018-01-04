@@ -233,22 +233,22 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
   LimitedTypeList with RawDictStreamable capability.
   """
 
-  def __init__(cls, name, bases, dct):
-    RawDictStreamable.__init__(cls,name, bases, dct)
-    LimitedTypeList.__init__(cls,name, bases, dct)
-
-  def __new__(cls, name, bases, dct):
+  def __new__(meta, name, bases, dct):
     from RingerCore.Logger import Logger
     if Logger in bases:
       checkAttrOrSetDefault( "_streamerObj", dct, bases, LoggerLimitedTypeListRDS )
     else:
       checkAttrOrSetDefault( "_streamerObj", dct, bases, LimitedTypeListRDS )
     checkAttrOrSetDefault( "_cnvObj", dct, bases, LimitedTypeListRDC )
-    t1 = RawDictStreamable.__new__(cls, name, bases, dct)
-    name = t1.__name__
-    bases = tuple(t1.mro())
+    t1 = RawDictStreamable.__new__(meta, name + "_RawDictStreamable__", bases, dct)
+    bases = t1.__mro__
     dct = t1.__dict__.copy()
-    return LimitedTypeList.__new__(cls, name, bases, dct)
+    t2 = LimitedTypeList.__new__(meta, name, bases, dct)
+    return t2
+
+  def __init__(cls, name, bases, dct):
+    RawDictStreamable.__init__(cls,name, bases, dct)
+    LimitedTypeList.__init__(cls,name, bases, dct)
 
 def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False, acceptSingleDim = False ):
   """

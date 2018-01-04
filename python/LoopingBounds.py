@@ -374,7 +374,7 @@ class LoopingBounds ( Logger ):
     """
     lb = self.lowerBound()
     ub = self.upperBound()
-    nfill = self.get_minNFill( ub, 4 )
+    nfill = self.get_minNFill( 4 )
     if lb != ub:
       return 'l%s.u%s' % ( str(lb).zfill(nfill), str(ub).zfill(nfill) )
     else:

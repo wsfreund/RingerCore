@@ -1,3 +1,10 @@
+2017-01-03 Werner S Freund
+  * Fix on looping bounds str method 
+	* Implementation of multiple version for each inherited class
+	(versionedClasses) of RawDictStreamables
+	* Fix LimitedTypeStreamableList adding the main class as a base in the mro
+	* Not tagging yet
+
 2017-12-21 Werner S Freund
 	* Fix for the git tag also accept commits in the git describe str
 	* Set development to be auto configured only when first requested
