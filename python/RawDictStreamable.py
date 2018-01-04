@@ -201,6 +201,11 @@ class RawDictCnv( Logger ):
       readVersionedClasses = { createClassStr(c) : readVersion for c in self._versionedClasses }
     else:
       readVersionedClasses = d['__versionedClasses']
+      try:
+        from numpy import ndarray
+        if isinstance(readVersionedClasses, ndarray):
+          readVersionedClasses = readVersionedClasses.item()
+      except ImportError: pass
       # Transform all old versioned classes name 
       for orig_cStr in readVersionedClasses:
         if orig_cStr in self.oldClasses:
