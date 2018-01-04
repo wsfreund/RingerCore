@@ -182,8 +182,10 @@ class LoopingBounds ( Logger ):
     if len(args) > 3: 
       raise ValueError("Input more than 3 values, format should be [min=0:[incr=1:]]max")
 
-    if len(args) == 0: 
-      raise ValueError("No input. Format should be [min=0,[incr=1,]]max")
+    if len(args) == 0 or (args[0] in ([],tuple(),)): 
+      # Create empty looping bounds
+      self._vec = [0,-1,1]
+      return
 
     if isinstance(args[0], LoopingBounds ):
       self._vec = args[0]._vec
@@ -374,7 +376,7 @@ class LoopingBounds ( Logger ):
     """
     lb = self.lowerBound()
     ub = self.upperBound()
-    nfill = self.get_minNFill( ub, 4 )
+    nfill = self.get_minNFill( 4 )
     if lb != ub:
       return 'l%s.u%s' % ( str(lb).zfill(nfill), str(ub).zfill(nfill) )
     else:
@@ -420,6 +422,21 @@ class LoopingBounds ( Logger ):
       Return the iterator to loop within this instance bounds
     """
     return self()
+
+  def  __contains__(self, item):
+    for obj in self:
+      if obj == item:
+        return True
+    return False
+
+  def __bool__(self):
+    """
+    Return true object is loopable
+    """
+    try:
+      iter(self).next()
+      return True
+    except StopIteration: return False
 
 from RingerCore.LimitedTypeList import LimitedTypeList
 LoopingBoundsCollection = LimitedTypeList("LoopingBoundsCollection", (), \

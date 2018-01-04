@@ -1,3 +1,7 @@
+2017-01-04 Werner S Freund
+	* Added method to check whether item is in LoopingBounds
+	* Tagging RingerCore-01-00-23
+
 2017-12-21 Werner S Freund
 	* Fix for the git tag also accept commits in the git describe str
 	* Set development to be auto configured only when first requested
