@@ -568,7 +568,7 @@ def getFilters( filtFinder, objs, idxs = None, printf = None):
         raise IndexError('This bin index does not exist.')
       if printf is not None:
         printf('Analyzing only the bin index %r', idxs)
-    printf('Found following filters: %r', filt)
+    printf('Found following filters (total:%d): %r', len(filt), filt)
   return filt
 
 def apply_sort( inputCollection, sortedIdx ):

@@ -305,7 +305,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
       raise ValueError("Cannot reach path '%s'" % path )
     if os.path.isdir(path):
       for idx, filt in enumerate(filters):
-        cList = [ f for f in glob( os.path.join(path,filt) ) ]
+        cList = filter(lambda x: not(os.path.isdir(x)), [ f for f in glob( os.path.join(path,filt) ) ])
         if cList: 
           retList[idx].extend(cList)
       folders = [ os.path.join(path,f) for f in os.listdir( path ) if os.path.isdir( os.path.join(path,f) ) ]
@@ -313,7 +313,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
         recList = expandFolders( folders, filters )
         if len(filters) is 1:
           recList = [recList]
-        for idx, l in enumerate(recList):
+        for l in recList:
           retList[idx].extend(l)
     else:
       for idx, filt in enumerate(filters):
