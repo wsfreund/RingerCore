@@ -92,9 +92,13 @@ class GitConfiguration( Configure ):
 
   def _git_description( self, getModuleProject = False ):
     import re
+    from RingerCore.FileIO import expandPath, changeExtension
     if not cmd_exists('git'):
       self._logger.warning("Couldn't find git commnad.")
-    git_dir = os.path.realpath( self._fname )
+    pyExtFile = changeExtension( self._fname, '.py', knownFileExtensions = ['.pyc'] )
+    if not os.path.exists( pyExtFile ):
+      pyExtFile = self._fname
+    git_dir = expandPath( pyExtFile )
     if os.path.isfile( git_dir ):
       git_dir = os.path.dirname( git_dir )
     # Protect against RootCore file arrangement
@@ -105,7 +109,7 @@ class GitConfiguration( Configure ):
       old_dir = git_dir
       with open( git_dir ) as f:
         relative_path = f.readline().split(' ')[-1].strip('\n')
-      git_dir = os.path.realpath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
+      git_dir = expandPath( os.path.join( os.path.dirname( old_dir ), relative_path ) )
     elif os.path.isdir( git_dir ) and getModuleProject:
       # Deal with module with .git files
       git_dir_cmd = subprocess.Popen(["git", "rev-parse", "--show-toplevel"]

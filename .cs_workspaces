@@ -11,7 +11,7 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
 endif
 set shortmess=aoO
 badd +1 python/__init__.py
-badd +6 python/Configure.py
+badd +1 python/Configure.py
 badd +1 python/FileIO.py
 badd +1 python/LimitedTypeList.py
 badd +1 python/Logger.py
@@ -26,12 +26,11 @@ badd +1 python/tex/__init__.py
 badd +1 python/tex/BeamerAPI.py
 badd +592 python/tex/TexAPI.py
 badd +1 python/parsers/__init__.py
-badd +1 python/parsers/__py_argparse.py
 badd +1 python/parsers/ClusterManager.py
 badd +1 python/parsers/Grid.py
 badd +1 python/parsers/LocalCluster.py
 badd +1 python/parsers/Logger.py
-badd +30 python/parsers/ParsingUtils.py
+badd +1 python/parsers/ParsingUtils.py
 badd +1 RingerCore/defines.h
 badd +1 RingerCore/MsgStream.h
 badd +1 RingerCore/StoreGate.h
@@ -46,13 +45,13 @@ badd +1 cmt/check_install_scipy.sh
 badd +1 cmt/check_install_setup_tools.sh
 badd +1 cmt/gcc_python_compiler_path.sh
 badd +1 cmt/Makefile.RootCore
-badd +1 cmt/new_env_file.sh
 badd +1 cmt/precompile.RootCore
-badd +1 python/Git.py
-badd +48 python/parsers/Git.py
+badd +28 python/Git.py
+badd +45 python/parsers/Git.py
+badd +55 CMakeLists.txt
 argglobal
 silent! argdel *
-edit python/npConstants.py
+edit python/Git.py
 edit python/LoopingBounds.py
 edit python/__init__.py
 edit python/Configure.py
@@ -61,8 +60,8 @@ edit python/RawDictStreamable.py
 edit python/RucioTools.py
 edit python/StoreGate.py
 edit python/util.py
+edit python/npConstants.py
 edit python/Logger.py
-edit python/Git.py
 edit python/LimitedTypeList.py
 edit python/FileIO.py
 let t:CtrlSpaceLabel = 'py'
@@ -71,14 +70,14 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 28 - ((27 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 28
-normal! 049|
+normal! 07|
 tabedit python/tex/TexAPI.py
 edit python/tex/__init__.py
 edit python/tex/BeamerAPI.py
@@ -89,7 +88,7 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 592 - ((18 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
@@ -104,7 +103,6 @@ edit python/parsers/ClusterManager.py
 edit python/parsers/Grid.py
 edit python/parsers/LocalCluster.py
 edit python/parsers/__init__.py
-edit python/parsers/__py_argparse.py
 edit python/parsers/Logger.py
 let t:CtrlSpaceLabel = 'parsers'
 edit python/parsers/Git.py
@@ -112,13 +110,13 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
-let s:l = 48 - ((47 * winheight(0) + 24) / 49)
+let s:l = 45 - ((44 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-48
+45
 normal! 03|
 tabedit RingerCore/StoreGate.h
 edit RingerCore/MsgStream.h
@@ -130,7 +128,7 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 1 - ((0 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
@@ -147,7 +145,7 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 1 - ((0 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
@@ -164,7 +162,7 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 1 - ((0 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
@@ -180,7 +178,6 @@ edit cmt/precompile.RootCore
 edit cmt/check_install_setup_tools.sh
 edit cmt/gcc_python_compiler_path.sh
 edit cmt/Makefile.RootCore
-edit cmt/new_env_file.sh
 edit cmt/check_install_scipy.sh
 let t:CtrlSpaceLabel = 'cmt'
 edit cmt/precompile.RootCore
@@ -188,7 +185,7 @@ set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
-set winheight=1 winwidth=1
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
 argglobal
 let s:l = 1 - ((0 * winheight(0) + 24) / 49)
 if s:l < 1 | let s:l = 1 | endif
@@ -196,12 +193,29 @@ exe s:l
 normal! zt
 1
 normal! 0
-tabnext 3
+tabedit CMakeLists.txt
+edit CMakeLists.txt
+let t:CtrlSpaceLabel = 'cmake'
+edit CMakeLists.txt
+set splitbelow splitright
+set nosplitbelow
+set nosplitright
+wincmd t
+set winminheight=1 winheight=1 winminwidth=1 winwidth=1
+argglobal
+let s:l = 55 - ((41 * winheight(0) + 24) / 49)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+55
+normal! 0
+tabnext 1
 if exists('s:wipebuf')
   silent exe 'bwipe ' . s:wipebuf
 endif
 unlet! s:wipebuf
 set winheight=1 winwidth=20 shortmess=filnxtToO
+set winminheight=1 winminwidth=1
 let s:sx = expand("<sfile>:p:r")."x.vim"
 if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)

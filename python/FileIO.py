@@ -21,7 +21,10 @@ def expandPath(path):
   " Returns absolutePath path expanding variables and user symbols "
   if not isinstance( path, basestring):
     raise BadFilePath(path)
-  return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
+  try:
+    return os.path.abspath( os.path.join(os.path.dirname(path), os.readlink( os.path.expanduser( os.path.expandvars( path ) ) ) ) )
+  except OSError:
+    return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
 
 def save(o, filename, **kw):
   """
