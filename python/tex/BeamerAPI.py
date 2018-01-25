@@ -1,5 +1,5 @@
 __all__ = [ 'BeamerSlide', 'BeamerTexReport'
-          , 'BeamerFigureSlide', 'BeamerMultiFigureSlide', 'BeamerTableSlide'
+          , 'BeamerFigureSlide', 'BeamerSCFigureSlide', 'BeamerMultiFigureSlide', 'BeamerTableSlide'
           , 'BeamerSection', 'BeamerSubSection', 'BeamerSubSubSection'
           , 'BeamerPhantomSection', 'BeamerPhantomSubSection', 'BeamerPhantomSubSubSection'
           , 'TexBeamerTemplate', 'TexBeamerTemplateCollection'
@@ -198,6 +198,16 @@ class BeamerFigureSlide( BeamerSlide ):
     self += Center( Figure( path, _contextManaged = False, **kw ), 
                     _contextManaged = False )
 
+class BeamerSCFigureSlide( BeamerSlide ):
+  """
+  Beamer figure slide
+  """
+  def __init__(self, path,config = None ,**kw):
+    BeamerSlide.__init__(self ,**kw) 
+    if not 'width' in kw and not 'height' in kw: kw['width'] = 1.0
+    self += Center( SCFigure( path, _contextManaged = False, **kw ), 
+                    _contextManaged = False )
+
 class BeamerMultiFigureSlide( BeamerSlide ):
   """
   Beamer multiple figures slide
@@ -376,7 +386,7 @@ class BeamerTexReport( TexObjectCollection ):
   def __init__(self, *args, **kw):
     # FIXME Check if no title slide in args, else add it as first, same for agenda
     if not args:
-      args = BeamerTitleSlide( _contextManaged = False), outlineSession
+      args = (BeamerTitleSlide( _contextManaged = False),) # , outlineSession
     import getpass, socket
     # Pre-ample default configuration
     self.theme      = retrieve_kw( kw, 'theme',      'Berlin'         ) # Boadilla, Singapore, Madrid
@@ -397,8 +407,9 @@ class BeamerTexReport( TexObjectCollection ):
                                                )
                                                                   )
     self.beamertemplates  = TexBeamerTemplateCollection( 
-                                    retrieve_kw( kw, 'beamertemplates', [# TexBeamerTemplate( 'navigation symbols', braces = '' )
-                                                                          TexBeamerTemplate( 'caption', brackets = 'numbered' )
+                                    retrieve_kw( kw, 'beamertemplates', [ TexBeamerTemplate( 'navigation symbols', braces = '' ),
+                                                                          #TexBeamerTemplate( 'caption', brackets = 'numbered' )
+                                                                          TexBeamerTemplate( 'caption', brackets = 'numbered' ),
                                                                         ]
                                                )
                                                                   )
@@ -599,6 +610,8 @@ class BeamerTexReportTemplate2( BeamerTexReport ):
                     %(beamertemplates)s
                   }
                   %(packages)s
+                  \setbeamerfont{caption}{size=\tiny}
+                  \setbeamersize{text margin left=10pt, text margin right=10pt}
                   \title{%(title)s}
                   \author{%(author)s}
                   \institute{%(institute)s}

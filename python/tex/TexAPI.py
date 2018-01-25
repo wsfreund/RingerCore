@@ -1,6 +1,6 @@
 __all__ = [ 'escape_decode', 'TexException', 'TexSessionStream', 'PDFTexOutput'
           , 'TexObject', 'TexObjectCollection', 'Center', 'Table'
-          , 'GenericTexCode', 'Figure', 'Tabular', 'TableLine', 'HLine', 'formatTex'
+          , 'GenericTexCode', 'Figure', 'SCFigure', 'Tabular', 'TableLine', 'HLine', 'formatTex'
           , 'TexPackage', 'TexPackageCollection', 'assertProp'
           , 'TexPassOptionsToPackage', 'TexPassOptionsToPackageCollection'
           , 'tss', 'gco', 'gcc', '_', 'Columns', 'Column', 'IncludeGraphics'
@@ -623,6 +623,35 @@ class Figure( TexObject ):
                       , width = width
                       , path = path
                       , **kw )
+
+class SCFigure( TexObjectCollection ):
+  """
+  Create side caption figure tex code
+  """
+  _header = r'%(config)s'
+  _enclosure = 'figure'
+  _footer = r''
+
+  def __init__( self, path
+              , config = [], columns_config = None, caption = ''
+              , width = None, fig_width = None, height = None, keepaspectratio = None,
+              **kw ):
+    self.config = ''
+    if config:
+      self.config += '['
+      self.config += config
+      self.config += ']'
+    TexObjectCollection.__init__(self, **kw) 
+    if width == None: width = 1.0
+    if fig_width == None: fig_width = 0.7
+    if columns_config == None:
+      columns_config = r'c,totalwidth=%f\textwidth' % width
+    with Columns( config = columns_config, _contextManaged = False ) as columns:
+      Column( fig_width )
+      IncludeGraphics( path, width, height, keepaspectratio )
+      Column( 1. - fig_width )
+      GenericTexCode( u'\caption{%(caption)s}' % { 'caption' : caption } )
+      self += columns
 
 class Table( TexObjectCollection ):
   _enclosure = 'table'
