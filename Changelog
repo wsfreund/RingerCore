@@ -4,7 +4,7 @@
 	* Log messages now show Cxx. prefix when logging from that side.
 	* Fix in GitConfiguration
 	* Added firstItemDepth to LoopingBounds;
-	* Tagging RingerCore-01-00-25
+	* Tagging RingerCore-01-01-00a
 
 2017-01-04 Werner S Freund
 	* Protect expandFolders from keeping folders in the returned list
