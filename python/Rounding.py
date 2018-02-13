@@ -1,4 +1,4 @@
-__all__ = ['roundingLogger', 'truncate', 'pdgRound']
+__all__ = ['roundingLogger', 'truncate', 'pdgRound', 'reducePowerOf10Str']
 
 from RingerCore.Logger import Logger
 
@@ -168,5 +168,47 @@ def pdgRound( number, trunc_pos = None, fill = '0', digits=None, getOrder = Fals
         else:
             ret = number + base
     return ( (ret, ret_trunc_pos) if getOrder else ret )
+
+def reducePowerOf10Str(s, doPrint = False):
+  import re
+  if isinstance(s,(list,tuple)): 
+    return map(reducePowerOf10Str, s)
+  if isinstance(s,(float,int)): s = pdgRound(s)
+  if not isinstance(s,basestring): return s
+  thousand = re.compile(r"""
+    (?<!\S)
+    # Ensures that we are at the begin of a word
+    ###############################################
+    (?=(\d+|\d*,?(\d{3},)*\d+)k*|(k*\.^))
+    # Guarantees that what come next is a sequence of digits or commas ending
+    # with possible 'k's added from previous substitutions
+    ###############################################
+    (?P<BEFORE>(\d+|\d*,?(\d{3},)*\d+))
+    # What may come before the matching pattern that we want to substitute
+    # (000). It is basically the string the we have guaranteed before, except
+    # for the 'k*' that we will use later on
+    ###############################################
+    (,?0{3})(?!(\d|,)+)
+    # This is the match that we will change by k. It must not be followed by a
+    # digit or a comma to ensure that we are substituting the last three zeros
+    # available. We also consume a left comma if available
+    ###############################################
+    (?:\.?(?!\d+))
+    # And finally, we also consume an ending dot if it hasn't following
+    # digits. It will also consume end of sentence punctuation
+    ###############################################
+    (?P<AFTER>(k*)|(k*\.^))
+    # To ensure that the string will keep any already available 'k's
+    """
+      , re.X)
+  s2 = thousand.sub(r'\g<BEFORE>k\g<AFTER>',s)
+  while s2 != s:
+    s = s2
+    s2 = thousand.sub(r'\g<BEFORE>k\g<AFTER>',s)
+  s = re.sub(r'k\.?k|kk','M',s2)
+  s = re.sub(r'Mk|kM|kkk','B',s)
+  s = re.sub(r'MM|kB|Bk|kkkk','T',s)
+  s = re.sub(r'kT|Tk|kkkkk','P',s)
+  return s
 
 

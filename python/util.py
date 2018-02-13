@@ -6,7 +6,7 @@ __all__ = ['Include', 'include', 'str_to_class', 'Roc', 'calcSP',
            'select', 'timed', 'getFilters', 'start_after', 'appendToOutput',
            'apply_sort', 'scale10', 'measureLoopTime', 'keyboard', 
            'is_tool', 'secureExtractNpItem', 'emptyArgumentsPrintHelp', 
-           'os_environ_get', 'measureCallTime', 'grouper']
+           'os_environ_get', 'measureCallTime', 'grouper',]
 
 import re, os, __main__
 import sys
@@ -629,5 +629,3 @@ def grouper(iterable, n, fillvalue=None):
   args = [iter(iterable)] * n
   from itertools import izip_longest
   return izip_longest(fillvalue=fillvalue, *args)
-
-
