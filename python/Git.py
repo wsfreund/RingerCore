@@ -95,8 +95,6 @@ class GitConfiguration( Configure ):
     from RingerCore.FileIO import expandPath, changeExtension
     if not cmd_exists('git'):
       self._logger.warning("Couldn't find git commnad.")
-    from RingerCore.util import keyboard
-    keyboard()
     pyExtFile = changeExtension( self._fname, '.py', knownFileExtensions = ['.pyc'] )
     if not os.path.exists( pyExtFile ):
       pyExtFile = self._fname
