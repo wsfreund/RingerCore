@@ -5,6 +5,7 @@
 	* Fix in GitConfiguration
 	* Added firstItemDepth to LoopingBounds;
 	* Added method reducePowerOf10Str
+	* Fixed Git.py incompatibility on RootCore side
 	* Tagging RingerCore-01-01-00a
 
 2017-01-04 Werner S Freund

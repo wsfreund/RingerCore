@@ -95,6 +95,8 @@ class GitConfiguration( Configure ):
     from RingerCore.FileIO import expandPath, changeExtension
     if not cmd_exists('git'):
       self._logger.warning("Couldn't find git commnad.")
+    from RingerCore.util import keyboard
+    keyboard()
     pyExtFile = changeExtension( self._fname, '.py', knownFileExtensions = ['.pyc'] )
     if not os.path.exists( pyExtFile ):
       pyExtFile = self._fname
@@ -102,6 +104,11 @@ class GitConfiguration( Configure ):
     if os.path.isfile( git_dir ):
       git_dir = os.path.dirname( git_dir )
     # Protect against RootCore file arrangement
+    if os.path.basename( git_dir ) == "python":
+      git_dir = os.path.dirname( git_dir )
+    base_dir = git_dir
+    while os.path.islink( base_dir ): base_dir = expandPath( base_dir )
+    git_dir = base_dir
     if os.path.basename( git_dir ) == "python":
       git_dir = os.path.dirname( git_dir )
     git_dir = os.path.join( git_dir, '.git' )
