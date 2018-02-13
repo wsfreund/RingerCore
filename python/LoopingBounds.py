@@ -2,7 +2,8 @@ __all__ = ['LoopingBounds', 'MatlabLoopingBounds', 'PythonLoopingBounds',
            'transformToMatlabBounds', 'transformToPythonBounds',
            'transformToSeqBounds', 'LoopingBoundsCollection',
            'MatlabLoopingBoundsCollection', 'PythonLoopingBoundsCollection',
-           'SetDepth','ltraverse', 'straverse','traverse', 'window']
+           'SetDepth','ltraverse', 'straverse','traverse', 'window',
+           'firstItemDepth']
 
 import numpy as np
 from RingerCore.Logger import Logger
@@ -24,6 +25,10 @@ def straverse(o, **kw):
   """
   if not 'simple_ret' in kw: kw['simple_ret'] = True
   return traverse(o, **kw)
+
+def firstItemDepth(o, tree_types=(list, tuple)):
+  _, _, _, _, depth = traverse(o, tree_types=tree_types).next()
+  return depth
 
 def traverse(o, tree_types=(list, tuple),
     max_depth_dist=0, max_depth=np.iinfo(np.uint64).max, 

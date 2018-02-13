@@ -249,27 +249,13 @@ class _ActionsContainer( object ):
     lActions = len(self._action_groups)
     for idx in reversed(list(toEliminate)):
       if idx < lActions:
-        #print "(adjustments) eliminating:", self._action_groups[idx].title
         self._action_groups.pop(idx)
       else:
-        #print "(adjustments) eliminating mutually exclusive:", self._mutually_exclusive_groups[idx].title
         self._mutually_exclusive_groups.pop(idx-lActions)
 
 class ArgumentParser( _ActionsContainer, argparse.ArgumentParser ):
   """
   This class has the following extra features over the original ArgumentParser:
-
-  -> add_boolean_argument: This option can be used to declare an argument which
-  may be declared as a radio button, that is, simply:
-     --option
-  where it will be set to True, or also specifying its current status through the
-  following possible ways:
-     --option True
-     --option true
-     --option 1
-     --option 0
-     --option False
-     --option false
 
   -> When type is a EnumStringification, it will automatically transform the input
   value using retrieve;
@@ -277,6 +263,12 @@ class ArgumentParser( _ActionsContainer, argparse.ArgumentParser ):
 
   def __init__(self,*l,**kw):
     _ActionsContainer.__init__(self)
+    if 'parents' in kw:
+      for p in kw['parents']:
+        if not isinstance(p, argparse.ArgumentParser):
+          raise ValueError("Attempted to add parents of non argparse.ArgumentParser type: %r", p)
+      #from copy import copy
+      #kw['parents'] = [copy(p) for p in kw['parents']]
     argparse.ArgumentParser.__init__(self,*l,**kw)
     self.register('type', BooleanStr, BooleanStr.retrieve)
     if 'parents' in kw:

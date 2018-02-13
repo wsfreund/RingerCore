@@ -181,8 +181,9 @@ class MsgStreamMirror
           if (useColor){ m_formatted_msg += color[level]; }
           const char* lvl_str = to_str(level);
           const size_t end_log_name = space_between_log_and_msg 
-                                      - (std::strlen(lvl_str) + 2);
-          m_formatted_msg += logName.substr(0, end_log_name );
+                                      - (std::strlen(lvl_str) + 2 );
+          m_formatted_msg += "Cxx.";
+          m_formatted_msg += logName.substr(0, end_log_name - 4 );
           m_formatted_msg.append( end_log_name 
                                   - m_formatted_msg.length() + ((useColor)?5:0) + 1
                                   , 0x20);

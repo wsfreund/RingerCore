@@ -1,4 +1,6 @@
-__all__ = [ 'lsfParser','pbsParser', 'LSFArgumentParser', 'PBSJobArgumentParser'
+__all__ = [ 'LsfParser', 'PbsParser'
+          , 'lsfParser', 'pbsParser'
+          , 'LSFArgumentParser', 'PBSJobArgumentParser'
           , 'LocalClusterNamespace', 'PBSOutputMerging']
 
 import os
@@ -27,54 +29,59 @@ class LSFArgumentParser( JobSubmitArgumentParser ):
 class PBSJobArgumentParser( JobSubmitArgumentParser ):
   prefix = 'pbs'
 
-pbsParser = PBSJobArgumentParser(description = 'Run job on local cluster using PBS/Torque',
-                                 parents = [clusterManagerParser],
-                                 conflict_handler = 'resolve')
-pbsGroup = pbsParser.add_argument_group('PBS/Torque Arguments', '')
-pbsGroup.add_job_submission_option('-Q','--queue',action='store', required = False,
-                                    help = "Specify the job queue.")
-OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',1))
-pbsGroup.add_job_submission_option( '--nodes', option='-l',suboption='nodes', action=SubOptionRetrieve, required = False
-                                  , type=int
-                                  , help = "Specify the job number of nodes.")
-pbsGroup.add_job_submission_option( '--ncpus', option='-l',suboption='ncpus', action=SubOptionRetrieve, required = False
-                                  , default = OMP_NUM_THREADS, type=int
-                                  , help = "Specify the job number of nodes.")
-pbsGroup.add_job_submission_option( '--walltime', option='-l', suboption='walltime', required = False
-                                  , action=SubOptionRetrieve
-                                  , help = "Specify the job wall time limit using format [hh:mm:ss].")
-pbsGroup.add_job_submission_option( '--mem', option='-l', suboption='mem',action=SubOptionRetrieve
-                                  , required = False
-                                  , help = "Specify the job memory size.")
-pbsGroup.add_job_submission_option( '-oe', '--combine-stdout-sterr', option='-j', action=EnumStringOptionRetrieve
-                                  , required = False, type=PBSOutputMerging, default=PBSOutputMerging.oe
-                                  , help = PBSOutputMerging.__doc__)
-pbsGroup.add_job_submission_option( '-stdout', action='store', required = False
-                                  , help = "Name of standard output file.")
-pbsGroup.add_job_submission_option( '-stderr', action='store', required = False
-                                  , help = "Name of standard output error file.")
-pbsGroup.add_job_submission_option( '-V','--copy-environment', option = '-V', action=BooleanOptionRetrieve
-                                  , required = False, type = BooleanStr
-                                  , help = "Copy current environment to the job.")
-pbsGroup.add_job_submission_option( '-N','--job-name', option = '-N', action=OptionRetrieve
-                                  , help = "Specifies name for job submitted.", addEqual=False)
-pbsGroup.add_job_submission_option( '-M','--mail-address',action='store', required = False
-                                  , help = "Specify mail address.")
-pbsGroup.add_job_submission_option( '-D','--job-dependency',action='store', required = False
-                                  , type = int
-                                  , help = "Specifies that current job depends on other job.")
-pbsGroup.add_job_submission_option( '-j','--job-dependency',action='store', required = False
-                                  , type = int
-                                  , help = "Specifies that current job depends on other job.")
-# Arguments which are not propagated to the job, but handle how to set it up
-pbsGroup.add_argument('--debug', required = False, type = BooleanStr, default=False,
-                      help = "Specify that this should be run on debug mode.")
-pbsGroup.add_argument( '--nFiles', required = False
-                     , default = None, type=int
-                     , help = """Specify the number of files in the input directory to be used.""")
-pbsGroup.add_argument('--max-job-slots', type = int, default = 48,
-                     help = "Specify the maximum job slots that can be submitted with this name" )
+def PbsParser():
+  pbsParser = PBSJobArgumentParser(description = 'Run job on local cluster using PBS/Torque',
+                                   parents = [clusterManagerParser],
+                                   conflict_handler = 'resolve')
+  pbsGroup = pbsParser.add_argument_group('PBS/Torque Arguments', '')
+  pbsGroup.add_job_submission_option('-Q','--queue',action='store', required = False,
+                                      help = "Specify the job queue.")
+  OMP_NUM_THREADS = int(os.environ.get('OMP_NUM_THREADS',1))
+  pbsGroup.add_job_submission_option( '--nodes', option='-l',suboption='nodes', action=SubOptionRetrieve, required = False
+                                    , type=int
+                                    , help = "Specify the job number of nodes.")
+  pbsGroup.add_job_submission_option( '--ncpus', option='-l',suboption='ncpus', action=SubOptionRetrieve, required = False
+                                    , default = OMP_NUM_THREADS, type=int
+                                    , help = "Specify the job number of nodes.")
+  pbsGroup.add_job_submission_option( '--walltime', option='-l', suboption='walltime', required = False
+                                    , action=SubOptionRetrieve
+                                    , help = "Specify the job wall time limit using format [hh:mm:ss].")
+  pbsGroup.add_job_submission_option( '--mem', option='-l', suboption='mem',action=SubOptionRetrieve
+                                    , required = False
+                                    , help = "Specify the job memory size.")
+  pbsGroup.add_job_submission_option( '-oe', '--combine-stdout-sterr', option='-j', action=EnumStringOptionRetrieve
+                                    , required = False, type=PBSOutputMerging, default=PBSOutputMerging.oe
+                                    , help = PBSOutputMerging.__doc__)
+  pbsGroup.add_job_submission_option( '-stdout', action='store', required = False
+                                    , help = "Name of standard output file.")
+  pbsGroup.add_job_submission_option( '-stderr', action='store', required = False
+                                    , help = "Name of standard output error file.")
+  pbsGroup.add_job_submission_option( '-V','--copy-environment', option = '-V', action=BooleanOptionRetrieve
+                                    , required = False, type = BooleanStr
+                                    , help = "Copy current environment to the job.")
+  pbsGroup.add_job_submission_option( '-N','--job-name', option = '-N', action=OptionRetrieve
+                                    , help = "Specifies name for job submitted.", addEqual=False)
+  pbsGroup.add_job_submission_option( '-M','--mail-address',action='store', required = False
+                                    , help = "Specify mail address.")
+  pbsGroup.add_job_submission_option( '-D','--job-dependency',action='store', required = False
+                                    , type = int
+                                    , help = "Specifies that current job depends on other job.")
+  pbsGroup.add_job_submission_option( '-j','--job-dependency',action='store', required = False
+                                    , type = int
+                                    , help = "Specifies that current job depends on other job.")
+  # Arguments which are not propagated to the job, but handle how to set it up
+  pbsGroup.add_argument('--debug', required = False, type = BooleanStr, default=False,
+                        help = "Specify that this should be run on debug mode.")
+  pbsGroup.add_argument( '--nFiles', required = False
+                       , default = None, type=int
+                       , help = """Specify the number of files in the input directory to be used.""")
+  pbsGroup.add_argument('--max-job-slots', type = int, default = 48,
+                       help = "Specify the maximum job slots that can be submitted with this name" )
+  return pbsParser
+pbsParser = PbsParser()
 ## TODO
+def LsfParser():
+  return None
 lsfParser = None
 
 ################################################################################

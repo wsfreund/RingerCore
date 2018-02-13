@@ -1,3 +1,11 @@
+2017-02-13 Werner S Freund
+	* Added support to AnalysisBase integration
+	* Added firstItemDepth to LoopingBounds module
+	* Log messages now show Cxx. prefix when logging from that side.
+	* Fix in GitConfiguration
+	* Added firstItemDepth to LoopingBounds;
+	* Tagging RingerCore-01-00-25
+
 2017-01-04 Werner S Freund
 	* Protect expandFolders from keeping folders in the returned list
 	* Tagging RingerCore-01-00-24

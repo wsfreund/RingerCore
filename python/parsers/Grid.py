@@ -1,5 +1,6 @@
 __all__ = ['SecondaryDataset','SecondaryDatasetCollection', 
            'GridOutput','GridOutputCollection', 'GridNamespace',  
+           'GridParser', 'InGridParser', 'IOGridParser', 'OutGridParser',
            'gridParser', 'inGridParser', 'ioGridParser', 'outGridParser',
            'MultiThreadGridConfigure' ]
 
@@ -160,135 +161,149 @@ class MultiThreadGridConfigure( CastToTypeOptionConfigure ):
       self._fatal("Estimation only available when using rucio.", NotImplementedError)
 
 # Basic grid parser
-gridParser = GridJobArgumentParser( add_help = False, parents = [clusterManagerParser] )
-gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
-gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
-    help = "The site location where the job should run.",
-    required = False,)
-shortSites = ['ANALY_CERN_SHORT','ANALY_CONNECT_SHORT','ANALY_BNL_SHORT']
-gridParserGroup.add_job_submission_csv_option('--excludedSite', 
-    #default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
-    #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
-    default = 'ANALY_DESY-HH_UCORE,ANALY_BNL_MCORE,ANALY_MWT2_SL6,ANALY_MWT2_HIMEM,ANALY_DESY-HH,ANALY_FZK_UCORE,ANALY_FZU,DESY-HH_UCORE,FZK-LCG2_UCORE',
-    help = "The excluded site location.", 
-    required = False, )
-gridParserGroup.add_job_submission_option_group('--debug', default = None,
-    const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode',
-    help = "Submit GRID job on debug mode.", action='store_const',
-    required = False )
-gridParserGroup.add_job_submission_option('--nCore', type=int,
-    required = False, help = """Number of cores to be used by the job.""")
-gridParserGroup.add_job_submission_option('--nJobs', type=int,
-    required = False, help = """Number of jobs to submit.""")
-gridParserGroup.add_job_submission_option('--excludeFile', 
-    required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*,RootCoreBin/*,RootCore/*,*new_env_file.sh,"',
-    help = """Files to exclude from environment copied to grid.""")
-gridParserGroup.add_job_submission_option('--disableAutoRetry', type=BooleanStr,
-    required = False,
-    help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--followLinks', type=BooleanStr,
-    required = False,
-    help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--mergeOutput', type=BooleanStr,
-    required = False,
-    help = """Flag to enable merging output.""")
-#gridParserGroup.add_job_submission_option('--mergeScript', 
-#    required = False, 
-#    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
-gridParserGroup.add_job_submission_csv_option('--extFile', 
-    required = False, 
-    help = """External file to add.""")
-gridParserGroup.add_job_submission_option('--match', 
-    required = False, 
-    help = """Use only files matching with given pattern.""")
-gridParserGroup.add_job_submission_option('--antiMatch', 
-    required = False,
-    help = """Use all files but those matching with given pattern.""")
-gridParserGroup.add_job_submission_option('--cloud', 
-    required = False, default=False,
-    help = """The cloud where to submit the job.""")
-gridParserGroup.add_job_submission_option('--nGBPerJob', 
-    required = False,
-    help = """Maximum number of GB per job.""")
-gridParserGroup.add_job_submission_option('--skipScout', type=BooleanStr,
-    required = False,
-    help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--memory', type=int,
-    required = False,
-    help = """Needed memory to run in MB.""")
-gridParserGroup.add_job_submission_option('--long', type=BooleanStr,
-    required = False,
-    help = """Submit for long queue.""")
-gridParserGroup.add_job_submission_option('--useNewCode', type=BooleanStr,
-    required = False,
-    help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--allowTaskDuplication', type=BooleanStr,
-    required = False,
-    help = """Flag to disable auto retrying jobs.""")
-gridParserGroup.add_job_submission_option('--crossSite',
-    required = False, type=int,
-    help = """Split jobs over many sites.""")
-mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
-mutuallyEx1.add_job_submission_option('-itar','--inTarBall', 
-    metavar='InTarBall', 
-    help = "The environemnt tarball for posterior usage.")
-mutuallyEx1.add_job_submission_option('-otar','--outTarBall',
-    metavar='OutTarBall',  
-    help = "The environemnt tarball for posterior usage.")
-mutuallyEx1.title = 'GRID Mutually Exclusive Arguments'
+def GridParser():
+  gridParser = GridJobArgumentParser( add_help = False, parents = [clusterManagerParser] )
+  gridParserGroup = gridParser.add_argument_group('GRID Arguments', '')
+  gridParserGroup.add_job_submission_option('--site',default = 'AUTO',
+      help = "The site location where the job should run.",
+      required = False,)
+  shortSites = ['ANALY_CERN_SHORT','ANALY_CONNECT_SHORT','ANALY_BNL_SHORT']
+  gridParserGroup.add_job_submission_csv_option('--excludedSite', 
+      #default = 'ANALY_CERN_CLOUD,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT', # Known bad sites
+      #default = 'ANALY_CERN_CLOUD,ANALY_SLAC,ANALY_CERN_SHORT,ANALY_CONNECT_SHORT,ANALY_BNL_SHORT,ANALY_BNL_EC2E1,ANALY_SWT2_CPB', # Known bad sites
+      default = 'ANALY_DESY-HH_UCORE,ANALY_BNL_MCORE,ANALY_MWT2_SL6,ANALY_MWT2_HIMEM,ANALY_DESY-HH,ANALY_FZK_UCORE,ANALY_FZU,DESY-HH_UCORE,FZK-LCG2_UCORE',
+      help = "The excluded site location.", 
+      required = False, )
+  gridParserGroup.add_job_submission_option_group('--debug', default = None,
+      const='--express --debugMode --allowTaskDuplication --disableAutoRetry --useNewCode',
+      help = "Submit GRID job on debug mode.", action='store_const',
+      required = False )
+  gridParserGroup.add_job_submission_option('--nCore', type=int,
+      required = False, help = """Number of cores to be used by the job.""")
+  gridParserGroup.add_job_submission_option('--nJobs', type=int,
+      required = False, help = """Number of jobs to submit.""")
+  gridParserGroup.add_job_submission_option('--excludeFile', 
+      required = False, default = '"*.o,*.so,*.a,*.gch,Download/*,InstallArea/*,RootCoreBin/*,RootCore/*,*new_env_file.sh,"',
+      help = """Files to exclude from environment copied to grid.""")
+  gridParserGroup.add_job_submission_option('--disableAutoRetry', type=BooleanStr,
+      required = False,
+      help = """Flag to disable auto retrying jobs.""")
+  gridParserGroup.add_job_submission_option('--followLinks', type=BooleanStr,
+      required = False,
+      help = """Flag to disable auto retrying jobs.""")
+  gridParserGroup.add_job_submission_option('--mergeOutput', type=BooleanStr,
+      required = False,
+      help = """Flag to enable merging output.""")
+  #gridParserGroup.add_job_submission_option('--mergeScript', 
+  #    required = False, 
+  #    help = """The script for merging the files. E.g.: 'your_merger.py -o %%OUT -i %%IN'""")
+  gridParserGroup.add_job_submission_csv_option('--extFile', 
+      required = False, 
+      help = """External file to add.""")
+  gridParserGroup.add_job_submission_option('--match', 
+      required = False, 
+      help = """Use only files matching with given pattern.""")
+  gridParserGroup.add_job_submission_option('--antiMatch', 
+      required = False,
+      help = """Use all files but those matching with given pattern.""")
+  gridParserGroup.add_job_submission_option('--cloud', 
+      required = False, default=False,
+      help = """The cloud where to submit the job.""")
+  gridParserGroup.add_job_submission_option('--nGBPerJob', 
+      required = False,
+      help = """Maximum number of GB per job.""")
+  gridParserGroup.add_job_submission_option('--skipScout', type=BooleanStr,
+      required = False,
+      help = """Flag to disable auto retrying jobs.""")
+  gridParserGroup.add_job_submission_option('--memory', type=int,
+      required = False,
+      help = """Needed memory to run in MB.""")
+  gridParserGroup.add_job_submission_option('--long', type=BooleanStr,
+      required = False,
+      help = """Submit for long queue.""")
+  gridParserGroup.add_job_submission_option('--useNewCode', type=BooleanStr,
+      required = False,
+      help = """Flag to disable auto retrying jobs.""")
+  gridParserGroup.add_job_submission_option('--allowTaskDuplication', type=BooleanStr,
+      required = False,
+      help = """Flag to disable auto retrying jobs.""")
+  gridParserGroup.add_job_submission_option('--crossSite',
+      required = False, type=int,
+      help = """Split jobs over many sites.""")
+  mutuallyEx1 = gridParserGroup.add_mutually_exclusive_group( required=False )
+  mutuallyEx1.add_job_submission_option('-itar','--inTarBall', 
+      metavar='InTarBall', 
+      help = "The environemnt tarball for posterior usage.")
+  mutuallyEx1.add_job_submission_option('-otar','--outTarBall',
+      metavar='OutTarBall',  
+      help = "The environemnt tarball for posterior usage.")
+  mutuallyEx1.title = 'GRID Mutually Exclusive Arguments'
+  return gridParser 
+gridParser = GridParser()
 ################################################################################
 ## Temporary classes only to deal with diamond inherit scheme
-_inParser = GridJobArgumentParser(add_help = False)
-_inParserGroup = _inParser.add_argument_group('GRID Input Dataset Arguments', '')
-_inParserGroup.add_job_submission_option('--inDS','-i', action='store', 
-                       required = True,
-                       help = "The input Dataset ID (DID)")
-_inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store',
-                       required = False, default = SecondaryDatasetCollection(),
-                       help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
-_inParserGroup.add_job_submission_option('--forceStaged', type=BooleanStr,
-    required = False, default = False,
-    help = """Force files from primary DS to be staged to local
-    disk, even if direct-access is possible.""")
-_inParserGroup.add_job_submission_option('--forceStagedSecondary', type=BooleanStr,
-    required = False,
-    help = """Force files from secondary DS to be staged to local
-              disk, even if direct-access is possible.""")
-_inParserGroup.add_job_submission_csv_option('--reusableSecondary', 
-    required = False,
-    help = """Allow reuse secondary dataset.""")
-_inParserGroup.add_job_submission_option('--nFiles', type=int,
-    required = False,
-    help = """Number of files to run.""")
-_inParserGroup.add_job_submission_option('--nFilesPerJob', type=int,
-    required = False,
-    help = """Number of files to run per job.""")
+def _InParser():
+  _inParser = GridJobArgumentParser(add_help = False)
+  _inParserGroup = _inParser.add_argument_group('GRID Input Dataset Arguments', '')
+  _inParserGroup.add_job_submission_option('--inDS','-i', action='store', 
+                         required = True,
+                         help = "The input Dataset ID (DID)")
+  _inParserGroup.add_job_submission_csv_option('--secondaryDSs', action='store',
+                         required = False, default = SecondaryDatasetCollection(),
+                         help = "The secondary Dataset ID (DID), in the format name:nEvents:place")
+  _inParserGroup.add_job_submission_option('--forceStaged', type=BooleanStr,
+      required = False, default = False,
+      help = """Force files from primary DS to be staged to local
+      disk, even if direct-access is possible.""")
+  _inParserGroup.add_job_submission_option('--forceStagedSecondary', type=BooleanStr,
+      required = False,
+      help = """Force files from secondary DS to be staged to local
+                disk, even if direct-access is possible.""")
+  _inParserGroup.add_job_submission_csv_option('--reusableSecondary', 
+      required = False,
+      help = """Allow reuse secondary dataset.""")
+  _inParserGroup.add_job_submission_option('--nFiles', type=int,
+      required = False,
+      help = """Number of files to run.""")
+  _inParserGroup.add_job_submission_option('--nFilesPerJob', type=int,
+      required = False,
+      help = """Number of files to run per job.""")
+  return _inParser 
 ################################################################################
-_outParser = GridJobArgumentParser(add_help = False)
-_outParserGroup = _inParser.add_argument_group('GRID Output Dataset Arguments', '')
-_outParserGroup.add_job_submission_option('--outDS','-o', action='store', 
-                        required = True,
-                        help = "The output Dataset ID (DID)")
-_outParserGroup.add_job_submission_csv_option('--outputs', required = True,
-    default = GridOutputCollection(),
-    help = """The output format.""")
+def _OutParser():
+  _outParser = GridJobArgumentParser(add_help = False)
+  _outParserGroup = _outParser.add_argument_group('GRID Output Dataset Arguments', '')
+  _outParserGroup.add_job_submission_option('--outDS','-o', action='store', 
+                          required = True,
+                          help = "The output Dataset ID (DID)")
+  _outParserGroup.add_job_submission_csv_option('--outputs', required = True,
+      default = GridOutputCollection(),
+      help = """The output format.""")
+  return _outParser
 ################################################################################
 ## Input and output grid parser
-ioGridParser = GridJobArgumentParser(add_help = False, 
-                                     parents = [_inParser, _outParser, gridParser],
-                                     conflict_handler = 'resolve')
+def IOGridParser():
+  ioGridParser = GridJobArgumentParser(add_help = False, 
+                                       parents = [_InParser(), _OutParser(), GridParser()],
+                                       conflict_handler = 'resolve')
+  return ioGridParser
+ioGridParser = IOGridParser()
 
 ## Input grid parser
-inGridParser = GridJobArgumentParser(add_help = False, 
-                                     parents = [_inParser, gridParser],
-                                     conflict_handler = 'resolve')
+def InGridParser():
+  inGridParser = GridJobArgumentParser(add_help = False, 
+                                       parents = [_InParser(), GridParser()],
+                                       conflict_handler = 'resolve')
+  return inGridParser
+inGridParser = InGridParser()
 
 ## Output grid parser
-outGridParser = GridJobArgumentParser(add_help = False, 
-                                      parents = [_outParser, gridParser],
-                                      conflict_handler = 'resolve')
-# Remove temp classes
-del _inParser, _outParser
+def OutGridParser():
+  outGridParser = GridJobArgumentParser(add_help = False, 
+                                        parents = [_OutParser(), GridParser()],
+                                        conflict_handler = 'resolve')
+  return outGridParser
+outGridParser = OutGridParser()
 
 class LargeDIDError(ValueError):
   def __init__(self, in_):

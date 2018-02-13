@@ -26,6 +26,31 @@ if( XAOD_STANDALONE )
                        LINK_LIBRARIES ${Boost_LIBRARIES} ${ROOT_LIBRARIES}
                      )
 
+		### Install python packages
+		list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+		include(SetupPythonPackage)
+
+    setup_python_package( numpy 
+    "https://github.com/numpy/numpy/releases/download/v1.14.0/numpy-1.14.0.tar.gz"
+    "c573e2d2f26a5786d5198a660f87d8e4"
+    #PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch-setup.cfg setup.cfg
+    #ARG_DEPENDS scipy
+  	 LOG_DOWNLOAD 0
+  	 LOG_UPDATE 0
+  	 LOG_CONFIGURE 0
+  	 LOG_BUILD 0
+  	 LOG_TEST 0
+  	 LOG_INSTALL 1
+    )
+
+    #setup_python_package( scipy
+    #"https://github.com/scipy/scipy/releases/download/v1.0.0/scipy-1.0.0.tar.gz"
+    #"53fa34bd3733a9a4216842b6000f7316"
+    # ARG_DEPENDS numpy
+    #)
+    #add_dependencies(scipy numpy)
+
   endif()
 endif()
 

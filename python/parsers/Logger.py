@@ -1,4 +1,4 @@
-__all__ = ['LoggerNamespace', 'loggerParser']
+__all__ = ['LoggerNamespace', 'LoggerParser', 'loggerParser']
 
 from RingerCore.parsers.ParsingUtils import ArgumentParser, argparse
 from RingerCore.Logger import LoggingLevel
@@ -16,11 +16,15 @@ class _RetrieveOutputLevelAction(argparse.Action):
     namespace.level = value
     setattr(namespace, self.dest, value)
 
-loggerParser = ArgumentParser(add_help = False)
-logOutput = loggerParser.add_argument_group('Logging arguments', '')
-logOutput.add_argument('--output-level', action=_RetrieveOutputLevelAction,
-    type=LoggingLevel, required = False, dest='_level', default = LoggingLevel.INFO,
-    metavar = 'LEVEL', help = "The output level for the main logger." )
+def LoggerParser():
+  loggerParser = ArgumentParser(add_help = False)
+  logOutput = loggerParser.add_argument_group('Logging arguments', '')
+  logOutput.add_argument('--output-level', action=_RetrieveOutputLevelAction,
+      type=LoggingLevel, required = False, dest='_level', default = LoggingLevel.INFO,
+      metavar = 'LEVEL', help = "The output level for the main logger." )
+  return loggerParser
+loggerParser = LoggerParser()
+
 # TODO Add a destination file for logging messages
 #parser.add_argument(
 #        '--log', default=sys.stdout, type=argparse.FileType('w'),
