@@ -2,7 +2,8 @@ __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
            'ensureExtension', 'appendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
-           'getFiles', 'expandPath', 'BadFilePath']
+           'getFiles', 'expandPath', 'BadFilePath', 
+           'LockFile']
 
 import numpy as np
 import cPickle
@@ -13,9 +14,39 @@ import os
 import sys
 import shutil
 import StringIO
+import signal
 from time import sleep, time
 
 class BadFilePath(ValueError): pass
+
+from RingerCore.Logger import Logger
+class LockFile( Logger ):
+  """
+  Simple lock file
+  """
+
+  def __init__( self, path ):
+    self.path = path
+    if self:
+      self.path = None
+      raise IOError( "Cannot create .lock file, file %s already exists." % self.path, self.path )
+    open( self.path, 'w' ).close()
+    self._prevSignal = signal.getsignal(signal.SIGTERM)
+    signal.signal( signal.SIGTERM, self._abort )
+
+  def __bool__( self ):
+    return os.path.isfile( self.path )
+  __nonzero__ = __bool__
+
+  def _abort( self, signum, frame ):
+    self.delete()
+    if self._prevSignal: self._prevSignal(signum, frame )
+
+  def delete( self ):
+    if self: os.remove( self.path )
+
+  def __del__( self ):
+    self.delete()
 
 def expandPath(path):
   " Returns absolutePath path expanding variables and user symbols "
