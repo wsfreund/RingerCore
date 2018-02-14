@@ -1,4 +1,8 @@
 2017-02-14 Werner S Freund
+	* Allow git tags to have letters after the tagging numbers.
+	* Tagging RingerCore-01-01-00c
+
+2017-02-14 Werner S Freund
 	* Important bug fix on inspect_list_attrs which would span dimension using
 	the same instances. Besides the fix, it will now by default work on 
 	deepcopy of the instances now.
