@@ -116,6 +116,19 @@ def _LimitedTypeList____add__(self, var):
   copy = list.__add__(self, var)
   return copy 
 
+# Uncomment this in case you want to have LimitedTypeLists Specifying its type
+#def _LimitedTypeList____str__(self):
+#  """
+#    Default __str__ method
+#  """
+#  return '< ' + self.__class__.__name__ + list.__str__(self) + ' >'
+
+#def _LimitedTypeList____repr__(self):
+#  """
+#    Default __repr__ method
+#  """
+#  return '< ' + self.__class__.__name__ + list.__repr__(self) + ' >'
+
 def _LimitedTypeList____iadd__( self, var, *args ):
   """
     Default __iadd__ method
@@ -250,36 +263,34 @@ class LimitedTypeStreamableList( RawDictStreamable, LimitedTypeList):
     dct = t1.__dict__.copy()
     return LimitedTypeList.__new__(cls, name, bases, dct)
 
-def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False, acceptSingleDim = False ):
+def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple), dim = None, name = "", level = None, deepcopy = False, allowSpan = True ):
   """
   Check if list can be set into a LimitedTypeList of <wantedType> at the depth
   <nDepth>.
   
-  Also make sure that its dimension is <dim>, otherwise spam it to <dim> if its
-  previous size was 1.
+  Make sure that its dimension of <nDepth> is <dim>. If <allowSpan> is set, then 
+  the only exception to throwing RuntimeError is when <nDepth> dimension is 1, where
+  it will be spanned to have dimension size of <dim> by copying this element using
+  <deepcopy> to determine whether to deepcopy element or do a standard copy.
 
-  Use <name> to dimension name.
+  Use <name> to determine dimension name, this will be used in case of throwing.
 
   <level> can be used to change the value of the logging level of the objects.
-
-  When acceptSingleDim is set, and <dim> is set to 1, then it will not complain
-  with different dim size at <nDepth>
   """
+  dcopy = deepcopy; from copy import copy, deepcopy
   if nDepth == 0:
     if level is not None and obj is not None:
       var.level = level
     if wantedType is not None:
       var = wantedType( var )
     # And that its size spans over last dim:
-    if dim:
-      lPar = len(var)
-      if lPar == 1:
-        if wantedType is not None:
-          var = wantedType( var * dim )
-        else:
-          var = [ var ] * dim
-      elif lPar != dim:
-        raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+    lPar = len(var)
+    if allowSpan and lPar == 1:
+      if dim > 1: var = [ deepcopy( var[0] ) if dcopy else copy( var[0] ) for _ in range(dim) ]
+      if wantedType is not None and type(var) is not wantedType:
+        var = wantedType( var )
+    elif lPar != dim:
+      raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
     from RingerCore.LoopingBounds import traverse
     for obj, idx, parent, _, _ in traverse( var
@@ -288,18 +299,15 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
                                           ):
       if level is not None and obj is not None:
         obj.level = level
-      if wantedType is not None and type(obj) is not wantedType:
-        parent[idx] = wantedType(obj)
       # Make sure that its size spans over dim:
-      if dim and ( dim != 1 or not acceptSingleDim ):
-        lPar = len(parent[idx])
-        if lPar == 1:
-          if wantedType is not None:
-            parent[idx] = wantedType( parent[idx] * dim )
-          else:
-            parent[idx] = [ parent[idx] ] * dim
-        elif lPar != dim:
-          raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+      lPar = len(parent[idx])
+      if allowSpan and lPar == 1:
+        if dim > 1: parent[idx] = [ deepcopy( obj[0] ) if dcopy else copy( obj[0] ) for _ in range(dim) ]
+      elif lPar != dim:
+        raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+      #else: # lPar == 1 and dim == 1:
+      if wantedType is not None and type(parent[idx]) is not wantedType:
+        parent[idx] = wantedType(parent[idx])
   if deepcopy:
     from copy import deepcopy
     var = deepcopy( var )

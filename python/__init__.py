@@ -3,12 +3,12 @@ __all__ = ['__version__']
 from . import Configure
 __all__.extend( Configure.__all__ )
 from .Configure import *
-from . import FileIO
-__all__.extend( FileIO.__all__ )
-from .FileIO import *
 from . import Logger
 __all__.extend( Logger.__all__ )
 from .Logger import *
+from . import FileIO
+__all__.extend( FileIO.__all__ )
+from .FileIO import *
 from . import parsers
 __all__.extend( parsers.__all__ )
 from .parsers import *
