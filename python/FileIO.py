@@ -27,23 +27,22 @@ class LockFile( Logger ):
 
   def __init__( self, path ):
     self.path = path
-    if self:
+    if self.exists():
       self.path = None
       raise IOError( "Cannot create .lock file, file %s already exists." % self.path, self.path )
     open( self.path, 'w' ).close()
     self._prevSignal = signal.getsignal(signal.SIGTERM)
     signal.signal( signal.SIGTERM, self._abort )
 
-  def __bool__( self ):
+  def exists( self ):
     return os.path.isfile( self.path )
-  __nonzero__ = __bool__
 
   def _abort( self, signum, frame ):
     self.delete()
     if self._prevSignal: self._prevSignal(signum, frame )
 
   def delete( self ):
-    if self: os.remove( self.path )
+    if self.exists(): os.remove( self.path )
 
   def __del__( self ):
     self.delete()
@@ -472,7 +471,7 @@ def changeExtension( filename, newExtension, knownFileExtensions = ['tgz', 'tar.
 
 def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
                                                                   'pic.gz', 'pic.xz', 'pic',
-                                                                  'npz', 'npy', 'root'],
+                                                                  'npz', 'npy', 'root','pdf','jpg','jpeg'],
                       retryExtensions = ['gz', 'xz'],
                       moreFileExtensions = [],
                       moreRetryExtensions = [],
@@ -615,8 +614,12 @@ def mkdir_p(path):
       pass
     else: raise IOError
 
-def getFiles(folder, ftype = os.path.isfile):
+def getFiles(folder, ftype = os.path.isfile, fullpath = True):
   """
   As in expand folders, but without recursion
   """
-  return [ os.path.join(folder,f) for f in sorted(os.listdir(folder)) if ftype( os.path.join(folder,f) ) ]
+  if fullpath:
+    return [ os.path.join(folder,f) for f in sorted(os.listdir(folder)) if ftype( os.path.join(folder,f) ) ]
+  else:
+    return [ f for f in sorted(os.listdir(folder)) if ftype( os.path.join(folder,f) ) ]
+

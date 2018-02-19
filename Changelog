@@ -1,3 +1,9 @@
+2017-02-19 Werner S Freund
+	* Improved inspect_list_attrs to also work in the singleton cases
+	* FileIO can now list files with full path or not
+	* Added hadd_chunk script
+	* Tagging RingerCore-01-01-00d
+
 2017-02-14 Werner S Freund
 	* Added lock file class
 	* Not tagging

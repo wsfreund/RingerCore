@@ -57,3 +57,4 @@ endif()
 
 ## Install files from the package:
 atlas_install_python_modules( python/*.py python/parsers python/tex )
+atlas_install_scripts( scripts/hadd_chunk.py )

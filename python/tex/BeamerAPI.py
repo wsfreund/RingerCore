@@ -392,7 +392,7 @@ class BeamerTexReport( TexObjectCollection ):
     self.passOptionsToPackages  = TexPassOptionsToPackageCollection( 
                                     retrieve_kw( kw, 'passOptionsToPackage', [ 
                                                                      #TexPassOptionsToPackage( 'beamerouterthememiniframes', "subsection=false")
-                                                                     TexPassOptionsToPackage( 'xcolor', 'table', 'xcdraw' )
+                                                                     TexPassOptionsToPackage( 'xcolor', 'table', 'xcdraw', 'x11names' )
                                                                              ]
                                                )
                                                                   )

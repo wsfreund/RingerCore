@@ -281,16 +281,15 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
   if nDepth == 0:
     if level is not None and obj is not None:
       var.level = level
-    if wantedType is not None:
+    if dim is not None:
+      # And that its size spans over last dim:
+      lPar = len(var)
+      if allowSpan and lPar == 1:
+        if dim > 1: var = [ deepcopy( var[0] ) if dcopy else copy( var[0] ) for _ in range(dim) ]
+      elif lPar != dim:
+        raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+    if wantedType is not None and type(var) is not wantedType:
       var = wantedType( var )
-    # And that its size spans over last dim:
-    lPar = len(var)
-    if allowSpan and lPar == 1:
-      if dim > 1: var = [ deepcopy( var[0] ) if dcopy else copy( var[0] ) for _ in range(dim) ]
-      if wantedType is not None and type(var) is not wantedType:
-        var = wantedType( var )
-    elif lPar != dim:
-      raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
   else:
     from RingerCore.LoopingBounds import traverse
     for obj, idx, parent, _, _ in traverse( var
@@ -300,12 +299,13 @@ def inspect_list_attrs(var, nDepth, wantedType = None, tree_types = (list,tuple)
       if level is not None and obj is not None:
         obj.level = level
       # Make sure that its size spans over dim:
-      lPar = len(parent[idx])
-      if allowSpan and lPar == 1:
-        if dim > 1: parent[idx] = [ deepcopy( obj[0] ) if dcopy else copy( obj[0] ) for _ in range(dim) ]
-      elif lPar != dim:
-        raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
-      #else: # lPar == 1 and dim == 1:
+      if dim is not None:
+        lPar = len(parent[idx])
+        if allowSpan and lPar == 1:
+          if dim > 1: parent[idx] = [ deepcopy( obj[0] ) if dcopy else copy( obj[0] ) for _ in range(dim) ]
+        elif lPar != dim:
+          raise RuntimeError("Number of dimensions equivalent to %s do not match specified value (is %d, should be %d)!" % (name, lPar, dim))
+        #else: # lPar == 1 and dim == 1:
       if wantedType is not None and type(parent[idx]) is not wantedType:
         parent[idx] = wantedType(parent[idx])
   if deepcopy:
