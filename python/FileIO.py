@@ -56,12 +56,25 @@ def expandPath(path):
   except OSError:
     return os.path.abspath( os.path.expanduser( os.path.expandvars( path ) ) )
 
+def watchLock(filename):
+  logger = Logger.getModuleLogger( "watchLock" )
+  lockFileName = os.path.join( os.path.join( os.path.dirname(filename), '.' + os.path.basename(filename) + '.lock' ) )
+  firstMsg = True
+  while os.path.exists( lockFileName ): 
+    if firstMsg: 
+      logger.warning("Waiting other process to unlock file %s...", lockFileName )
+      firstMsg = False
+    sleep(1)
+  lockFile = LockFile( lockFileName )
+  return lockFile
+
 def save(o, filename, **kw):
   """
     Save an object to disk.
   """
   compress = kw.pop( 'compress', True )
   protocol = kw.pop( 'protocol', -1   )
+  lock     = kw.pop( 'lock',     True )
   if not isinstance(filename, str):
     raise("Filename must be a string!")
   filename = expandPath( filename )
@@ -71,6 +84,7 @@ def save(o, filename, **kw):
   if type(protocol) is str:
     if protocol == "savez_compressed":
       filename = ensureExtension(filename, 'npz')
+      if lock: lockFile = watchLock( filename )
       if type(o) is dict:
         np.savez_compressed(filename, **o)
       else:
@@ -79,6 +93,7 @@ def save(o, filename, **kw):
         np.savez_compressed(filename, *o)
     elif protocol == "savez":
       filename = ensureExtension(filename, 'npz')
+      if lock: lockFile = watchLock( filename )
       if type(o) is dict:
         np.savez(filename, **o)
       else:
@@ -87,18 +102,23 @@ def save(o, filename, **kw):
         np.savez(filename, *o)
     elif protocol == "save":
       filename = ensureExtension(filename, 'npy')
+      if lock: lockFile = watchLock( filename )
       np.save(filename, o)
     else:
       raise ValueError("Unknown protocol '%s'" % protocol)
   elif type(protocol) is int:
     if compress:
       filename = ensureExtension(filename, 'pic.gz')
+      if lock: lockFile = watchLock( filename )
       f = gzip.GzipFile(filename, 'wb')
     else:
       filename = ensureExtension(filename, 'pic')
+      if lock: lockFile = watchLock( filename )
       f = open(filename, 'w')
     cPickle.dump(o, f, protocol)
     f.close()
+  if lock:
+    lockFile.delete()
   return filename
 
 def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
