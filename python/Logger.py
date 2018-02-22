@@ -328,7 +328,7 @@ class Logger( object ):
       Makes logger invisible for pickle
     """
     odict = self.__dict__.copy() # copy the dict since we change it
-    del odict['_logger']         # remove logger entry
+    if '_logger' in odict: del odict['_logger']         # remove logger entry
     return odict
 
   def __setstate__(self, d):

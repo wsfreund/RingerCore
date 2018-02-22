@@ -129,6 +129,7 @@ class LocalClusterNamespace( JobSubmitNamespace, Logger, ):
     "Execute the command"
     full_cmd_str = self.prog + ' \\\n'
     full_cmd_str += self._parse_standard_args()
+    if hasattr(self,'exec_') and '-' in self.exec_: full_cmd_str += ' -- ' 
     full_cmd_str += self.parse_exec()
     full_cmd_str += self.parse_special_args()
     self._run_command(full_cmd_str)
@@ -137,7 +138,7 @@ class LocalClusterNamespace( JobSubmitNamespace, Logger, ):
     full_cmd_str = ''
     # Add execute grid command if available
     if hasattr(self,'exec_'):
-      full_cmd_str += self._formated_line( '--' )
+      #full_cmd_str += self._formated_line( '--' )
       full_cmd_str += self.parseExecStr(self.exec_, addQuote = False)
     return full_cmd_str
 
