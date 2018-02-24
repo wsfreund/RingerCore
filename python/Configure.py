@@ -238,7 +238,7 @@ class Configure( Logger ):
         if hasattr(self, '_logger'): self._debug("Disabled auto configuration for %s due to manual value setup.", self.name)
       value = self.retrieve( val )
       if not self.allowReconfigure and self.configured():
-        self._error("Attempted to reconfigure %s twice.",  self.name)
+        self._fatal("Attempted to reconfigure %s.",  self.name)
       newChoice = value
       if newChoice != self._choice:
         self._choice = newChoice
