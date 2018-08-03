@@ -1,3 +1,8 @@
+2018-08-03 Werner S Freund
+	* Improved BooleanStr to return False and True python booleans instead of
+	integers 0 and 1.
+	* Tagging RingerCore-01-01-01
+
 2017-02-24 Werner S Freund
 	* Tagging RingerCore-01-01-00
 

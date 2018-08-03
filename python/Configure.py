@@ -1,7 +1,7 @@
 __all__ = [ 'NotSetType', 'NotSet', 'Holder', 'StdPair'
           , 'EnumStringification', 'BooleanStr'
           , 'conditionalOption', 'RCM_GRID_ENV', 'retrieve_kw'
-          , 'checkForUnusedVars', 'setDefaultKey' 
+          , 'checkForUnusedVars', 'setDefaultKey'
           , 'Configure', 'EnumStringificationOptionConfigure'
           , 'MasterLevel', 'masterLevel', 'RCM_NO_COLOR', 'OMP_NUM_THREADS'
           , 'cmd_exists', 'LimitedTypeOptionConfigure', 'CastToTypeOptionConfigure'
@@ -19,7 +19,7 @@ def cmd_exists(cmd):
   Taken from: http://stackoverflow.com/a/28909933/1162884
   """
   import subprocess
-  return subprocess.call("type " + cmd, shell=True, 
+  return subprocess.call("type " + cmd, shell=True,
       stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
 
 class NotSetType( type ):
@@ -31,7 +31,7 @@ class NotSetType( type ):
   def __str__(self):
     return "<+NotSet+>"
 
-class NotSet( object ): 
+class NotSet( object ):
   """As None, but can be used with retrieve_kw to have a unique default value
   though all job hierarchy."""
   __metaclass__ = NotSetType
@@ -154,10 +154,58 @@ def get_attributes(o, **kw):
                 and (getProtected or not( a[0].startswith('_') or a[0].startswith('__') ) ) ]
 
 class BooleanStr( EnumStringification ):
+  """
+  Specialization of EnumStringification for boolean type.
+  Values will always be set to 0 and 1
+  """
   _ignoreCase = True
 
-  False = 0
-  True = 1
+  False = False
+  True = True
+
+  @classmethod
+  def tostring(cls, val):
+    "Transforms val into string."
+    if isinstance(val,int):
+      if val == 0:
+        return "False"
+      else:
+        return "True"
+    if isinstance(val,float):
+      if val == 0.:
+        return "False"
+      else:
+        return "True"
+    return super(BooleanStr,cls).tostring( val )
+
+  @classmethod
+  def fromstring(cls, str_):
+    "Transforms string into enumeration."
+    try:
+      val = float(str_)
+      if str_ == "0":
+        return False
+      else:
+        return True
+    except Exception, e:
+      pass
+    return super(BooleanStr,cls).fromstring( str_ )
+
+  @classmethod
+  def retrieve(cls, val):
+    """
+    Retrieve int value and check if it is a valid enumeration string or int on
+    this enumeration class.
+    """
+    try:
+      val = int(float(val))
+      if val == 0:
+        return False
+      else:
+        return True
+    except Exception, e:
+      pass
+    return super(BooleanStr, cls).retrieve( val )
 
   @staticmethod
   def treatVar(var,d, default = False):
@@ -186,7 +234,7 @@ class Holder( object ):
     else:
       raise RuntimeError("Cannot replace held object.")
 
-class StdPair( object ): 
+class StdPair( object ):
   """
   A simple object pair holder
   """
@@ -242,16 +290,16 @@ class Configure( Logger ):
       newChoice = value
       if newChoice != self._choice:
         self._choice = newChoice
-        test_result = self.test() 
+        test_result = self.test()
         if test_result is not None and not test_result:
           if hasattr(self, '_logger'):
             self._fatal("%s test failed.", self.name )
           else:
             raise RuntimeError('%s test failed', self.name )
         if hasattr(self, '_logger'):
-          self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} ) 
+          self._info('%s was set to %s', self.name, str(self), extra={'color':'0;34'} )
       elif hasattr(self, '_logger'):
-        self._verbose('Ignored setting to same value. (Previous|New): (%s|%s)', self._choice, val ) 
+        self._verbose('Ignored setting to same value. (Previous|New): (%s|%s)', self._choice, val )
     elif hasattr(self, '_logger'):
       self._debug('Called %s set method with empty value.', self.name )
     return self._choice
@@ -275,7 +323,7 @@ class Configure( Logger ):
     """Check whether this class is configured, raise otherwise except when it can
     auto-configure itself"""
     if not self.configured():
-      self._autoconfiguration() 
+      self._autoconfiguration()
     else:
       self._fatal("%s was not configured.", self.name )
 
@@ -329,7 +377,7 @@ class Configure( Logger ):
     return '%s[%s](%s)' % (self.name
                           , ','.join( [ 'ALWAYS_AUTO' if self.alwaysAutoConfigure else ('CAN_AUTO' if hasattr(self,'auto') else 'MANUAL_ONLY') ]
                                     + (['CAN_RECONFIGURE' if self.allowReconfigure else 'CANNOT_RECONFIGURE'] if not self.alwaysAutoConfigure else [])
-                                    + (['ALLOW_MANUAL' if self.allowManualConfigure else 'NO_MANUAL_CONFIG'] if self.alwaysAutoConfigure else []) 
+                                    + (['ALLOW_MANUAL' if self.allowManualConfigure else 'NO_MANUAL_CONFIG'] if self.alwaysAutoConfigure else [])
                                     )
                           , self)
 

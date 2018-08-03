@@ -72,6 +72,10 @@ class _ActionsContainer( object ):
             if not 'action' in kwargs:
               del kwargs['type']
               kwargs['action'] = BooleanRetrieve
+              kwargs['help'] = """Boolean parameter. Assignable to True or
+              False. Another syntax accepts inputing numbers, where the value
+              will be assigned to False if it is assigned to a number in which
+              its integer part is 0, otherwise assigned to True."""
             else:
               if not lType in self._registries['type']: self.register('type', lType, lType.retrieve)
           else:
@@ -127,7 +131,7 @@ class _ActionsContainer( object ):
       except _EraseGroup:
         popIdxs.append(idx)
     for idx in reversed(popIdxs):
-      #print 'deleting group:', self._action_groups[idx].title 
+      #print 'deleting group:', self._action_groups[idx].title
       self._action_groups.pop( idx )
     popIdxs = []
     # Repeat procedure for the mutually exclusive groups:
@@ -141,7 +145,7 @@ class _ActionsContainer( object ):
       except _EraseGroup:
         popIdxs.append(idx)
     for idx in reversed(popIdxs):
-      #print 'deleting mutually exclusive group:', self._mutually_exclusive_groups[idx].title 
+      #print 'deleting mutually exclusive group:', self._mutually_exclusive_groups[idx].title
       self._mutually_exclusive_groups.pop( idx )
     # Treat our own actions:
     popIdxs = []
@@ -236,7 +240,7 @@ class _ActionsContainer( object ):
         continue
       # This seems not to be needed as the argparse deals with it:
       ##Make sure that we have all grouped arguments with common titles
-      ##merged in only one group. This avoids having several properties 
+      ##merged in only one group. This avoids having several properties
       #sameTitleIdxs = [idx + qidx for qidx, qgroup in enumerate(groups[idx:]) if group.title == qgroup.title and qgroup is not group]
       #for sameTitleIdx in sameTitleIdxs:
       #  # Add actions:
