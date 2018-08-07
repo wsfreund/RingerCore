@@ -132,7 +132,7 @@ class _BeamerPhantomSectionBase( _BeamerSectionBase ):
   """
   Base class for beamer phantom sections
   """
-  _global_extra = _(  
+  _global_extra = _(
       r"""
       \makeatletter
       \newcommand{\phantomsectionfortoc}[1]{%%
@@ -193,9 +193,9 @@ class BeamerFigureSlide( BeamerSlide ):
   Beamer figure slide
   """
   def __init__(self, path,config = None ,**kw):
-    BeamerSlide.__init__(self ,**kw) 
+    BeamerSlide.__init__(self ,**kw)
     if not 'width' in kw and not 'height' in kw: kw['width'] = 0.7
-    self += Center( Figure( path, _contextManaged = False, **kw ), 
+    self += Center( Figure( path, _contextManaged = False, **kw ),
                     _contextManaged = False )
 
 class BeamerMultiFigureSlide( BeamerSlide ):
@@ -208,7 +208,7 @@ class BeamerMultiFigureSlide( BeamerSlide ):
               , fontsize = None, startAt = 0, delocateAll = 0
               , verticalDelocateAll = 0, verticalStartAt = 0
               , config = None, ignoreMissing = False, **kw):
-    BeamerSlide.__init__(self, **kw) 
+    BeamerSlide.__init__(self, **kw)
     # Deal with text and paths arguments:
     if nDivWidth * nDivHeight < len(paths):
       raise TexException(self, "Not enought divisions (%d,%d) to retrieve all paths (%d)"
@@ -237,7 +237,7 @@ class BeamerMultiFigureSlide( BeamerSlide ):
     texts += [None] * ( ( nDivWidth * nDivHeight) - len(texts) )
     paths = map(lambda path: path if (os.path.exists( os.path.expandvars( os.path.expanduser( path ) ) ) if isinstance(path, basestring) else False) else None, paths)
     # Now start slide figure objects creation:
-    fWidth = usedWidth / nDivWidth 
+    fWidth = usedWidth / nDivWidth
     fHeight = usedHeight / nDivHeight
     if fontsize:
       self += GenericTexCode( code = r'\fontsize{%f}{0}\selectfont' % fontsize, _contextManaged = False )
@@ -292,14 +292,14 @@ class BeamerTableSlide( BeamerSlide ):
   def __init__( self, lines=[], columns='', caption = '', table_width = 1.
               , sideline = '', rounding = None, config = None, **kw ):
     BeamerSlide.__init__( self , **kw )
-                    
+
     with Table( caption = caption, _contextManaged = False ) as table:
       self._table = table
       self += table
       with ResizeBox( size = table_width, _contextManaged = False) as rb:
         table += rb
         with Tabular( columns = columns
-                    , _contextManaged = False 
+                    , _contextManaged = False
                     ) as tabular:
           rb += tabular
           self._tabular = tabular
@@ -329,12 +329,12 @@ class TexBeamerTemplate( TexObject ):
     self.brackets = ''
     if brackets is not None:
       self.brackets += '['
-      self.brackets += ','.join( brackets ) 
+      self.brackets += ','.join( brackets )
       self.brackets += ']'
     self.braces = ''
     if braces is not None:
       self.braces += '{'
-      self.braces += ','.join( braces ) 
+      self.braces += ','.join( braces )
       self.braces += '}'
     TexObject.__init__(self)
 
@@ -346,7 +346,7 @@ class TexBeamerTemplateCollection( TexObjectCollection ):
 
 class BeamerTexReport( TexObjectCollection ):
   """
-  A BeamerTexReport object can be used to generate templated slides 
+  A BeamerTexReport object can be used to generate templated slides
   containing plots, tables etc.
   """
   _acceptedTypes = BeamerSlide, _BeamerSectionBase
@@ -385,27 +385,28 @@ class BeamerTexReport( TexObjectCollection ):
     self.title      = escape_latex( retrieve_kw( kw, 'title',      'Report'         ) )
     self.institute  = retrieve_kw( kw, 'institute',  os.environ.get( 'BEAMER_API_INSTITUTE', 'ATLAS Internal' ) )
     self.author     = retrieve_kw( kw, 'author',  os.environ.get( 'BEAMER_API_AUTHOR', getpass.getuser()
-                                                                                       + '@' 
-                                                                                       + socket.gethostname() 
+                                                                                       + '@'
+                                                                                       + socket.gethostname()
                                                                 )
                                  )
-    self.passOptionsToPackages  = TexPassOptionsToPackageCollection( 
-                                    retrieve_kw( kw, 'passOptionsToPackage', [ 
+    self.passOptionsToPackages  = TexPassOptionsToPackageCollection(
+                                    retrieve_kw( kw, 'passOptionsToPackage', [
                                                                      #TexPassOptionsToPackage( 'beamerouterthememiniframes', "subsection=false")
                                                                      TexPassOptionsToPackage( 'xcolor', 'table', 'xcdraw', 'x11names' )
                                                                              ]
                                                )
                                                                   )
-    self.beamertemplates  = TexBeamerTemplateCollection( 
+    self.beamertemplates  = TexBeamerTemplateCollection(
                                     retrieve_kw( kw, 'beamertemplates', [# TexBeamerTemplate( 'navigation symbols', braces = '' )
                                                                           TexBeamerTemplate( 'caption', brackets = 'numbered' )
                                                                         ]
                                                )
                                                                   )
-    self.packages  = TexPackageCollection( 
+    self.packages  = TexPackageCollection(
                         retrieve_kw( kw, 'packages', [ TexPackage( 'babel', 'english' )
                                                      , TexPackage( 'inputenc', 'utf8x' )
                                                      , TexPackage( 'multicol' )
+                                                     , TexPackage( 'multirow' )
                                                      , TexPackage( 'chemfig' )
                                                      , TexPackage( 'etoolbox' )
                                                      , TexPackage( 'moresize' )
@@ -416,8 +417,8 @@ class BeamerTexReport( TexObjectCollection ):
                                                      #, TexPackage( 'moresize' ) # \usepackage[11pt]{moresize}
                                                      , TexPackage( 'anyfontsize' )
                                                      #, TexPackage( 'helvet', help = r'Needed to simulate root font (use \fontfamily{phv}\selectfont)' )
-                                                     #, TexPackage( 'colorbl' ) 
-                                                     #, PDFTexLayout() 
+                                                     #, TexPackage( 'colorbl' )
+                                                     #, PDFTexLayout()
                                                      ]
                                    )
                     )
@@ -489,7 +490,7 @@ class BeamerTexReport( TexObjectCollection ):
       self._stream().__exit__( exc_type, exc_value, traceback )
     self._contextManager.pop()
 
-# This singleton will be used to assign every TexObject to this 
+# This singleton will be used to assign every TexObject to this
 # tex session file
 gcb = Holder( None, replaceable = True )
 
