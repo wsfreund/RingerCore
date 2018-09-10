@@ -132,7 +132,7 @@ class LocalClusterNamespace( JobSubmitNamespace, Logger, ):
     if hasattr(self,'exec_') and '-' in self.exec_: full_cmd_str += ' -- ' 
     full_cmd_str += self.parse_exec()
     full_cmd_str += self.parse_special_args()
-    self._run_command(full_cmd_str)
+    return self._run_command(full_cmd_str)
 
   def parse_exec(self):
     full_cmd_str = ''

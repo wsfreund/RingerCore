@@ -239,7 +239,7 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     full_cmd_str += self.parse_exec()
     full_cmd_str += self.parse_special_args()
     full_cmd_str += self._parse_standard_args()
-    self._run_command(full_cmd_str)
+    return self._run_command(full_cmd_str)
 
   def parse_exec(self):
     "Overload this method to specify how the exec command string should be written."
@@ -376,8 +376,11 @@ class JobSubmitNamespace( Logger, argparse.Namespace ):
     self._debug("Command without spaces:\n%s", full_cmd_str)
     # And run it:
     if not self.dry_run:
-      self.fcn(full_cmd_str)
-      pass
+      ret = self.fcn(full_cmd_str)
+      if ret:
+        self._error("Command failed")
+      return ret
+    return None
 
 class _JobSubmitArgumentGroup( _JobSubmitActionsContainer, _ArgumentGroup ):
   def __init__(self, *args, **kw):
