@@ -1,8 +1,9 @@
 __all__ = ['save', 'load', 'expandFolders', 'mkdir_p',
            'getExtension', 'checkExtension', 'changeExtension',
-           'ensureExtension', 'appendToFileName', 'findFile',
+           'ensureExtension', 'appendToFileName', 'prependToFileName',
+           'prependAppendToFileName', 'findFile',
            'getMD5','checkFile', 'WriteMethod', 'cat_files_py',
-           'getFiles', 'expandPath', 'BadFilePath', 
+           'getFiles', 'expandPath', 'BadFilePath',
            'LockFile']
 
 import numpy as np
@@ -60,8 +61,8 @@ def watchLock(filename):
   logger = Logger.getModuleLogger( "watchLock" )
   lockFileName = os.path.join( os.path.join( os.path.dirname(filename), '.' + os.path.basename(filename) + '.lock' ) )
   firstMsg = True
-  while os.path.exists( lockFileName ): 
-    if firstMsg: 
+  while os.path.exists( lockFileName ):
+    if firstMsg:
       logger.warning("Waiting other process to unlock file %s...", lockFileName )
       firstMsg = False
     sleep(1)
@@ -82,7 +83,15 @@ def save(o, filename, **kw):
   if not os.path.isdir( dirplace ) and dirplace:
     mkdir_p( dirplace )
   if type(protocol) is str:
-    if protocol == "savez_compressed":
+    if protocol == "mat":
+      filename = ensureExtension(filename, 'mat')
+      try:
+        import scipy.io
+        if lock: lockFile = watchLock( filename )
+        scipy.io.savemat( filename, o)
+      except ImportError, e:
+        raise ImportError( "Exporting data in matlab extension is not available. Reason: %s" % e )
+    elif protocol == "savez_compressed":
       filename = ensureExtension(filename, 'npz')
       if lock: lockFile = watchLock( filename )
       if type(o) is dict:
@@ -122,7 +131,7 @@ def save(o, filename, **kw):
   return filename
 
 def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = False,
-         useGenerator = False, tarMember = None, ignore_zeros = True, 
+         useGenerator = False, tarMember = None, ignore_zeros = True,
          extractAll = False, eraseTmpTarMembers = True,
          returnFileName = False, returnFileMember = False,
          logger = None):
@@ -159,7 +168,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     if decompress == 'auto':
       if checkExtension( filename, 'tar.gz|tgz' ):
         decompress = 'tgz'
-      elif checkExtension( filename, 'gz|gzip' ): 
+      elif checkExtension( filename, 'gz|gzip' ):
         decompress = 'gzip'
       elif checkExtension( filename, 'tar' ):
         decompress = 'tar'
@@ -167,12 +176,12 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
         decompress = False
       else:
         raise RuntimeError("It is not possible to read format: '.%s'. Input file was: '%s'." % (
-          getExtension(filename, None), 
+          getExtension(filename, None),
           filename) )
     if decompress == 'gzip':
       f = gzip.GzipFile(filename, 'rb')
     elif decompress in ('tgz', 'tar'):
-      args = (allowTmpFile, transformDataRawData, 
+      args = (allowTmpFile, transformDataRawData,
               tarMember, extractAll, eraseTmpTarMembers,
               ignore_zeros, logger,)
       if decompress == 'tar':
@@ -191,7 +200,7 @@ def load(filename, decompress = 'auto', allowTmpFile = True, useHighLevelObj = F
     o = transformDataRawData( o, filename, None )
     return [o] if useGenerator else o
   # end of (if filename)
-# end of (load) 
+# end of (load)
 
 
 def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
@@ -225,7 +234,7 @@ def __load_tar(filename, mode, allowTmpFile, transformDataRawData, tarMember,
           start = time()
           logger.info("Proceeding to untar all members.")
           process_args = (tar_cmd, '--verbose', '-xvzif', filename,)
-          untar_ps = Popen(process_args, stdout = PIPE, bufsize = 1, 
+          untar_ps = Popen(process_args, stdout = PIPE, bufsize = 1,
                           cwd = tmpFolderPath)
           memberList = []
           with untar_ps.stdout:
@@ -359,7 +368,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
     if os.path.isdir(path):
       for idx, filt in enumerate(filters):
         cList = filter(lambda x: not(os.path.isdir(x)), [ f for f in glob( os.path.join(path,filt) ) ])
-        if cList: 
+        if cList:
           retList[idx].extend(cList)
       folders = [ os.path.join(path,f) for f in os.listdir( path ) if os.path.isdir( os.path.join(path,f) ) ]
       if folders:
@@ -375,7 +384,7 @@ def expandFolders( pathList, filters = None, logger = None, level = None):
   if len(filters) is 1:
     retList = retList[0]
   return retList
- 
+
 def getExtension( filename, nDots = None):
   """
     Get file extension.
@@ -423,7 +432,7 @@ def ensureExtension( filename, extL, ignoreNumbersAfterExtension = True ):
   the extensions specified is found, nothing will be changed in the output,
   else the first extension will be added to the file.
   """
-  if isinstance(extL, basestring) and '|' in extL: 
+  if isinstance(extL, basestring) and '|' in extL:
     extL = extL.split('|')
   if not isinstance(extL, (list,tuple)):
     extL = [extL]
@@ -489,6 +498,30 @@ def changeExtension( filename, newExtension, knownFileExtensions = ['tgz', 'tar.
   else:
     return filename + newExtension
 
+def prependAppendToFileName( filename, prependStr, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
+                                                                                     'pic.gz', 'pic.xz', 'pic',
+                                                                                     'npz', 'npy', 'root','pdf','jpg','jpeg'],
+                      retryExtensions = ['gz', 'xz'],
+                      moreFileExtensions = [],
+                      moreRetryExtensions = [],
+                      ignoreNumbersAfterExtension = True,
+                      separator = '_'):
+  filename = prependToFileName( prependStr, filename, separator )
+  filename = appendToFileName( filename, appendStr, knownFileExtensions,
+                      retryExtensions,
+                      moreFileExtensions,
+                      moreRetryExtensions,
+                      ignoreNumbersAfterExtension,
+                      separator )
+  return filename
+
+def prependToFileName( prependStr, filename, separator = '_'):
+  """
+  Prepend string to file name
+  """
+  if prependStr.endswith(separator): separator = ''
+  return os.path.dirname(filename) + prependStr + separator + os.path.basename(filename)
+
 def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz', 'tar.xz','tar',
                                                                   'pic.gz', 'pic.xz', 'pic',
                                                                   'npz', 'npy', 'root','pdf','jpg','jpeg'],
@@ -498,7 +531,7 @@ def appendToFileName( filename, appendStr, knownFileExtensions = ['tgz', 'tar.gz
                       ignoreNumbersAfterExtension = True,
                       separator = '_'):
   """
-  Append string to end of file name but keeping file extension in the end.
+  Append string to file name but keeping file extension in the end.
 
   Inputs:
     -> filename: the filename path;
@@ -545,7 +578,7 @@ def getMD5(filepath):
   md5_returned = ''
   with open(os.path.expandvars(filepath),'rb') as file_to_check:
     # read contents of the file
-    data = file_to_check.read()    
+    data = file_to_check.read()
     # pipe contents of the file through
     md5_returned = hashlib.md5(data).hexdigest()
   return md5_returned
@@ -587,7 +620,7 @@ def cat_files_py(flist, ofile, op, logger = None, level = None):
   if level is None: level = LoggingLevel.INFO
   with open(ofile, 'wb') as out:
     from RingerCore.util import progressbar
-    for fname in progressbar(flist, len(flist), prefix="Merging: ", 
+    for fname in progressbar(flist, len(flist), prefix="Merging: ",
                              disp = True if logger is not None else False, step = 10,
                              logger = logger, level = level ):
       with open(fname,'rb') as f:
@@ -621,7 +654,7 @@ def findFile( filename, pathlist, access ):
       return f
 
   # no such accessible file avalailable
-  return None  
+  return None
 
 def mkdir_p(path):
   import errno

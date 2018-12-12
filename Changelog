@@ -1,3 +1,8 @@
+2018-12-12 Werner S Freund
+	* Added prependAppendToFile.
+	* save function can try to save matlab files
+	* Tagging RingerCore-01-01-02
+
 2018-08-03 Werner S Freund
 	* Improved BooleanStr to return False and True python booleans instead of
 	integers 0 and 1.
@@ -26,7 +31,7 @@
 
 2017-02-14 Werner S Freund
 	* Important bug fix on inspect_list_attrs which would span dimension using
-	the same instances. Besides the fix, it will now by default work on 
+	the same instances. Besides the fix, it will now by default work on
 	deepcopy of the instances now.
 	* Tagging RingerCore-01-01-00b
 
@@ -76,7 +81,7 @@
   * Tagging RingerCore-01-00-18.
 
 2017-12-17 Werner S Freund
-	* Added specific configuration classes that allow setting 
+	* Added specific configuration classes that allow setting
 	limited or cast to type configuration instances.
 	* Bug fix in Logger module that would display non-breaking lines
 	messages when inside of unicode stream environment.
@@ -92,7 +97,7 @@
   * Tagging RingerCore-01-00-16
 
 2017-12-02 Werner S Freund
-  * Fixed logging parser 
+  * Fixed logging parser
   * Tagging RingerCore-01-00-15
 
 2017-11-19 Werner S Freund
@@ -140,7 +145,7 @@ clean even when there are changes in MakeFile.RootCore
 	* LoopingBounds can be used directly in loops via iter method.
 
 2017-07-31 Werner S Freund
-	* expandFolders now deal with path globing 
+	* expandFolders now deal with path globing
 
 2017-07-28 Werner S Freund
 	* Added EnumStringification methods to retrieve enumeration string/ints
@@ -219,7 +224,7 @@ clean even when there are changes in MakeFile.RootCore
 	* util.py: Moved traverse and related objects to LoopingBounds.py,
 	also moved EnumStringification to Configure.py as it is commonly used
 	for configuration.
-	* Configure.py: Created a based class which can be used together with 
+	* Configure.py: Created a based class which can be used together with
 	EnumStringification to generate a Singleton (through the Holder class) that
 	can be retrieved and mantain a unique flow over the different modules.
 	* __init__.py: Added version to file.
@@ -227,7 +232,7 @@ clean even when there are changes in MakeFile.RootCore
 	of the module state.
 
 2017-01-04 Werner S Freund
-	* Improved argparse interaction with the utilities that RingerCore provides 
+	* Improved argparse interaction with the utilities that RingerCore provides
 	through the module ParsingUtils.py. The special cases are the
 	EnumStringification and the Logger classes, which now can automatically
 	detect those special cases.
