@@ -1,3 +1,8 @@
+2019-02-28 Werner S Freund
+	* Added possibility to save method only return the file output name (not a
+	good option though).
+	* Not tagging until it is fixed to a better solution.
+
 2018-12-12 Werner S Freund
 	* Added prependAppendToFile.
 	* save function can try to save matlab files

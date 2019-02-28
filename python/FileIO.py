@@ -73,9 +73,10 @@ def save(o, filename, **kw):
   """
     Save an object to disk.
   """
-  compress = kw.pop( 'compress', True )
-  protocol = kw.pop( 'protocol', -1   )
-  lock     = kw.pop( 'lock',     True )
+  compress = kw.pop( 'compress', True  )
+  protocol = kw.pop( 'protocol', -1    )
+  lock     = kw.pop( 'lock',     True  )
+  dryrun   = kw.pop( 'dryrun',   False )
   if not isinstance(filename, str):
     raise("Filename must be a string!")
   filename = expandPath( filename )
@@ -85,6 +86,7 @@ def save(o, filename, **kw):
   if type(protocol) is str:
     if protocol == "mat":
       filename = ensureExtension(filename, 'mat')
+      if dryrun: return filename
       try:
         import scipy.io
         if lock: lockFile = watchLock( filename )
@@ -93,6 +95,7 @@ def save(o, filename, **kw):
         raise ImportError( "Exporting data in matlab extension is not available. Reason: %s" % e )
     elif protocol == "savez_compressed":
       filename = ensureExtension(filename, 'npz')
+      if dryrun: return filename
       if lock: lockFile = watchLock( filename )
       if type(o) is dict:
         np.savez_compressed(filename, **o)
@@ -102,6 +105,7 @@ def save(o, filename, **kw):
         np.savez_compressed(filename, *o)
     elif protocol == "savez":
       filename = ensureExtension(filename, 'npz')
+      if dryrun: return filename
       if lock: lockFile = watchLock( filename )
       if type(o) is dict:
         np.savez(filename, **o)
@@ -111,6 +115,7 @@ def save(o, filename, **kw):
         np.savez(filename, *o)
     elif protocol == "save":
       filename = ensureExtension(filename, 'npy')
+      if dryrun: return filename
       if lock: lockFile = watchLock( filename )
       np.save(filename, o)
     else:
@@ -118,10 +123,12 @@ def save(o, filename, **kw):
   elif type(protocol) is int:
     if compress:
       filename = ensureExtension(filename, 'pic.gz')
+      if dryrun: return filename
       if lock: lockFile = watchLock( filename )
       f = gzip.GzipFile(filename, 'wb')
     else:
       filename = ensureExtension(filename, 'pic')
+      if dryrun: return filename
       if lock: lockFile = watchLock( filename )
       f = open(filename, 'w')
     cPickle.dump(o, f, protocol)
