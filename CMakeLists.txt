@@ -50,6 +50,7 @@ if( XAOD_STANDALONE )
     # ARG_DEPENDS numpy
     #)
     #add_dependencies(scipy numpy)
+    #add_dependencies(numpy)
 
   endif()
 endif()
